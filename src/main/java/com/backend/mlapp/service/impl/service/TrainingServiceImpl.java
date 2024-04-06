@@ -6,11 +6,13 @@ import com.backend.mlapp.entity.Training;
 import com.backend.mlapp.enumeration.TrainingStatus;
 import com.backend.mlapp.exception.*;
 import com.backend.mlapp.payload.TrainRequest;
+import com.backend.mlapp.payload.TrainingStatusResponse;
 import com.backend.mlapp.repository.AlgorithmRepository;
 import com.backend.mlapp.repository.TrainingRepository;
 import com.backend.mlapp.service.TrainingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
@@ -26,9 +29,15 @@ import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Instances;
+
+import java.io.IOException;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +50,11 @@ public class TrainingServiceImpl implements TrainingService {
     private final AlgorithmRepository algorithmRepository;
 
     private final FileManager fileManager;
+
+    private final MinioClient minioClient;
     private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
+
+    private static final String LOG_DIRECTORY = "logs/";
 
     private static final Map<String, Map<String, String>> defaultAlgorithmParams = new HashMap<>();
 
@@ -75,34 +88,65 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     @Async
     public CompletableFuture<String> trainModel(TrainRequest trainRequest) {
+        Training training = new Training();
         try {
             Algorithm algorithm = algorithmRepository.findByName(trainRequest.getAlgorithm())
                     .orElseThrow(() -> new ResourceNotFoundException("Algorithm does not exists."));
-            Training training = new Training();
             training.setAlgorithmParam(trainRequest.getAlgorithmConfigs());
             training.setStatus(TrainingStatus.REQUESTED);
             training.setStartedAt(LocalDate.now());
             training.setTargetColumn(String.valueOf(trainRequest.getTargetClassCol()));
             training.setAlgorithm(algorithm);
-            trainingRepository.save(training);
+            training = trainingRepository.save(training);
 
-            String arffFile = fileManager.csvToArff(trainRequest.getFile());
-            Instances dataset = fileManager.loadDataset(arffFile, trainRequest.getTargetClassCol());
+            // Return the training ID immediately to the user
+            CompletableFuture<String> trainingIdFuture = CompletableFuture.completedFuture(training.getId().toString());
 
-            Object model = createModel(trainRequest.getAlgorithm());
-            configureAndTrainModel(model, training, dataset, trainRequest);
+            Training finalTraining = training;
+            CompletableFuture.runAsync(() -> {
+                try {
+                    String arffFile = fileManager.csvToArff(trainRequest.getFile());
+                    Instances dataset = fileManager.loadDataset(arffFile, trainRequest.getTargetClassCol());
+                    finalTraining.setStatus(TrainingStatus.RUNNING);
+                    trainingRepository.save(finalTraining);
 
-            training.setStatus(TrainingStatus.COMPLETE);
-            training.setFinishedAt(LocalDate.now());
-            trainingRepository.save(training);
-            return CompletableFuture.completedFuture(UUID.randomUUID().toString());
+                    Object model = createModel(trainRequest.getAlgorithm());
+                    configureAndTrainModel(model, finalTraining, dataset, trainRequest);
 
+                    logTrainingDetails(finalTraining.getId(), "Training completed successfully");
+                    finalTraining.setStatus(TrainingStatus.COMPLETE);
+                    finalTraining.setFinishedAt(LocalDate.now());
+                    trainingRepository.save(finalTraining);
+                } catch (Exception e) {
+                    logTrainingDetails(finalTraining.getId(), "Failed to train model: " + e.getMessage());
+                    finalTraining.setStatus(TrainingStatus.FAILED);
+                    finalTraining.setFinishedAt(LocalDate.now());
+                    trainingRepository.save(finalTraining);
+                }
+            });
+
+            // Return the future with the training ID
+            return trainingIdFuture;
         } catch (Exception e) {
-            logger.error("Failed to train model: {}", e.getMessage(), e);
+            logTrainingDetails(training.getId(), "Failed to initialize training: " + e.getMessage());
             CompletableFuture<String> failedFuture = new CompletableFuture<>();
             failedFuture.completeExceptionally(e);
             return failedFuture;
         }
+    }
+
+
+    @Override
+    public TrainingStatusResponse getTrainingStatus(Integer trainingId) {
+        Training training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Training not found with ID: " + trainingId));
+        String logDetails = readLogForTraining(trainingId);
+        return new TrainingStatusResponse(
+                training.getId(),
+                training.getStatus(),
+                logDetails,
+                training.getFinishedAt()
+        );
     }
 
     private void configureAndTrainModel(Object model, Training training, Instances dataset, TrainRequest trainRequest) throws Exception {
@@ -130,10 +174,11 @@ public class TrainingServiceImpl implements TrainingService {
     private static Object createModel(String algorithm) {
         return switch (algorithm.toLowerCase()) {
             case "naive-bayes" -> new NaiveBayes();
-            case "k-nn" -> new IBk();
-            case "j48" -> new J48();
-            case "svm" -> new SMO();
-            case "skm" -> new SimpleKMeans();
+            case "k-nn" -> new IBk(); //classifier
+            case "j48" -> new J48(); //classifier
+            case "svm" -> new SMO(); //classifier
+            case "l-r" -> new LinearRegression(); //regressor
+            case "skm" -> new SimpleKMeans(); //clusterer
             default -> throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
         };
     }
@@ -265,32 +310,31 @@ public class TrainingServiceImpl implements TrainingService {
         kmeans.buildClusterer(dataset);
         logger.info("Within-cluster sum of squared errors: {}", kmeans.getSquaredError());
     }
+
+    private void logTrainingDetails(Integer trainingId, String message) {
+        String logFileName = LOG_DIRECTORY + "training_" + trainingId + ".log";
+        try {
+            Files.write(
+                    Paths.get(logFileName),
+                    (LocalDateTime.now() + ": " + message + "\n").getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            throw new LogFileException("Cannot write in log file." + logFileName, e);
+        }
+    }
+
+    private static String readLogForTraining(Integer trainingId) {
+        String logFileName = LOG_DIRECTORY + "training_" + trainingId + ".log";
+        try {
+            return new String(Files.readAllBytes(Paths.get(logFileName)));
+        } catch (IOException e) {
+            throw new LogFileException("Log file does not exist or cannot be read." + logFileName, e);
+        }
+    }
+
+
 }
-
-/*@Override
-public String saveModelToMinIO (String trainingId) throws IOException {
-      *//*  // Retrieve your model based on trainingId. Implementation depends on your application.
-        Classifier model = getModelByTrainingId(trainingId);
-
-        // Serialize the model. The implementation might vary depending on how your models are represented.
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(model);
-        byte[] modelBytes = baos.toByteArray();
-
-        // Define a unique name for the model file
-        String modelName = "model-" + trainingId + ".model";
-
-        // Use MinioClient to upload the model
-        minioClient.putObject(
-                PutObjectArgs.builder().bucket(minioBucketName).object(modelName)
-                        .stream(new ByteArrayInputStream(modelBytes), modelBytes.length, -1)
-                        .contentType("application/octet-stream")
-                        .build());
-
-        return modelName;*//*
-    return null;
-}*/
 
 
 

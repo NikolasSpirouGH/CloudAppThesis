@@ -62,4 +62,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ConfigurationParseException.class)
+    public ResponseEntity<Object> handleConfigurationParseException(ConfigurationParseException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Wrong configuration input.", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(TrainingModelException.class)
+    public ResponseEntity<Object> handleTrainingModelException(TrainingModelException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Something went wrong with training.", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(LogFileException.class)
+    public ResponseEntity<Object> handleLogFileException(LogFileException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Something went wrong with log file.", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

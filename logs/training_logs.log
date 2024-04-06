@@ -1,0 +1,1045 @@
+2024-04-06 11:37:56 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 876183 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 11:37:56 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 11:37:56 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 11:37:56 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 11:37:58 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 11:37:58 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 56 ms. Found 4 JPA repository interfaces.
+2024-04-06 11:37:59 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 11:37:59 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 11:37:59 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 11:37:59 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 11:37:59 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2977 ms
+2024-04-06 11:37:59 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 11:37:59 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 11:38:00 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 11:38:00 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 11:38:00 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 11:38:00 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@cacebfa
+2024-04-06 11:38:00 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 11:38:00 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 11:38:01 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 11:38:01 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:38:02 [restartedMain] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingController' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/controllers/TrainingController.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+2024-04-06 11:38:02 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:38:02 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 11:38:02 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 11:38:02 [restartedMain] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2024-04-06 11:38:02 [restartedMain] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2024-04-06 11:38:02 [restartedMain] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingController' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/controllers/TrainingController.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:795)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:237)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1355)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1192)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:962)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:624)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:334)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at com.backend.mlapp.CloudAppMlProjectApplication.main(CloudAppMlProjectApplication.java:10)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:795)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:237)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1355)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1192)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:904)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:782)
+	... 24 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:648)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:485)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1335)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1165)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:904)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:782)
+	... 38 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:177)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:644)
+	... 52 common frames omitted
+Caused by: java.lang.IllegalArgumentException: invalid hostname //127.0.0.1:9000
+	at io.minio.http.HttpUtils.validateHostnameOrIPAddress(HttpUtils.java:108)
+	at io.minio.http.HttpUtils.getBaseUrl(HttpUtils.java:122)
+	at io.minio.MinioAsyncClient$Builder.endpoint(MinioAsyncClient.java:3279)
+	at io.minio.MinioClient$Builder.endpoint(MinioClient.java:2466)
+	at com.backend.mlapp.config.MinioConfig.minioClient(MinioConfig.java:34)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$0.CGLIB$minioClient$0(<generated>)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$FastClass$$1.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:258)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:331)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$0.minioClient(<generated>)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:140)
+	... 53 common frames omitted
+2024-04-06 11:40:20 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 876649 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 11:40:20 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 11:40:20 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 11:40:20 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 11:40:21 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 11:40:21 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 43 ms. Found 4 JPA repository interfaces.
+2024-04-06 11:40:22 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 11:40:22 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 11:40:22 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 11:40:22 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 11:40:22 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1934 ms
+2024-04-06 11:40:22 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 11:40:22 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 11:40:22 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 11:40:22 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 11:40:22 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 11:40:23 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@626639b2
+2024-04-06 11:40:23 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 11:40:23 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 11:40:23 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 11:40:23 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:40:24 [restartedMain] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingController' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/controllers/TrainingController.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+2024-04-06 11:40:24 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:40:24 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 11:40:24 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 11:40:24 [restartedMain] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2024-04-06 11:40:24 [restartedMain] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2024-04-06 11:40:24 [restartedMain] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingController' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/controllers/TrainingController.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:795)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:237)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1355)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1192)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:962)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:624)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:334)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at com.backend.mlapp.CloudAppMlProjectApplication.main(CloudAppMlProjectApplication.java:10)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'trainingServiceImpl' defined in file [/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes/com/backend/mlapp/service/impl/service/TrainingServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 4: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:795)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:237)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1355)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1192)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:904)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:782)
+	... 24 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'minioClient' defined in class path resource [com/backend/mlapp/config/MinioConfig.class]: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:648)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:485)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1335)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1165)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:562)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:904)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:782)
+	... 38 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [io.minio.MinioClient]: Factory method 'minioClient' threw exception with message: invalid hostname //127.0.0.1:9000
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:177)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:644)
+	... 52 common frames omitted
+Caused by: java.lang.IllegalArgumentException: invalid hostname //127.0.0.1:9000
+	at io.minio.http.HttpUtils.validateHostnameOrIPAddress(HttpUtils.java:108)
+	at io.minio.http.HttpUtils.getBaseUrl(HttpUtils.java:122)
+	at io.minio.MinioAsyncClient$Builder.endpoint(MinioAsyncClient.java:3279)
+	at io.minio.MinioClient$Builder.endpoint(MinioClient.java:2466)
+	at com.backend.mlapp.config.MinioConfig.minioClient(MinioConfig.java:34)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$0.CGLIB$minioClient$0(<generated>)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$FastClass$$1.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:258)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:331)
+	at com.backend.mlapp.config.MinioConfig$$SpringCGLIB$$0.minioClient(<generated>)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:140)
+	... 53 common frames omitted
+2024-04-06 11:48:35 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 877360 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 11:48:35 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 11:48:35 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 11:48:35 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 11:48:36 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 11:48:36 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 42 ms. Found 4 JPA repository interfaces.
+2024-04-06 11:48:36 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 11:48:36 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 11:48:36 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 11:48:36 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 11:48:36 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1779 ms
+2024-04-06 11:48:37 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 11:48:37 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 11:48:37 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 11:48:37 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 11:48:37 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 11:48:37 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@51a748bb
+2024-04-06 11:48:37 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 11:48:37 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 11:48:38 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 11:48:38 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:48:39 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 11:48:39 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 11:48:39 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@45ea60e6, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@23674c8f, org.springframework.security.web.context.SecurityContextHolderFilter@1fdcb7fd, org.springframework.security.web.header.HeaderWriterFilter@15e2209a, org.springframework.web.filter.CorsFilter@49640744, org.springframework.security.web.authentication.logout.LogoutFilter@43081ec3, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@7229c626, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@1d2b784f, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@328e9d22, com.backend.mlapp.security.JwtTokenValidator@247526c5, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@1c6bd6a9, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@66171980, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@512ae89a, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@3def15f0, org.springframework.security.web.session.SessionManagementFilter@288c5d08, org.springframework.security.web.access.ExceptionTranslationFilter@4ee664e, org.springframework.security.web.access.intercept.AuthorizationFilter@152970d0]
+2024-04-06 11:48:39 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 11:48:40 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 11:48:40 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 11:48:40 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 5.788 seconds (process running for 6.434)
+2024-04-06 11:48:41 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 11:48:41 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 11:48:41 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2024-04-06 11:52:57 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:52:57 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 11:52:57 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 11:53:02 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 877594 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 11:53:02 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 11:53:02 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 11:53:02 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 11:53:03 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 11:53:03 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 41 ms. Found 4 JPA repository interfaces.
+2024-04-06 11:53:04 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 11:53:04 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 11:53:04 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 11:53:04 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 11:53:04 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1864 ms
+2024-04-06 11:53:04 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 11:53:05 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 11:53:05 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 11:53:05 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 11:53:05 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 11:53:05 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@15df525c
+2024-04-06 11:53:05 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 11:53:05 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 11:53:06 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 11:53:06 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 11:53:07 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 11:53:07 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 11:53:07 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3b5289a5, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@779d3bb0, org.springframework.security.web.context.SecurityContextHolderFilter@323c89d5, org.springframework.security.web.header.HeaderWriterFilter@4b7709a3, org.springframework.web.filter.CorsFilter@574244af, org.springframework.security.web.authentication.logout.LogoutFilter@6da6961b, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@15cb668d, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@12002bcf, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@26b4487b, com.backend.mlapp.security.JwtTokenValidator@904e2a9, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@5306b9d6, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@2d606c64, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@6cddba40, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@17da1882, org.springframework.security.web.session.SessionManagementFilter@4194a849, org.springframework.security.web.access.ExceptionTranslationFilter@79be30db, org.springframework.security.web.access.intercept.AuthorizationFilter@73968f90]
+2024-04-06 11:53:07 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 11:53:08 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 11:53:08 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 11:53:08 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 6.132 seconds (process running for 6.807)
+2024-04-06 11:53:09 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 11:53:09 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 11:53:09 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2024-04-06 11:55:02 [http-nio-8080-exec-1] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for GET '/api/trainings/train-status/153':
+
+org.apache.catalina.connector.RequestFacade@3bc84334
+
+servletPath:/api/trainings/train-status/153
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 1145f6cf-5757-4f4d-88fd-f1d04956ba6d
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 11:55:02 [http-nio-8080-exec-1] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.backend.mlapp.exception.LogFileException: Log file does not exist or cannot be read./logstraining_153.log]
+2024-04-06 12:01:45 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:01:45 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 12:01:45 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 12:01:50 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 878293 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 12:01:50 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 12:01:50 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 12:01:50 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 12:01:51 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 12:01:51 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 42 ms. Found 4 JPA repository interfaces.
+2024-04-06 12:01:52 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 12:01:52 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 12:01:52 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 12:01:52 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 12:01:52 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1761 ms
+2024-04-06 12:01:52 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 12:01:52 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 12:01:52 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 12:01:52 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 12:01:52 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 12:01:52 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@38f82406
+2024-04-06 12:01:52 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 12:01:52 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 12:01:53 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 12:01:53 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:01:54 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 12:01:54 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 12:01:55 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@2f763210, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@57ac50bd, org.springframework.security.web.context.SecurityContextHolderFilter@57d13e6d, org.springframework.security.web.header.HeaderWriterFilter@520ffbbc, org.springframework.web.filter.CorsFilter@152970d0, org.springframework.security.web.authentication.logout.LogoutFilter@5edf4d42, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@904e2a9, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@37e1c1c7, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@2a5a8250, com.backend.mlapp.security.JwtTokenValidator@34a2d3b9, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@779d3bb0, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1bf55229, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@81e2c56, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1be4428, org.springframework.security.web.session.SessionManagementFilter@42f0f8f3, org.springframework.security.web.access.ExceptionTranslationFilter@4194a849, org.springframework.security.web.access.intercept.AuthorizationFilter@15cb668d]
+2024-04-06 12:01:55 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 12:01:55 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 12:01:55 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 12:01:55 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 5.835 seconds (process running for 6.473)
+2024-04-06 12:01:56 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 12:01:56 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 12:01:56 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2024-04-06 12:02:00 [http-nio-8080-exec-1] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for GET '/api/trainings/train-status/153':
+
+org.apache.catalina.connector.RequestFacade@2454f2c7
+
+servletPath:/api/trainings/train-status/153
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 0e0da321-80d3-424c-8382-ae5e79aadc1d
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:02:00 [http-nio-8080-exec-1] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.backend.mlapp.exception.LogFileException: Log file does not exist or cannot be read.logs/training_153.log]
+2024-04-06 12:02:34 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:02:34 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 12:02:34 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 12:02:38 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 878469 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 12:02:38 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 12:02:38 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 12:02:38 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 12:02:39 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 12:02:39 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 42 ms. Found 4 JPA repository interfaces.
+2024-04-06 12:02:40 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 12:02:40 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 12:02:40 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 12:02:40 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 12:02:40 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1765 ms
+2024-04-06 12:02:40 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 12:02:40 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 12:02:40 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 12:02:41 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 12:02:41 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 12:02:41 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@9b9eecb
+2024-04-06 12:02:41 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 12:02:41 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 12:02:42 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 12:02:42 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:02:43 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 12:02:43 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 12:02:43 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@30a8ac81, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7229c626, org.springframework.security.web.context.SecurityContextHolderFilter@37e1c1c7, org.springframework.security.web.header.HeaderWriterFilter@45893ea3, org.springframework.web.filter.CorsFilter@30359854, org.springframework.security.web.authentication.logout.LogoutFilter@42c3e68a, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@1be4428, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@66171980, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@6cc1f858, com.backend.mlapp.security.JwtTokenValidator@19789de5, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@152970d0, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@747dfdca, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3c00c208, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@25dc701a, org.springframework.security.web.session.SessionManagementFilter@73df1e90, org.springframework.security.web.access.ExceptionTranslationFilter@7a0a0a8, org.springframework.security.web.access.intercept.AuthorizationFilter@17da1882]
+2024-04-06 12:02:43 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 12:02:44 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 12:02:44 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 12:02:44 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 5.959 seconds (process running for 6.597)
+2024-04-06 12:02:45 [RMI TCP Connection(4)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 12:02:45 [RMI TCP Connection(4)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 12:02:45 [RMI TCP Connection(4)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2024-04-06 12:03:45 [http-nio-8080-exec-1] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@4ff3370b
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 7d2b1073-900e-46bd-85f9-347d840893ad
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------720184577206469137626118
+content-length: 4338
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:03:45 [http-nio-8080-exec-1] WARN  o.h.e.jdbc.spi.SqlExceptionHelper - SQL Error: 0, SQLState: 23502
+2024-04-06 12:03:45 [http-nio-8080-exec-1] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: null value in column "training_id" violates not-null constraint
+  Detail: Failing row contains (null, null, null, 2024-04-06, REQUESTED, null, null, 5).
+2024-04-06 12:03:45 [http-nio-8080-exec-1] WARN  o.h.e.jdbc.spi.SqlExceptionHelper - SQL Error: 0, SQLState: 23502
+2024-04-06 12:03:45 [http-nio-8080-exec-1] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: null value in column "training_id" violates not-null constraint
+  Detail: Failing row contains (null, null, 2024-04-06, 2024-04-06, FAILED, null, null, 5).
+2024-04-06 12:03:45 [http-nio-8080-exec-1] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.backend.mlapp.exception.TrainingModelException: Unexpected error occurred while training the model]
+2024-04-06 12:04:01 [http-nio-8080-exec-2] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@374e03a4
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 60edf203-7c2e-4174-ab46-47d69561fa3c
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------564868565982441567819054
+content-length: 4443
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:04:01 [http-nio-8080-exec-2] WARN  o.h.e.jdbc.spi.SqlExceptionHelper - SQL Error: 0, SQLState: 23502
+2024-04-06 12:04:01 [http-nio-8080-exec-2] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: null value in column "training_id" violates not-null constraint
+  Detail: Failing row contains (null, null, null, 2024-04-06, REQUESTED, null, null, 1).
+2024-04-06 12:04:01 [http-nio-8080-exec-2] WARN  o.h.e.jdbc.spi.SqlExceptionHelper - SQL Error: 0, SQLState: 23502
+2024-04-06 12:04:01 [http-nio-8080-exec-2] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: null value in column "training_id" violates not-null constraint
+  Detail: Failing row contains (null, null, 2024-04-06, 2024-04-06, FAILED, null, null, 1).
+2024-04-06 12:04:01 [http-nio-8080-exec-2] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.backend.mlapp.exception.TrainingModelException: Unexpected error occurred while training the model]
+2024-04-06 12:05:25 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:05:25 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 12:05:25 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 12:05:29 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 878705 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 12:05:29 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 12:05:29 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 12:05:29 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 12:05:30 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 12:05:30 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 42 ms. Found 4 JPA repository interfaces.
+2024-04-06 12:05:31 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 12:05:31 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 12:05:31 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 12:05:31 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 12:05:31 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1831 ms
+2024-04-06 12:05:31 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 12:05:31 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 12:05:31 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 12:05:31 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 12:05:31 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 12:05:31 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@37bd4673
+2024-04-06 12:05:31 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 12:05:31 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 12:05:32 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 12:05:32 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:05:33 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 12:05:34 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 12:05:34 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@7229c626, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@30359854, org.springframework.security.web.context.SecurityContextHolderFilter@43b3f3ce, org.springframework.security.web.header.HeaderWriterFilter@1bf55229, org.springframework.web.filter.CorsFilter@6cc1f858, org.springframework.security.web.authentication.logout.LogoutFilter@1b1ff4b1, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@5f4f1b3f, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@72419188, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@19789de5, com.backend.mlapp.security.JwtTokenValidator@25dc701a, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@2a5a8250, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@288c5d08, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@2708fbef, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@39b7abcd, org.springframework.security.web.session.SessionManagementFilter@4f4cab3, org.springframework.security.web.access.ExceptionTranslationFilter@118a83c3, org.springframework.security.web.access.intercept.AuthorizationFilter@52f851ea]
+2024-04-06 12:05:34 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 12:05:35 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 12:05:35 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 12:05:35 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 6.162 seconds (process running for 6.843)
+2024-04-06 12:05:36 [RMI TCP Connection(5)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 12:05:36 [RMI TCP Connection(5)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 12:05:36 [RMI TCP Connection(5)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2024-04-06 12:05:46 [http-nio-8080-exec-1] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@61f6395b
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 4da7e1a3-6474-4439-96c1-8afcb5da1ccd
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------747758419364466797613342
+content-length: 4443
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:05:47 [http-nio-8080-exec-1] WARN  com.github.fommil.netlib.ARPACK - Failed to load implementation from: com.github.fommil.netlib.NativeSystemARPACK
+2024-04-06 12:05:47 [http-nio-8080-exec-1] WARN  com.github.fommil.netlib.ARPACK - Failed to load implementation from: com.github.fommil.netlib.NativeRefARPACK
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Starting training model with ID: 1
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Classifier: J48
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Dataset size: 150 instances
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Number of attributes: 5
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Class attribute: Species
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === 2-fold Cross-validation ===
+Correctly Classified Instances         140               93.3333 %
+Incorrectly Classified Instances        10                6.6667 %
+Kappa statistic                          0.9   
+Mean absolute error                      0.0515
+Root mean squared error                  0.2079
+Relative absolute error                 11.5769 %
+Root relative squared error             44.1085 %
+Total Number of Instances              150     
+
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Detailed Accuracy By Class ===
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.980    0.000    1.000      0.980    0.990      0.985    0.990     0.987     setosa
+                 0.900    0.050    0.900      0.900    0.900      0.850    0.925     0.843     versicolor
+                 0.920    0.050    0.902      0.920    0.911      0.866    0.955     0.869     virginica
+Weighted Avg.    0.933    0.033    0.934      0.933    0.934      0.900    0.957     0.900     
+
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Confusion Matrix ===
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [49     , 1      , 0      ]
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 45     , 5      ]
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 4      , 46     ]
+2024-04-06 12:05:47 [http-nio-8080-exec-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Average Evaluation Results ===
+Correctly Classified Instances         140               93.3333 %
+Incorrectly Classified Instances        10                6.6667 %
+Kappa statistic                          0.9   
+Mean absolute error                      0.0515
+Root mean squared error                  0.2079
+Relative absolute error                 11.5769 %
+Root relative squared error             44.1085 %
+Total Number of Instances              150     
+
+2024-04-06 12:06:14 [http-nio-8080-exec-2] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for GET '/api/trainings/train-status/1':
+
+org.apache.catalina.connector.RequestFacade@1047f93c
+
+servletPath:/api/trainings/train-status/1
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: bab18abb-6b07-48ab-b5c4-9043ecc07fb4
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:12:22 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:12:22 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-04-06 12:12:22 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2024-04-06 12:12:28 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Starting CloudAppMlProjectApplication using Java 17.0.9 with PID 879062 (/home/paradox/Desktop/thesis/CloudAppThesis-master/target/classes started by paradox in /home/paradox/Desktop/thesis/CloudAppThesis-master)
+2024-04-06 12:12:28 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - No active profile set, falling back to 1 default profile: "default"
+2024-04-06 12:12:28 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2024-04-06 12:12:28 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2024-04-06 12:12:29 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-04-06 12:12:30 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 42 ms. Found 4 JPA repository interfaces.
+2024-04-06 12:12:30 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2024-04-06 12:12:30 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2024-04-06 12:12:30 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2024-04-06 12:12:30 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2024-04-06 12:12:30 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1895 ms
+2024-04-06 12:12:31 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-04-06 12:12:31 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2024-04-06 12:12:31 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2024-04-06 12:12:31 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-04-06 12:12:31 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2024-04-06 12:12:31 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6d779c97
+2024-04-06 12:12:31 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2024-04-06 12:12:31 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2024-04-06 12:12:32 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-04-06 12:12:32 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-04-06 12:12:33 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-04-06 12:12:33 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 14 endpoint(s) beneath base path '/actuator'
+2024-04-06 12:12:33 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3e46a19, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7088e149, org.springframework.security.web.context.SecurityContextHolderFilter@394b5366, org.springframework.security.web.header.HeaderWriterFilter@118a83c3, org.springframework.web.filter.CorsFilter@57399a84, org.springframework.security.web.authentication.logout.LogoutFilter@73968f90, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@7ce87499, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@2708fbef, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@3c7fc79d, com.backend.mlapp.security.JwtTokenValidator@1c6bd6a9, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@3f6d8410, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1ec2864c, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@43b3f3ce, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@2bdeeec4, org.springframework.security.web.session.SessionManagementFilter@45893ea3, org.springframework.security.web.access.ExceptionTranslationFilter@7bc420e8, org.springframework.security.web.access.intercept.AuthorizationFilter@64ee93d]
+2024-04-06 12:12:33 [restartedMain] WARN  o.s.s.c.a.web.builders.WebSecurity - 
+
+********************************************************************
+**********        Security debugging is enabled.       *************
+**********    This may include sensitive information.  *************
+**********      Do not use in a production system!     *************
+********************************************************************
+
+
+2024-04-06 12:12:34 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2024-04-06 12:12:34 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2024-04-06 12:12:34 [restartedMain] INFO  c.b.m.CloudAppMlProjectApplication - Started CloudAppMlProjectApplication in 6.091 seconds (process running for 6.83)
+2024-04-06 12:12:35 [RMI TCP Connection(2)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-06 12:12:35 [RMI TCP Connection(2)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2024-04-06 12:12:35 [RMI TCP Connection(2)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2024-04-06 12:13:00 [http-nio-8080-exec-1] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@154894af
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: dfc15573-0c8a-4923-91d7-0ee3343512fd
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------894499246982333916931794
+content-length: 3775026
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:13:42 [http-nio-8080-exec-2] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@38d454dc
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 6abe71b7-9506-4cba-992e-074cb636799f
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------791427644976386411055036
+content-length: 4443
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] WARN  com.github.fommil.netlib.ARPACK - Failed to load implementation from: com.github.fommil.netlib.NativeSystemARPACK
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] WARN  com.github.fommil.netlib.ARPACK - Failed to load implementation from: com.github.fommil.netlib.NativeRefARPACK
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Starting training model with ID: 3
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Classifier: J48
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Dataset size: 150 instances
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Number of attributes: 5
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Class attribute: Species
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === 2-fold Cross-validation ===
+Correctly Classified Instances         140               93.3333 %
+Incorrectly Classified Instances        10                6.6667 %
+Kappa statistic                          0.9   
+Mean absolute error                      0.0515
+Root mean squared error                  0.2079
+Relative absolute error                 11.5769 %
+Root relative squared error             44.1085 %
+Total Number of Instances              150     
+
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Detailed Accuracy By Class ===
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.980    0.000    1.000      0.980    0.990      0.985    0.990     0.987     setosa
+                 0.900    0.050    0.900      0.900    0.900      0.850    0.925     0.843     versicolor
+                 0.920    0.050    0.902      0.920    0.911      0.866    0.955     0.869     virginica
+Weighted Avg.    0.933    0.033    0.934      0.933    0.934      0.900    0.957     0.900     
+
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Confusion Matrix ===
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [49     , 1      , 0      ]
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 45     , 5      ]
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 4      , 46     ]
+2024-04-06 12:13:42 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Average Evaluation Results ===
+Correctly Classified Instances         140               93.3333 %
+Incorrectly Classified Instances        10                6.6667 %
+Kappa statistic                          0.9   
+Mean absolute error                      0.0515
+Root mean squared error                  0.2079
+Relative absolute error                 11.5769 %
+Root relative squared error             44.1085 %
+Total Number of Instances              150     
+
+2024-04-06 12:13:58 [http-nio-8080-exec-3] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for POST '/api/trainings/train-model':
+
+org.apache.catalina.connector.RequestFacade@420f127c
+
+servletPath:/api/trainings/train-model
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 2528544f-8f7d-4ce6-b649-715495435d23
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+content-type: multipart/form-data; boundary=--------------------------629607289900903317871310
+content-length: 1423952
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Starting training model with ID: 4
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Classifier: J48
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Dataset size: 20640 instances
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Number of attributes: 10
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - Class attribute: ocean_proximity
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === 2-fold Cross-validation ===
+Correctly Classified Instances       20091               97.3401 %
+Incorrectly Classified Instances       549                2.6599 %
+Kappa statistic                          0.9605
+Mean absolute error                      0.0125
+Root mean squared error                  0.0998
+Relative absolute error                  4.6366 %
+Root relative squared error             27.1706 %
+Total Number of Instances            20640     
+
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Detailed Accuracy By Class ===
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.986    0.002    0.985      0.986    0.986      0.984    0.997     0.977     NEAR BAY
+                 0.976    0.024    0.970      0.976    0.973      0.952    0.981     0.968     <1H OCEAN
+                 0.986    0.007    0.986      0.986    0.986      0.979    0.993     0.980     INLAND
+                 0.923    0.008    0.944      0.923    0.933      0.924    0.969     0.921     NEAR OCEAN
+                 1.000    0.000    1.000      1.000    1.000      1.000    1.000     1.000     ISLAND
+Weighted Avg.    0.973    0.014    0.973      0.973    0.973      0.960    0.985     0.967     
+
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Confusion Matrix ===
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [2258   , 6      , 1      , 25     , 0      ]
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [5      , 8917   , 93     , 121    , 0      ]
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 94     , 6457   , 0      , 0      ]
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [29     , 174    , 1      , 2454   , 0      ]
+2024-04-06 12:13:59 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - [0      , 0      , 0      , 0      , 5      ]
+2024-04-06 12:14:00 [ForkJoinPool.commonPool-worker-1] INFO  c.b.m.s.i.s.TrainingServiceImpl - === Average Evaluation Results ===
+Correctly Classified Instances       20091               97.3401 %
+Incorrectly Classified Instances       549                2.6599 %
+Kappa statistic                          0.9605
+Mean absolute error                      0.0125
+Root mean squared error                  0.0998
+Relative absolute error                  4.6368 %
+Root relative squared error             27.1706 %
+Total Number of Instances            20640     
+
+2024-04-06 12:14:41 [http-nio-8080-exec-4] INFO  Spring Security Debugger - 
+
+************************************************************
+
+Request received for GET '/api/trainings/train-status/2':
+
+org.apache.catalina.connector.RequestFacade@737e9b04
+
+servletPath:/api/trainings/train-status/2
+pathInfo:null
+headers: 
+user-agent: PostmanRuntime/7.37.3
+accept: */*
+postman-token: 7a4dfa60-1c6c-45e9-8a1b-3a2b4df284e4
+host: 127.0.0.1:8080
+accept-encoding: gzip, deflate, br
+connection: keep-alive
+
+
+Security filter chain: [
+  DisableEncodeUrlFilter
+  WebAsyncManagerIntegrationFilter
+  SecurityContextHolderFilter
+  HeaderWriterFilter
+  CorsFilter
+  LogoutFilter
+  UsernamePasswordAuthenticationFilter
+  DefaultLoginPageGeneratingFilter
+  DefaultLogoutPageGeneratingFilter
+  JwtTokenValidator
+  BasicAuthenticationFilter
+  RequestCacheAwareFilter
+  SecurityContextHolderAwareRequestFilter
+  AnonymousAuthenticationFilter
+  SessionManagementFilter
+  ExceptionTranslationFilter
+  AuthorizationFilter
+]
+
+
+************************************************************
+
+

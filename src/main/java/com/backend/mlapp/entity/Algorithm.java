@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Algorithm {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "algorithm_id")
     private Integer id;
 

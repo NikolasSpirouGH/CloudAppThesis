@@ -1,4 +1,4 @@
-/*package com.backend.mlapp.config;
+package com.backend.mlapp.config;
 
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -21,7 +21,7 @@ public class MinioConfig {
     @Value("${minio.access.secret}")
     private String accessSecret;
 
-    @Value("${minio.url}")
+    @Value("http://127.0.0.1:9000")
     private String minioUrl;
 
     @Value("${minio.bucket.name}")
@@ -45,13 +45,9 @@ public class MinioConfig {
             return minioClient;
         } catch (MinioException e) {
             throw new RuntimeException("Error initializing MinIO", e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeyException e) {
+        } catch (IOException | InvalidKeyException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
-}*/
+}
 

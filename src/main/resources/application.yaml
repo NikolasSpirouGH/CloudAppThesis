@@ -42,12 +42,12 @@ springdoc:
 logging:
   level:
     root: INFO
-    com.backend.mlapp: DEBUG
+    com.backend.mlapp.service.impl.service.TrainingServiceImpl: DEBUG
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr(%-5level){yellow} %clr([%15.15thread]){magenta} %clr(%logger{36}){cyan} - %clr(%msg%n){black}"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
-    name: logs/myapp.log
+    name: logs/training_logs.log
 
 minio:
   access:

@@ -14,13 +14,9 @@ import java.time.LocalDate;
 @Table(name = "trainings")
 public class Training {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "training_id")
     private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name="algorithm_id")
-    private Algorithm algorithm;
 
     @Column
     private String trainingColumns;
@@ -41,4 +37,7 @@ public class Training {
     @Column
     private String algorithmParam;
 
+    @ManyToOne
+    @JoinColumn(name="algorithm_id")
+    private Algorithm algorithm;;
 }
