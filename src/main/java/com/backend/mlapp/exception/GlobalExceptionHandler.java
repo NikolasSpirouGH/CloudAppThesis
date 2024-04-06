@@ -79,4 +79,10 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Something went wrong with log file.", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(NotAuthenticatedUserException.class)
+    public ResponseEntity<Object> handleNotAuthenticatedUserException(NotAuthenticatedUserException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Access Denied", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
 }

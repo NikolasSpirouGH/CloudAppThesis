@@ -29,9 +29,9 @@ public class DataInitializer implements CommandLineRunner {
 
     public void run(String... args) {
         List<AppUser> admins = List.of(
-                new AppUser(null, "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE),
-                new AppUser(null, "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE),
-                new AppUser(null, "john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", UserRole.USER, UserStatus.ACTIVE)
+                new AppUser(null, "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE,null),
+                new AppUser(null, "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE, null),
+                new AppUser(null, "john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", UserRole.USER, UserStatus.ACTIVE, null)
 
         );
 

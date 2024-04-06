@@ -39,5 +39,9 @@ public class Training {
 
     @ManyToOne
     @JoinColumn(name="algorithm_id")
-    private Algorithm algorithm;;
+    private Algorithm algorithm;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
 }

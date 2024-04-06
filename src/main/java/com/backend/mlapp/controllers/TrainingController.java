@@ -26,6 +26,7 @@ public class TrainingController {
 
     private final ObjectMapper objectMapper;
 
+
     @PostMapping("/train-model")
     public ResponseEntity<String> trainModel(@Valid @ModelAttribute TrainRequest trainRequest){
         CompletableFuture<String> trainingRequestId;
@@ -53,6 +54,8 @@ public class TrainingController {
         TrainingStatusResponse response = trainingService.getTrainingStatus(trainingId);
         return ResponseEntity.ok(response);
     }
+
+
 }
 
 

@@ -2,6 +2,7 @@ package com.backend.mlapp.service.impl.service;
 
 import com.backend.mlapp.config.FileManager;
 import com.backend.mlapp.entity.Algorithm;
+import com.backend.mlapp.entity.AppUser;
 import com.backend.mlapp.entity.Training;
 import com.backend.mlapp.enumeration.TrainingStatus;
 import com.backend.mlapp.exception.*;
@@ -9,6 +10,7 @@ import com.backend.mlapp.payload.TrainRequest;
 import com.backend.mlapp.payload.TrainingStatusResponse;
 import com.backend.mlapp.repository.AlgorithmRepository;
 import com.backend.mlapp.repository.TrainingRepository;
+import com.backend.mlapp.repository.UserRepository;
 import com.backend.mlapp.service.TrainingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,18 +19,24 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.SimpleLinearRegression;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Instances;
+import weka.core.OptionHandler;
 
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
@@ -48,6 +56,8 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingRepository trainingRepository;
 
     private final AlgorithmRepository algorithmRepository;
+
+    private final UserRepository userRepository;
 
     private final FileManager fileManager;
 
@@ -83,11 +93,34 @@ public class TrainingServiceImpl implements TrainingService {
         simpleKMeansDefaults.put("I", "500");
         simpleKMeansDefaults.put("S", "10");
         defaultAlgorithmParams.put("skm", simpleKMeansDefaults);
+
+        Map<String, String> linearRegressionDefaults = new HashMap<>();
+        linearRegressionDefaults.put("S", "0");
+        linearRegressionDefaults.put("R", "1.0E-8");
+        defaultAlgorithmParams.put("linear-regression", linearRegressionDefaults);
     }
 
     @Override
     @Async
     public CompletableFuture<String> trainModel(TrainRequest trainRequest) {
+        //Authenticate
+        AppUser user = null;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username;
+            if (authentication.getPrincipal() instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                username = userDetails.getUsername();
+            } else {
+                username = authentication.getPrincipal().toString();
+            }
+             user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username));
+            logger.info("User found with id " + user.getId());
+        }catch(NullPointerException e){
+            logger.error("Access Denied " + "for user " + user.getFirstName() + e.getMessage());
+            throw new NotAuthenticatedUserException("You do not have the authority;");
+        }
         Training training = new Training();
         try {
             Algorithm algorithm = algorithmRepository.findByName(trainRequest.getAlgorithm())
@@ -97,6 +130,7 @@ public class TrainingServiceImpl implements TrainingService {
             training.setStartedAt(LocalDate.now());
             training.setTargetColumn(String.valueOf(trainRequest.getTargetClassCol()));
             training.setAlgorithm(algorithm);
+            training.setUser(user);
             training = trainingRepository.save(training);
 
             // Return the training ID immediately to the user
@@ -105,6 +139,7 @@ public class TrainingServiceImpl implements TrainingService {
             Training finalTraining = training;
             CompletableFuture.runAsync(() -> {
                 try {
+                    //Thread.sleep(10000);
                     String arffFile = fileManager.csvToArff(trainRequest.getFile());
                     Instances dataset = fileManager.loadDataset(arffFile, trainRequest.getTargetClassCol());
                     finalTraining.setStatus(TrainingStatus.RUNNING);
@@ -114,17 +149,18 @@ public class TrainingServiceImpl implements TrainingService {
                     configureAndTrainModel(model, finalTraining, dataset, trainRequest);
 
                     logTrainingDetails(finalTraining.getId(), "Training completed successfully");
+                    logger.info("Training completed successfully" + finalTraining.getId());
                     finalTraining.setStatus(TrainingStatus.COMPLETE);
                     finalTraining.setFinishedAt(LocalDate.now());
                     trainingRepository.save(finalTraining);
                 } catch (Exception e) {
                     logTrainingDetails(finalTraining.getId(), "Failed to train model: " + e.getMessage());
+                    logger.error("Failed to train model " + e.getMessage());
                     finalTraining.setStatus(TrainingStatus.FAILED);
                     finalTraining.setFinishedAt(LocalDate.now());
                     trainingRepository.save(finalTraining);
                 }
             });
-
             // Return the future with the training ID
             return trainingIdFuture;
         } catch (Exception e) {
@@ -134,7 +170,6 @@ public class TrainingServiceImpl implements TrainingService {
             return failedFuture;
         }
     }
-
 
     @Override
     public TrainingStatusResponse getTrainingStatus(Integer trainingId) {
@@ -177,18 +212,17 @@ public class TrainingServiceImpl implements TrainingService {
             case "k-nn" -> new IBk(); //classifier
             case "j48" -> new J48(); //classifier
             case "svm" -> new SMO(); //classifier
-            case "l-r" -> new LinearRegression(); //regressor
+            case "slr" -> new LinearRegression(); //regressor
             case "skm" -> new SimpleKMeans(); //clusterer
             default -> throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
         };
     }
 
     private static void setAlgorithmOptions(Object algorithm, Map<String, String> params) throws Exception {
-        if (!(algorithm instanceof weka.core.OptionHandler)) {
+        if (!(algorithm instanceof OptionHandler)) {
             throw new AlgorithmParameterSettingException(algorithm.getClass().getSimpleName() + " does not support option handling.");
         }
-
-        weka.core.OptionHandler optionHandler = (weka.core.OptionHandler) algorithm;
+        OptionHandler optionHandler = (OptionHandler) algorithm;
         List<String> optionsList = new ArrayList<>();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             optionsList.add("-" + entry.getKey());
@@ -332,8 +366,6 @@ public class TrainingServiceImpl implements TrainingService {
             throw new LogFileException("Log file does not exist or cannot be read." + logFileName, e);
         }
     }
-
-
 }
 
 
