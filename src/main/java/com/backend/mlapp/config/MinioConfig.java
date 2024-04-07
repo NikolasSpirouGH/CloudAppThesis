@@ -4,6 +4,8 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.errors.MinioException;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +15,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 @Configuration
+@Setter
+@Getter
 public class MinioConfig {
 
     @Value("${minio.access.name}")
@@ -24,7 +28,7 @@ public class MinioConfig {
     @Value("http://127.0.0.1:9000")
     private String minioUrl;
 
-    @Value("${minio.bucket.name}")
+    @Value("dataset-files")
     private String bucketName;
 
     @Bean

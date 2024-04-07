@@ -26,7 +26,7 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB
+      max-file-size: 20MB
       max-request-size: 15MB
 
 management:
@@ -54,8 +54,10 @@ minio:
     name: minioadmin
     secret: minioadmin
   url: //127.0.0.1:9000
-  bucket:
-    name: ml-models
+  buckets:
+    - name: ml-models
+    - name: dataset-files
+
 
 server:
   port: 8080

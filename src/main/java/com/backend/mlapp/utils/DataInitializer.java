@@ -1,4 +1,4 @@
-package com.backend.mlapp.config;
+package com.backend.mlapp.utils;
 
 import com.backend.mlapp.entity.Algorithm;
 import com.backend.mlapp.entity.AppUser;

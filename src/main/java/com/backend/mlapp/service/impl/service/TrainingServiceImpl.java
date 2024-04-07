@@ -1,6 +1,6 @@
 package com.backend.mlapp.service.impl.service;
 
-import com.backend.mlapp.config.FileManager;
+import com.backend.mlapp.config.MinioConfig;
 import com.backend.mlapp.entity.Algorithm;
 import com.backend.mlapp.entity.AppUser;
 import com.backend.mlapp.entity.Training;
@@ -11,6 +11,7 @@ import com.backend.mlapp.payload.TrainingStatusResponse;
 import com.backend.mlapp.repository.AlgorithmRepository;
 import com.backend.mlapp.repository.TrainingRepository;
 import com.backend.mlapp.repository.UserRepository;
+import com.backend.mlapp.utils.FileStorageService;
 import com.backend.mlapp.service.TrainingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,6 @@ import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.functions.SMO;
-import weka.classifiers.functions.SimpleLinearRegression;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
 import weka.clusterers.ClusterEvaluation;
@@ -37,10 +36,11 @@ import weka.clusterers.Clusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Instances;
 import weka.core.OptionHandler;
+import com.backend.mlapp.utils.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -61,10 +61,11 @@ public class TrainingServiceImpl implements TrainingService {
 
     private final FileManager fileManager;
 
-    private final MinioClient minioClient;
+    private final DataPreprocessor dataPreprocessor;
     private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
-
     private static final String LOG_DIRECTORY = "logs/";
+
+    private final FileStorageService fileStorageService;
 
     private static final Map<String, Map<String, String>> defaultAlgorithmParams = new HashMap<>();
 
@@ -103,7 +104,26 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     @Async
     public CompletableFuture<String> trainModel(TrainRequest trainRequest) {
-        //Authenticate
+        AppUser user = authenticateAndGetUser();
+        Training training = initializeTraining(trainRequest, user);
+        return CompletableFuture.runAsync(() -> {
+            try {
+                training.setStatus(TrainingStatus.RUNNING);
+                trainingRepository.save(training);
+                InputStream inputStream = fileStorageService.getFileInputStream("dataset-files", trainRequest.getFileReference());
+                String arffContent = fileManager.csvToArff(inputStream, trainRequest.getFileReference());;
+                Instances dataset = fileManager.loadDataset(arffContent, trainRequest.getTargetClassCol());
+                Instances preprocessedDataset = dataPreprocessor.preprocess(dataset);
+                Object model = createModel(trainRequest.getAlgorithm());
+                configureAndTrainModel(model, training, preprocessedDataset, trainRequest);
+                finalizeTrainingSuccess(training);
+            } catch (Exception e) {
+                handleTrainingError(training, e);
+            }
+        }).thenApply(v -> training.getId().toString()); // Return the training ID.
+    }
+
+    private AppUser authenticateAndGetUser() {
         AppUser user = null;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -114,61 +134,43 @@ public class TrainingServiceImpl implements TrainingService {
             } else {
                 username = authentication.getPrincipal().toString();
             }
-             user = userRepository.findByEmail(username)
+            user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username));
             logger.info("User found with id " + user.getId());
         }catch(NullPointerException e){
             logger.error("Access Denied " + "for user " + user.getFirstName() + e.getMessage());
             throw new NotAuthenticatedUserException("You do not have the authority;");
         }
+        return user;
+    }
+
+    private Training initializeTraining(TrainRequest trainRequest, AppUser user) {
         Training training = new Training();
-        try {
-            Algorithm algorithm = algorithmRepository.findByName(trainRequest.getAlgorithm())
-                    .orElseThrow(() -> new ResourceNotFoundException("Algorithm does not exists."));
-            training.setAlgorithmParam(trainRequest.getAlgorithmConfigs());
-            training.setStatus(TrainingStatus.REQUESTED);
-            training.setStartedAt(LocalDate.now());
-            training.setTargetColumn(String.valueOf(trainRequest.getTargetClassCol()));
-            training.setAlgorithm(algorithm);
-            training.setUser(user);
-            training = trainingRepository.save(training);
+        Algorithm algorithm = algorithmRepository.findByName(trainRequest.getAlgorithm())
+                .orElseThrow(() -> new ResourceNotFoundException("Algorithm does not exists."));
+        training.setAlgorithmParam(trainRequest.getAlgorithmConfigs());
+        training.setStatus(TrainingStatus.REQUESTED);
+        training.setStartedAt(LocalDateTime.now());
+        training.setTargetColumn(String.valueOf(trainRequest.getTargetClassCol()));
+        training.setAlgorithm(algorithm);
+        training.setUser(user);
+        training = trainingRepository.save(training);
+        return training;
+    }
 
-            // Return the training ID immediately to the user
-            CompletableFuture<String> trainingIdFuture = CompletableFuture.completedFuture(training.getId().toString());
+    private void finalizeTrainingSuccess(Training training) {
+        training.setStatus(TrainingStatus.COMPLETE);
+        training.setFinishedAt(LocalDateTime.now());
+        trainingRepository.save(training);
+        logTrainingDetails(training.getId(), "Training completed successfully.");
+    }
 
-            Training finalTraining = training;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    //Thread.sleep(10000);
-                    String arffFile = fileManager.csvToArff(trainRequest.getFile());
-                    Instances dataset = fileManager.loadDataset(arffFile, trainRequest.getTargetClassCol());
-                    finalTraining.setStatus(TrainingStatus.RUNNING);
-                    trainingRepository.save(finalTraining);
-
-                    Object model = createModel(trainRequest.getAlgorithm());
-                    configureAndTrainModel(model, finalTraining, dataset, trainRequest);
-
-                    logTrainingDetails(finalTraining.getId(), "Training completed successfully");
-                    logger.info("Training completed successfully" + finalTraining.getId());
-                    finalTraining.setStatus(TrainingStatus.COMPLETE);
-                    finalTraining.setFinishedAt(LocalDate.now());
-                    trainingRepository.save(finalTraining);
-                } catch (Exception e) {
-                    logTrainingDetails(finalTraining.getId(), "Failed to train model: " + e.getMessage());
-                    logger.error("Failed to train model " + e.getMessage());
-                    finalTraining.setStatus(TrainingStatus.FAILED);
-                    finalTraining.setFinishedAt(LocalDate.now());
-                    trainingRepository.save(finalTraining);
-                }
-            });
-            // Return the future with the training ID
-            return trainingIdFuture;
-        } catch (Exception e) {
-            logTrainingDetails(training.getId(), "Failed to initialize training: " + e.getMessage());
-            CompletableFuture<String> failedFuture = new CompletableFuture<>();
-            failedFuture.completeExceptionally(e);
-            return failedFuture;
-        }
+    private void handleTrainingError(Training training, Throwable e) {
+        logger.error("Training failed for ID {}: {}", training.getId(), e.getMessage(), e);
+        training.setStatus(TrainingStatus.FAILED);
+        training.setFinishedAt(LocalDateTime.now());
+        trainingRepository.save(training);
+        logTrainingDetails(training.getId(), "Training failed: " + e.getMessage());
     }
 
     @Override
@@ -176,6 +178,7 @@ public class TrainingServiceImpl implements TrainingService {
         Training training = trainingRepository.findById(trainingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Training not found with ID: " + trainingId));
         String logDetails = readLogForTraining(trainingId);
+
         return new TrainingStatusResponse(
                 training.getId(),
                 training.getStatus(),

@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Data
 public class TrainRequest {
 
-    private MultipartFile file;
+    private String fileReference;
 
     @NotBlank
     private String algorithm;

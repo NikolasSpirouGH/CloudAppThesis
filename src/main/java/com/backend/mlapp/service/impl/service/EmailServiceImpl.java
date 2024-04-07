@@ -36,11 +36,8 @@ public class EmailServiceImpl implements EmailService {
         verificationToken.setToken(token);
         verificationToken.setUser(user);
         verificationToken.setExpiryDate(new Date(System.currentTimeMillis() + 86400000));
-
         tokenRepository.save(verificationToken);
-
         SimpleMailMessage mailMessage = getSimpleMailMessage(user, token);
-
         mailSender.send(mailMessage);
     }
 
@@ -54,14 +51,11 @@ public class EmailServiceImpl implements EmailService {
         Token resetToken = new Token();
         resetToken.setToken(token);
         resetToken.setUser(userOptional.get());
-
         resetToken.setExpiryDate(new Date(System.currentTimeMillis() + 86400000));
-
         tokenRepository.save(resetToken);
         SimpleMailMessage mailMessage = getSimpleMailMessage(userOptional.get(), token);
         mailSender.send(mailMessage);
     }
-
 
     @NotNull
     private static SimpleMailMessage getSimpleMailMessage(AppUser user, String token) {

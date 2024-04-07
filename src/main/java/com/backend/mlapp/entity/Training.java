@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -25,10 +26,10 @@ public class Training {
     private String targetColumn;
 
     @Column
-    private LocalDate startedAt;
+    private LocalDateTime startedAt;
 
     @Column
-    private LocalDate finishedAt;
+    private LocalDateTime finishedAt;
 
     @Column
     @Enumerated(EnumType.STRING)
