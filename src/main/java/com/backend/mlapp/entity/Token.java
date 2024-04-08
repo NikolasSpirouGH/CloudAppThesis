@@ -13,14 +13,14 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name="token")
+    @Column
     private String token;
 
     @OneToOne(targetEntity = AppUser.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "user_id")
+    @JoinColumn(nullable = false, name = "id")
     private AppUser user;
 
-    @Column(name="exp_date")
+    @Column
     private Date expiryDate;
 
 }

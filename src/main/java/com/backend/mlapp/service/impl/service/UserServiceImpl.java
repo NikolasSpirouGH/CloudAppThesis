@@ -7,14 +7,14 @@ import com.backend.mlapp.payload.UpdateRequest;
 import com.backend.mlapp.repository.UserRepository;
 import com.backend.mlapp.service.EmailService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.backend.mlapp.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService{
     @Transactional
     @Override
     public AppUser updateMyInfo(UpdateRequest updateRequest) {
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username;
         if (authentication.getPrincipal() instanceof UserDetails) {
@@ -50,6 +51,21 @@ public class UserServiceImpl implements UserService{
 
         update(user, updateRequest);
         return user;
+    }
+
+    @Override
+    public Integer getUserFromAuth(Authentication authentication) {
+        authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username;
+        if (authentication.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            username = userDetails.getUsername();
+        } else {
+            username = authentication.getPrincipal().toString();
+        }
+        AppUser user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username));
+        return user.getId();
     }
 
     private void update(AppUser user,UpdateRequest updateRequest){
@@ -84,4 +100,9 @@ public class UserServiceImpl implements UserService{
             emailService.sendVerificationEmail(user);
         }
     }
-}
+
+    @Override
+    public Optional<AppUser> getUserById(Integer userId) {
+        return Optional.ofNullable(userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found.")));
+    }
+ }

@@ -1,6 +1,5 @@
 package com.backend.mlapp.service.impl.service;
 
-import com.backend.mlapp.config.MinioConfig;
 import com.backend.mlapp.entity.Algorithm;
 import com.backend.mlapp.entity.AppUser;
 import com.backend.mlapp.entity.Training;
@@ -10,20 +9,15 @@ import com.backend.mlapp.payload.TrainRequest;
 import com.backend.mlapp.payload.TrainingStatusResponse;
 import com.backend.mlapp.repository.AlgorithmRepository;
 import com.backend.mlapp.repository.TrainingRepository;
-import com.backend.mlapp.repository.UserRepository;
-import com.backend.mlapp.utils.FileStorageService;
+import com.backend.mlapp.service.DatasetService;
 import com.backend.mlapp.service.TrainingService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.scheduling.annotation.Async;;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -42,6 +36,7 @@ import com.backend.mlapp.utils.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -58,15 +53,13 @@ public class TrainingServiceImpl implements TrainingService {
 
     private final AlgorithmRepository algorithmRepository;
 
-    private final UserRepository userRepository;
-
     private final FileManager fileManager;
 
     private final DataPreprocessor dataPreprocessor;
     private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
     private static final String LOG_DIRECTORY = "logs/";
 
-    private final FileStorageService fileStorageService;
+    private final DatasetService datasetService;
     private static final Map<String, Map<String, String>> defaultAlgorithmParams = new HashMap<>();
 
     static {
@@ -103,8 +96,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Async
-    public CompletableFuture<String> trainModel(TrainRequest trainRequest) {
-        AppUser user = authenticateAndGetUser();
+    public CompletableFuture<String> trainModel(AppUser user, TrainRequest trainRequest) {
         Training training = initializeTraining(trainRequest, user);
         CompletableFuture<String> immediateFuture = CompletableFuture.completedFuture(training.getId().toString());
 
@@ -115,7 +107,7 @@ public class TrainingServiceImpl implements TrainingService {
                 training.setStatus(TrainingStatus.RUNNING);
                 logTrainingDetails(training.getId(), "Training running.");
                 trainingRepository.save(training);
-                InputStream inputStream = fileStorageService.getFileInputStream("dataset-files", trainRequest.getFileReference());
+                InputStream inputStream = datasetService.getFileInputStream("dataset-files", trainRequest.getFileReference());
                 String arffContent = fileManager.csvToArff(inputStream, trainRequest.getFileReference());;
                 Instances dataset = fileManager.loadDataset(arffContent, trainRequest.getTargetClassCol());
                 Instances preprocessedDataset = dataPreprocessor.preprocess(dataset);
@@ -144,33 +136,15 @@ public class TrainingServiceImpl implements TrainingService {
         );
     }
 
-    private AppUser authenticateAndGetUser() {
-        AppUser user = null;
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username;
-            if (authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                username = userDetails.getUsername();
-            } else {
-                username = authentication.getPrincipal().toString();
-            }
-            user = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username));
-            logger.info("User found with id " + user.getId());
-        }catch(NullPointerException e){
-            logger.error("Access Denied " + "for user " + user.getFirstName() + e.getMessage());
-            throw new NotAuthenticatedUserException("You do not have the authority;");
-        }
-        return user;
+    @Override
+    public List<Training> getTrainingsByCriteria(Integer userId, LocalDate startDate, LocalDate endDate, String algorithm) {
+        return trainingRepository.findByUserIdAndCriteria(userId, startDate, endDate, algorithm);
     }
-
 
     private Training initializeTraining(TrainRequest trainRequest, AppUser user) {
         Training training = new Training();
         Algorithm algorithm = algorithmRepository.findByName(trainRequest.getAlgorithm())
                 .orElseThrow(() -> new ResourceNotFoundException("Algorithm does not exists."));
-        training.setAlgorithmParam(trainRequest.getAlgorithmConfigs());
         training.setStatus(TrainingStatus.REQUESTED);
         training.setStartedAt(LocalDateTime.now());
         training.setTargetColumn(String.valueOf(trainRequest.getTargetClassCol()));

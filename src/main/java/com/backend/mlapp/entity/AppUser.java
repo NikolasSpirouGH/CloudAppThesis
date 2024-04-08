@@ -19,35 +19,34 @@ import java.util.List;
 public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
     Integer id;
 
-    @Column(name = "first_name")
+    @Column
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column
     private String lastName;
 
-    @Column(name = "email", unique = true)
+    @Column(unique = true)
     private String email;
 
-    @Column(name = "password")
+    @Column
     private String password;
 
-    @Column(name = "age")
+    @Column
     private Integer age;
 
-    @Column(name = "profession")
+    @Column
     private String profession;
 
-    @Column(name = "country")
+    @Column
     private String country;
 
-    @Column(name = "user_role")
+    @Column
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @Column(name = "user_status")
+    @Column
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 

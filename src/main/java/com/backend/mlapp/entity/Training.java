@@ -16,14 +16,7 @@ import java.time.LocalDateTime;
 public class Training {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "training_id")
     private Integer id;
-
-    @Column
-    private String trainingColumns;
-
-    @Column
-    private String targetColumn;
 
     @Column
     private LocalDateTime startedAt;
@@ -35,14 +28,15 @@ public class Training {
     @Enumerated(EnumType.STRING)
     private TrainingStatus status;
 
-    @Column
-    private String algorithmParam;
-
     @ManyToOne
-    @JoinColumn(name="algorithm_id")
+    @JoinColumn(name="id")
     private Algorithm algorithm;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "id")
     private AppUser user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Dataset dataset;
+
 }

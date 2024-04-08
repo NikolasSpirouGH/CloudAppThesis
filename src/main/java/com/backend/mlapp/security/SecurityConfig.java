@@ -31,7 +31,7 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS
                         )
                 ).authorizeHttpRequests(
-                        Authorize-> Authorize.requestMatchers("/api/**","/actuator/**", "/swagger-ui.html/**", "/swagger-ui/**","/swagger-ui/index.html#/**", "/v3/api-docs/**", "/webjars/**").permitAll()
+                        Authorize-> Authorize.requestMatchers("/api/users/**","/actuator/**", "/swagger-ui.html/**", "/swagger-ui/**","/swagger-ui/index.html#/**", "/v3/api-docs/**", "/webjars/**").permitAll()
                                 .anyRequest().authenticated()
                 ).addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
                 .csrf(csrf-> {

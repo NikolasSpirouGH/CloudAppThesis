@@ -6,7 +6,7 @@ import com.backend.mlapp.payload.LoginRequest;
 import com.backend.mlapp.payload.RegisterRequest;
 import org.springframework.stereotype.Service;
 
-@Service
+
 public interface AuthService {
 
     AppUser register(RegisterRequest registerRequest);

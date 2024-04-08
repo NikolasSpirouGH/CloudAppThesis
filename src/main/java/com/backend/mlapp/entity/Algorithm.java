@@ -14,20 +14,13 @@ import java.util.List;
 public class Algorithm {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "algorithm_id")
+    @Column
     private Integer id;
 
-    @Column(name = "algorithm_name")
+    @Column
     private String name;
 
-    /*
-    @OneToMany(mappedBy = "algorithm")
-    private List<Training> training*/;
-/*
-    @Column(name = "training_user")
-    private String user;*/
+    @Column
+    private String defaultParameters;
 
-/*
-    @Column(name = "algorithm_config_param")
-    private String configParameters;*/
 }
