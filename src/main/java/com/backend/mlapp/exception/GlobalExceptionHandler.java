@@ -85,4 +85,17 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Access Denied", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(DatasetLoadException.class)
+    public ResponseEntity<Object> handleDatasetLoadException(DatasetLoadException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(TimeOutException.class)
+    public ResponseEntity<Object> handleTimeOutException(TimeOutException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Timeout ", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }

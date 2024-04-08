@@ -13,6 +13,7 @@ import com.backend.mlapp.repository.TrainingRepository;
 import com.backend.mlapp.repository.UserRepository;
 import com.backend.mlapp.utils.FileStorageService;
 import com.backend.mlapp.service.TrainingService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.MinioClient;
@@ -66,7 +67,6 @@ public class TrainingServiceImpl implements TrainingService {
     private static final String LOG_DIRECTORY = "logs/";
 
     private final FileStorageService fileStorageService;
-
     private static final Map<String, Map<String, String>> defaultAlgorithmParams = new HashMap<>();
 
     static {
@@ -106,9 +106,14 @@ public class TrainingServiceImpl implements TrainingService {
     public CompletableFuture<String> trainModel(TrainRequest trainRequest) {
         AppUser user = authenticateAndGetUser();
         Training training = initializeTraining(trainRequest, user);
-        return CompletableFuture.runAsync(() -> {
+        CompletableFuture<String> immediateFuture = CompletableFuture.completedFuture(training.getId().toString());
+
+          CompletableFuture.runAsync(() -> {
             try {
+                logTrainingDetails(training.getId(), "Training started.");
+                Thread.sleep(25000);
                 training.setStatus(TrainingStatus.RUNNING);
+                logTrainingDetails(training.getId(), "Training running.");
                 trainingRepository.save(training);
                 InputStream inputStream = fileStorageService.getFileInputStream("dataset-files", trainRequest.getFileReference());
                 String arffContent = fileManager.csvToArff(inputStream, trainRequest.getFileReference());;
@@ -117,10 +122,26 @@ public class TrainingServiceImpl implements TrainingService {
                 Object model = createModel(trainRequest.getAlgorithm());
                 configureAndTrainModel(model, training, preprocessedDataset, trainRequest);
                 finalizeTrainingSuccess(training);
+                logTrainingDetails(training.getId(), "Training completed successfully.");
             } catch (Exception e) {
                 handleTrainingError(training, e);
             }
-        }).thenApply(v -> training.getId().toString()); // Return the training ID.
+        });
+        return immediateFuture;
+    }
+
+    @Override
+    public TrainingStatusResponse getTrainingStatus(Integer trainingId) {
+        Training training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Training not found with ID: " + trainingId));
+        String logDetails = readLogForTraining(trainingId);
+
+        return new TrainingStatusResponse(
+                training.getId(),
+                training.getStatus(),
+                logDetails,
+                training.getFinishedAt()
+        );
     }
 
     private AppUser authenticateAndGetUser() {
@@ -143,6 +164,7 @@ public class TrainingServiceImpl implements TrainingService {
         }
         return user;
     }
+
 
     private Training initializeTraining(TrainRequest trainRequest, AppUser user) {
         Training training = new Training();
@@ -173,39 +195,45 @@ public class TrainingServiceImpl implements TrainingService {
         logTrainingDetails(training.getId(), "Training failed: " + e.getMessage());
     }
 
-    @Override
-    public TrainingStatusResponse getTrainingStatus(Integer trainingId) {
-        Training training = trainingRepository.findById(trainingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training not found with ID: " + trainingId));
-        String logDetails = readLogForTraining(trainingId);
 
-        return new TrainingStatusResponse(
-                training.getId(),
-                training.getStatus(),
-                logDetails,
-                training.getFinishedAt()
-        );
-    }
 
-    private void configureAndTrainModel(Object model, Training training, Instances dataset, TrainRequest trainRequest) throws Exception {
+    private void configureAndTrainModel(Object model, Training training, Instances dataset, TrainRequest trainRequest){
         if (model instanceof Classifier classifier) {
             logger.info("Starting training model with ID: {}", training.getId());
             if (trainRequest.getAlgorithmConfigs() != null) {
-                Map<String, String> algorithmConfigs = objectMapper.readValue(trainRequest.getAlgorithmConfigs(), new TypeReference<>() {
-                });
+                Map<String, String> algorithmConfigs = null;
+                try {
+                    algorithmConfigs = objectMapper.readValue(trainRequest.getAlgorithmConfigs(), new TypeReference<>() {
+                    });
+                } catch (JsonProcessingException e) {
+                    throw new AlgorithmParameterSettingException("Algorithm parameters problem.", e);
+                }
                 setClassifierParams(classifier, algorithmConfigs);
             }
-            reportClassifierInfo(classifier, dataset, trainRequest);
+            try {
+                reportClassifierInfo(classifier, dataset, trainRequest);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             evaluate(classifier, dataset, trainRequest.getFolds());
         } else if (model instanceof SimpleKMeans kmeans) {
             logger.info("Starting cluster training model with ID: {}", training.getId());
             if (trainRequest.getAlgorithmConfigs() != null) {
-                Map<String, String> algorithmConfigs = objectMapper.readValue(trainRequest.getAlgorithmConfigs(), new TypeReference<>() {});
+                Map<String, String> algorithmConfigs = null;
+                try {
+                    algorithmConfigs = objectMapper.readValue(trainRequest.getAlgorithmConfigs(), new TypeReference<>() {});
+                } catch (JsonProcessingException e) {
+                    throw new AlgorithmParameterSettingException("Algorithm parameters problem.", e);
+                }
                 setClustererParams(kmeans, algorithmConfigs);
             }
             dataset.setClassIndex(-1);
-            kmeans.buildClusterer(dataset);
-            reportClusterInfo(kmeans, dataset);
+            try {
+                kmeans.buildClusterer(dataset);
+                reportClusterInfo(kmeans, dataset);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -250,6 +278,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     private static void setClassifierParams(Classifier classifier, Map<String, String> algorithmParams) {
         Map<String, String> effectiveParams = mergeParamsWithDefaults(classifier, algorithmParams);
+        logger.info("Algorithm Configurations: {}", effectiveParams.toString());
         try {
             setAlgorithmOptions(classifier, effectiveParams);
         } catch (Exception e) {
@@ -259,6 +288,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     private static void setClustererParams(Clusterer clusterer, Map<String, String> algorithmParams) {
         Map<String, String> effectiveParams = mergeParamsWithDefaults(clusterer, algorithmParams);
+        logger.info("Algorithm Configurations: {}", effectiveParams.toString());
         try {
             setAlgorithmOptions(clusterer, effectiveParams);
         } catch (Exception e) {
@@ -266,47 +296,57 @@ public class TrainingServiceImpl implements TrainingService {
         }
     }
 
-    private void reportClassifierInfo(Classifier classifier, Instances dataset, TrainRequest trainRequest) throws Exception {
-        Evaluation eval = new Evaluation(dataset);
-        Random rand = new Random(1);
-        int folds = trainRequest.getFolds();
+    private void reportClassifierInfo(Classifier classifier, Instances dataset, TrainRequest trainRequest) {
+        try {
+            Evaluation eval = new Evaluation(dataset);
+            Random rand = new Random(1);
+            int folds = trainRequest.getFolds();
 
-        eval.crossValidateModel(classifier, dataset, folds, rand);
+            eval.crossValidateModel(classifier, dataset, folds, rand);
 
-        logger.info("Classifier: {}", classifier.getClass().getSimpleName());
-        logger.info("Dataset size: {} instances", dataset.numInstances());
-        logger.info("Number of attributes: {}", dataset.numAttributes());
-        logger.info("Class attribute: {}", dataset.classAttribute().name());
-        logger.info(eval.toSummaryString("=== " + folds + "-fold Cross-validation ===", false));
-        logger.info(eval.toClassDetailsString("=== Detailed Accuracy By Class ==="));
+            logger.info("Classifier: {}", classifier.getClass().getSimpleName());
+            logger.info("Dataset size: {} instances", dataset.numInstances());
+            logger.info("Number of attributes: {}", dataset.numAttributes());
+            logger.info("Class attribute: {}", dataset.classAttribute().name());
+            logger.info(eval.toSummaryString("=== " + folds + "-fold Cross-validation ===", false));
+            logger.info(eval.toClassDetailsString("=== Detailed Accuracy By Class ==="));
 
-        logger.info("=== Confusion Matrix ===");
-        double[][] confusionMatrix = eval.confusionMatrix();
-        for (double[] row : confusionMatrix) {
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < row.length; i++) {
-                sb.append(String.format("%-7.0f", row[i]));
-                if (i < row.length - 1) sb.append(", ");
+            logger.info("=== Confusion Matrix ===");
+            double[][] confusionMatrix = eval.confusionMatrix();
+            for (double[] row : confusionMatrix) {
+                StringBuilder sb = new StringBuilder("[");
+                for (int i = 0; i < row.length; i++) {
+                    sb.append(String.format("%-7.0f", row[i]));
+                    if (i < row.length - 1) sb.append(", ");
+                }
+                sb.append("]");
+                logger.info(sb.toString());
             }
-            sb.append("]");
-            logger.info(sb.toString());
+        }catch (Exception e) {
+            logger.error("Evaluate classifier failed.");
+            throw new ModelEvaluationException("Classifier evaluation error.", e);
         }
     }
 
-    private void reportClusterInfo(SimpleKMeans kmeans, Instances dataset) throws Exception {
-        logger.info("Within-cluster sum of squared errors: {}", kmeans.getSquaredError());
-        Instances centroids = kmeans.getClusterCentroids();
-        for (int i = 0; i < centroids.numInstances(); i++) {
-            logger.info("Cluster {} centroid: {}", i, centroids.instance(i));
+    private void reportClusterInfo(SimpleKMeans kmeans, Instances dataset) {
+        try {
+            logger.info("Within-cluster sum of squared errors: {}", kmeans.getSquaredError());
+            Instances centroids = kmeans.getClusterCentroids();
+            for (int i = 0; i < centroids.numInstances(); i++) {
+                logger.info("Cluster {} centroid: {}", i, centroids.instance(i));
+            }
+            double[] sizes = kmeans.getClusterSizes();
+            for (int i = 0; i < sizes.length; i++) {
+                logger.info("Cluster {} size: {}", i, sizes[i]);
+            }
+            ClusterEvaluation eval = new ClusterEvaluation();
+            eval.setClusterer(kmeans);
+            eval.evaluateClusterer(dataset);
+            logger.info("Cluster Evaluation Results:\n {}", eval.clusterResultsToString());
+        }catch(Exception e){
+            logger.error("Evaluate clusterer failed.");
+            throw new ModelEvaluationException("Clusterer evaluation failed.", e);
         }
-        double[] sizes = kmeans.getClusterSizes();
-        for (int i = 0; i < sizes.length; i++) {
-            logger.info("Cluster {} size: {}", i, sizes[i]);
-        }
-        ClusterEvaluation eval = new ClusterEvaluation();
-        eval.setClusterer(kmeans);
-        eval.evaluateClusterer(dataset);
-        logger.info("Cluster Evaluation Results:\n {}", eval.clusterResultsToString());
     }
 
     private void evaluate(Object model, Instances dataset, int folds) {
@@ -323,29 +363,38 @@ public class TrainingServiceImpl implements TrainingService {
         }
     }
 
-    private void evaluateClassifier(Classifier classifier, Instances dataset, int folds) throws Exception {
-        int seed = 1;
-        Random rand = new Random(seed);
-        Instances randData = new Instances(dataset);
-        randData.randomize(rand);
+    private void evaluateClassifier(Classifier classifier, Instances dataset, int folds) {
+        try {
+            int seed = 1;
+            Random rand = new Random(seed);
+            Instances randData = new Instances(dataset);
+            randData.randomize(rand);
 
-        if (randData.classAttribute().isNominal())
-            randData.stratify(folds);
+            if (randData.classAttribute().isNominal())
+                randData.stratify(folds);
 
-        Evaluation eval = new Evaluation(randData);
-        for (int n = 0; n < folds; n++) {
-            Instances train = randData.trainCV(folds, n);
-            Instances test = randData.testCV(folds, n);
-            classifier.buildClassifier(train);
-            eval.evaluateModel(classifier, test);
-        }
-
-        logger.info(eval.toSummaryString("=== Average Evaluation Results ===", false));
+            Evaluation eval = new Evaluation(randData);
+            for (int n = 0; n < folds; n++) {
+                Instances train = randData.trainCV(folds, n);
+                Instances test = randData.testCV(folds, n);
+                classifier.buildClassifier(train);
+                eval.evaluateModel(classifier, test);
+            }
+            logger.info(eval.toSummaryString("=== Average Evaluation Results ===", false));
+        }catch(Exception e) {
+            logger.error("Classifier evaluation " + classifier.toString() + " failed");
+           throw new ModelEvaluationException("Evaluate classifier " + classifier.toString() + "failed", e);
+            }
     }
 
-    private void evaluateClusterer(SimpleKMeans kmeans, Instances dataset) throws Exception {
-        kmeans.buildClusterer(dataset);
-        logger.info("Within-cluster sum of squared errors: {}", kmeans.getSquaredError());
+    private void evaluateClusterer(SimpleKMeans kmeans, Instances dataset) {
+        try {
+            kmeans.buildClusterer(dataset);
+            logger.info("Within-cluster sum of squared errors: {}", kmeans.getSquaredError());
+        } catch (Exception e) {
+            logger.error("Clusterer " + kmeans.toString() + " failed");
+            throw new ModelEvaluationException("Evaluate clusterer " + kmeans.toString() + " failed", e);
+        }
     }
 
     private void logTrainingDetails(Integer trainingId, String message) {

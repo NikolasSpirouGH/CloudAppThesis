@@ -62,7 +62,6 @@ public class UserServiceImpl implements UserService{
             user.setEmail(updateRequest.getEmail());
             user.setStatus(UserStatus.INACTIVE);
         }
-
         if (updateRequest.getFirstname() != null) {
             user.setFirstName(updateRequest.getFirstname());
         }

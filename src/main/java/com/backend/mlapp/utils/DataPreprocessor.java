@@ -12,50 +12,46 @@ import weka.filters.unsupervised.attribute.Normalize;
 @Component
 public class DataPreprocessor {
 
-    /**
-     * Applies a standard set of preprocessing filters to make the dataset
-     * compatible with most algorithms.
-     *
-     * @param dataset The dataset to preprocess.
-     * @return The preprocessed dataset.
-     * @throws Exception If an error occurs during preprocessing.
-     */
     public static Instances preprocess(Instances dataset) throws Exception {
         MultiFilter multiFilter = new MultiFilter();
 
-        // Prepare filters to be applied
         Filter[] filters = new Filter[]{
                 createStringToNominalFilter(dataset),
                 createNumericToNominalFilter(dataset),
-                new Normalize(), // Optionally, use new Standardize() instead of Normalize()
+                new Normalize(),
         };
 
         multiFilter.setFilters(filters);
         multiFilter.setInputFormat(dataset);
-
-        // Apply all filters
         return Filter.useFilter(dataset, multiFilter);
     }
 
-    private static Filter createStringToNominalFilter(Instances dataset) throws Exception {
+    private static Filter createStringToNominalFilter(Instances dataset){
         StringToNominal stringToNominal = new StringToNominal();
-        stringToNominal.setInputFormat(dataset);
+        try {
+            stringToNominal.setInputFormat(dataset);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return stringToNominal;
     }
 
-    private static Filter createNumericToNominalFilter(Instances dataset) throws Exception {
-        // Identify which attributes are numeric, for potential conversion to nominal
+    private static Filter createNumericToNominalFilter(Instances dataset) {
         String indices = getNumericAttributeIndices(dataset);
         if (!indices.isEmpty()) {
             NumericToNominal numericToNominal = new NumericToNominal();
             numericToNominal.setAttributeIndices(indices);
-            numericToNominal.setInputFormat(dataset);
+            try {
+                numericToNominal.setInputFormat(dataset);
+            } catch (Exception e) {
+
+                throw new RuntimeException(e);
+            }
             return numericToNominal;
         } else {
-            // Return a dummy filter when there are no numeric attributes to convert
             return new Filter() {
                 @Override
-                public boolean setInputFormat(Instances instanceInfo) throws Exception {
+                public boolean setInputFormat(Instances instanceInfo) {
                     return false;
                 }
 
@@ -65,7 +61,7 @@ public class DataPreprocessor {
                 }
 
                 @Override
-                public boolean batchFinished() throws Exception {
+                public boolean batchFinished(){
                     return false;
                 }
 

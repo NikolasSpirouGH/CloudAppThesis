@@ -1,5 +1,6 @@
 package com.backend.mlapp.utils;
 
+import com.backend.mlapp.exception.FileProcessingException;
 import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,9 +39,8 @@ public class FileStorageService {
         }
     }
 
-    public InputStream getFileInputStream(String bucketName, String fileReference) throws Exception {
+    public InputStream getFileInputStream(String bucketName, String fileReference) {
         try {
-            // Fetch the file as an InputStream directly from MinIO
             return minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucketName)
@@ -48,7 +48,7 @@ public class FileStorageService {
                             .build()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Error fetching file from MinIO: " + e.getMessage(), e);
+            throw new FileProcessingException("Error fetching file from MinIO: " + e.getMessage(), e);
         }
     }
 }

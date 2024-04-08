@@ -1,6 +1,12 @@
 package com.backend.mlapp.utils;
 
+import com.backend.mlapp.exception.DatasetLoadException;
+import com.backend.mlapp.exception.FileProcessingException;
+import com.backend.mlapp.service.impl.service.TrainingServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.flogger.Flogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import weka.core.Attribute;
@@ -20,10 +26,10 @@ import java.nio.file.StandardCopyOption;
 @RequiredArgsConstructor
 public class FileManager {
 
-    private final FileStorageService fileStorageService;
-    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
-    public Instances loadDataset(String arffFile, Integer targetClassCol) throws Exception {
+    private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
+
+    public Instances loadDataset(String arffFile, Integer targetClassCol) {
         try {
             System.out.println("Loading dataset from ARFF file: " + arffFile);
             ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffFile);
@@ -39,11 +45,11 @@ public class FileManager {
             dataset.setClassIndex(targetClassCol);
             return dataset;
         } catch (Exception e) {
-            System.err.println("Error loading dataset from ARFF file: " + arffFile);
-            e.printStackTrace();
-            throw e;
+            logger.error("Error loading dataset from ARFF file: " + arffFile);
+            throw new DatasetLoadException("Dataset did not load successfully" + arffFile.toString(), e);
         }
-    }
+
+        }
 
     public String csvToArff(InputStream inputStream, String fileReference) {
         File tempInputFile = null;
@@ -76,15 +82,12 @@ public class FileManager {
             // Return the path of the output file
             return tempOutputFile.getAbsolutePath();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to convert file to ARFF format", e);
+            throw new FileProcessingException("Failed to convert file to ARFF format", e);
         } finally {
             // Clean up the temporary input file
             if (tempInputFile != null) {
                 tempInputFile.delete();
             }
-            // Optionally, delete the output file if it's no longer needed
-            // Note: If you return the file path, you might want to keep the file until it's used
-            // tempOutputFile.delete();
         }
     }
 
