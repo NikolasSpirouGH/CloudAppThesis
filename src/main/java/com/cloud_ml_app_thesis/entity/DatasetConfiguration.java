@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
 import jakarta.persistence.*;
 
@@ -28,5 +28,5 @@ public class DatasetConfiguration {
     @ManyToOne(cascade= CascadeType.ALL, fetch=FetchType.LAZY)
     @JoinColumn(name = "dataset_id")
     private com.cloud_ml_app_thesis
-.model.Dataset dataset;
+.entity.Dataset dataset;
 }

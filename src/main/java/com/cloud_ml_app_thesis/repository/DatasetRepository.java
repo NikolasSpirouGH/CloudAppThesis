@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.repository;
         
 import com.cloud_ml_app_thesis
-.model.Dataset;
+.entity.Dataset;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

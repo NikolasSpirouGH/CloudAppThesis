@@ -1,12 +1,9 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis
-.model.Dataset;
-import com.cloud_ml_app_thesis
-.model.DatasetConfiguration;
+import com.cloud_ml_app_thesis.entity.Dataset;
+import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
-import com.cloud_ml_app_thesis
-.repository.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.DatasetRepository;
 import com.cloud_ml_app_thesis.request.UploadDatasetConfigurationRequest;
 import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;

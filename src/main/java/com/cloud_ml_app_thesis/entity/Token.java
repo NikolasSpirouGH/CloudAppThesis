@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
 import jakarta.persistence.*;
 
@@ -18,10 +18,10 @@ public class Token {
     private String token;
 
     @OneToOne(targetEntity = com.cloud_ml_app_thesis
-.model.AppUser.class, fetch = FetchType.EAGER)
+.entity.AppUser.class, fetch = FetchType.EAGER)
     @JoinColumn(nullable = false, name = "id")
     private com.cloud_ml_app_thesis
-.model.AppUser user;
+.entity.AppUser user;
 
     @Column
     private Date expiryDate;

@@ -1,5 +1,7 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
+import com.cloud_ml_app_thesis.enumeration.UserRole;
+import com.cloud_ml_app_thesis.enumeration.UserStatus;
 import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
@@ -43,15 +45,13 @@ public class AppUser {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis
-.model.UserRole role;
+    private UserRole role;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis
-.model.UserStatus status;
+    private UserStatus status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<com.cloud_ml_app_thesis
-.model.Training> trainings;
+.entity.Training> trainings;
 }

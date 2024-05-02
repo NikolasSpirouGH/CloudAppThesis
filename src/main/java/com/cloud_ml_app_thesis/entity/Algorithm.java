@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,7 +27,7 @@ public class Algorithm {
     private String defaultParameters;
 
     //orphanRemoval = false cause the algorithm can be removed from the app but if the training or the model doesn't we can remove their configuration
-    @OneToMany(mappedBy = "algorithm_configurations", cascade = CascadeType.ALL, orphanRemoval = false)
-    private List<AlgorithmConfiguration> algorithmConfigurations;
+//    @OneToMany(mappedBy = "algorithm_configurations", cascade = CascadeType.ALL, orphanRemoval = false)
+//    private List<AlgorithmConfiguration> algorithmConfigurations;
 
 }

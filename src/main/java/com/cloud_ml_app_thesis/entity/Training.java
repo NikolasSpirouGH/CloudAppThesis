@@ -1,6 +1,7 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
 
+import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
 import jakarta.persistence.*;
 
 import lombok.Getter;
@@ -25,21 +26,18 @@ public class Training {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis
-.model.TrainingStatus status;
+    private TrainingStatus status;
 
     @ManyToOne
-    @JoinColumn(name="id")
-    private com.cloud_ml_app_thesis
-.model.AlgorithmConfiguration algorithmConfiguration;
+    @JoinColumn(name="algorithm_id")
+    private AlgorithmConfiguration algorithmConfiguration;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
-    private com.cloud_ml_app_thesis
-.model.AppUser user;
+    @JoinColumn(name="user_id")
+    private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private com.cloud_ml_app_thesis
-.model.DatasetConfiguration datasetConfiguration;
+    @JoinColumn(name="dataset_id")
+    private DatasetConfiguration datasetConfiguration;
 
 }

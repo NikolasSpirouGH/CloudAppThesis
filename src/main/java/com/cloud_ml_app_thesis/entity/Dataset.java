@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.model;
+package com.cloud_ml_app_thesis.entity;
 
 
 import lombok.AllArgsConstructor;
