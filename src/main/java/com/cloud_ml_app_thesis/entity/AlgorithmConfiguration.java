@@ -18,4 +18,7 @@ public class AlgorithmConfiguration {
     @ManyToOne
     @JoinColumn(name = "algorithm_id")
     private Algorithm algorithm;
+
+    @Column
+    private String options;
 }

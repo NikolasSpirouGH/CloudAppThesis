@@ -1,14 +1,16 @@
 package com.cloud_ml_app_thesis.entity;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.*;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Data
+@Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name="datasets")
@@ -23,10 +25,13 @@ public class Dataset {
     @Column
     private String fileUrl;
 
-
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "user_id")
     private AppUser user;
+
+    @Column
+    private LocalDateTime uploadedDateTime;
 
     //we would keep the configuration of the dataset cause it is referred also to the Training, so and to the Model
 //    @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, orphanRemoval = false)

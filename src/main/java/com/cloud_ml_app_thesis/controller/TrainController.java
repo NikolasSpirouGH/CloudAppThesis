@@ -18,7 +18,7 @@ import java.util.*;
 
 
 @RestController
-@RequestMapping("/invoicesWS")
+@RequestMapping("api/train")
 
 @Slf4j
 @CrossOrigin(origins = "*")

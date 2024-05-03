@@ -17,16 +17,14 @@ public class DatasetConfiguration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
     private Long id;
+
     @Column
     private String basicAttributesColumns;
 
     @Column
     private String targetColumn;
 
-
-
     @ManyToOne(cascade= CascadeType.ALL, fetch=FetchType.LAZY)
     @JoinColumn(name = "dataset_id")
-    private com.cloud_ml_app_thesis
-.entity.Dataset dataset;
+    private Dataset dataset;
 }

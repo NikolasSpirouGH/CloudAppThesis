@@ -20,8 +20,6 @@ import java.util.Enumeration;
 @Service
 public class TrainService {
 
-
-
     public String getClassifierOptions(String classifierName){
         try {
             Classifier classifier = (Classifier) Class.forName("weka.classifiers." + classifierName).getDeclaredConstructor().newInstance();
@@ -39,8 +37,6 @@ public class TrainService {
             throw new RuntimeException(e);
         }
 
-
-//        return null;
     }
     public Map<String, String> getWekaAlgorithms() {
         Map<String, String> wekaAlgoInfos = new HashMap<>();

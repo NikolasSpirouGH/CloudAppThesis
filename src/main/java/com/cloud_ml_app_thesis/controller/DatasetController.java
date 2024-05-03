@@ -1,8 +1,10 @@
 package com.cloud_ml_app_thesis.controller;
 
 
-import com.cloud_ml_app_thesis.request.UploadDatasetConfigurationRequest;
+import com.cloud_ml_app_thesis.entity.Dataset;
+import com.cloud_ml_app_thesis.payload.DatasetConfigurationRequest;
 import com.cloud_ml_app_thesis.service.DatasetService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/datasetWS")
+@RequestMapping("api/datasets")
 
 @Slf4j
 @CrossOrigin(origins = "*")
@@ -21,25 +23,24 @@ public class DatasetController {
 
     private final DatasetService datasetService;
 
-    //Upload apla ena dataset to path
-    @PostMapping("/uploadDataset")
-    public ResponseEntity<String> uploadDataset(@RequestParam MultipartFile file){
-        String fileUrl = datasetService.uploadDataset(file);
-        return null;
+    // TODO me jwt auth tha pairnoume to user einai gia testing auto
+    @PostMapping("/upload-dataset")
+    public ResponseEntity<String> uploadDataset(@RequestParam MultipartFile file, @RequestParam String email){
+        String fileUrl = datasetService.uploadDataset(file, email);
+        return ResponseEntity.ok("Upload succeed." + fileUrl.toString());
     }
 
-
-    //Epistrefei ola ta urls twn dataset
-    @GetMapping("/getDatasets")
-    public ResponseEntity<List<String>> getDatasets(@RequestParam String username){
-        return null;
+    @GetMapping("/get-datasets")
+    public ResponseEntity<List<Dataset>> getDatasets(@RequestParam String email){
+        List<Dataset> datasetUrls = datasetService.getDatasetUrls(email);
+        System.out.println(datasetUrls);
+        return ResponseEntity.ok(datasetUrls);
     }
 
-    //DATASET CONFIGURATION *******************************
-    @PostMapping("/uploadDatasetConfiguration")
-    public ResponseEntity<String> uploadDatasetConfiguration(UploadDatasetConfigurationRequest request){
-
-        return null;
+    @PostMapping("/dataset-conf")
+    public ResponseEntity<String> datasetConfiguration(@Valid @RequestBody DatasetConfigurationRequest request){
+        datasetService.datasetConfiguration(request);
+        return ResponseEntity.ok("Dataset configured.");
     }
 
 

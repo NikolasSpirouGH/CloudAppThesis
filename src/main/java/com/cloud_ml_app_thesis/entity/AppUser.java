@@ -2,17 +2,16 @@ package com.cloud_ml_app_thesis.entity;
 
 import com.cloud_ml_app_thesis.enumeration.UserRole;
 import com.cloud_ml_app_thesis.enumeration.UserStatus;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Entity
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -44,6 +43,7 @@ public class AppUser {
     private String country;
 
     @Column
+    @JsonManagedReference
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
@@ -52,6 +52,8 @@ public class AppUser {
     private UserStatus status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<com.cloud_ml_app_thesis
-.entity.Training> trainings;
+    private List<Training> trainings;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Dataset> datasets;
 }

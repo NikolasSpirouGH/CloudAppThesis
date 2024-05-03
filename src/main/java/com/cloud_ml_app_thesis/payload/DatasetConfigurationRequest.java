@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.request;
+package com.cloud_ml_app_thesis.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @NonNull
 @Setter
 @Getter
-public class UploadDatasetConfigurationRequest {
+public class DatasetConfigurationRequest {
     @NonNull
     private String fileUrl;
     private String basicAttributesColumns;
