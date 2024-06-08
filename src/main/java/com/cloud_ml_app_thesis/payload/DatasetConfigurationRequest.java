@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 public class DatasetConfigurationRequest {
     @NonNull
-    private String fileUrl;
+    private Integer datasetId;
     private String basicAttributesColumns;
     private String targetColumn;
 

@@ -3,7 +3,7 @@ spring:
   application:
     name: CloudAppMLProject
   datasource:
-    url: jdbc:postgresql://localhost:5432/app-db
+    url: jdbc:postgresql://localhost:5432/app-db?useUnicode=true&characterEncoding=UTF-8
     username: postgres
     password: 1996
   jpa:

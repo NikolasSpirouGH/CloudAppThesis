@@ -25,7 +25,10 @@ public class MinioConfig {
     private String secretKey;
 
     @Value("ml-datasets")
-    private String bucketName;
+    private String datasetsBucketName;
+
+    @Value("ml-models")
+    private String modelsBucketName;
 
     @Bean
     public MinioClient minioClient() {
@@ -35,21 +38,27 @@ public class MinioConfig {
                     .credentials(accessKey, secretKey)
                     .build();
 
-            // Check if bucket exists, if not create one
-            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!found) {
-                minioClient.makeBucket(
-                        MakeBucketArgs.builder()
-                                .bucket(bucketName)
-                                .build());
-            } else {
-                System.out.println("Bucket already exists.");
-            }
+            // Check if datasets bucket exists, if not create one
+            ensureBucketExists(minioClient, datasetsBucketName);
+
+            // Check if models bucket exists, if not create one
+            ensureBucketExists(minioClient, modelsBucketName);
+
             return minioClient;
         } catch (MinioException e) {
             throw new RuntimeException("Error initializing Minio: " + e.getMessage());
         } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void ensureBucketExists(MinioClient minioClient, String bucketName) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+        if (!found) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            System.out.println("Bucket '" + bucketName + "' created successfully.");
+        } else {
+            System.out.println("Bucket '" + bucketName + "' already exists.");
         }
     }
 }

@@ -40,4 +40,11 @@ public class Training {
     @JoinColumn(name="dataset_id")
     private DatasetConfiguration datasetConfiguration;
 
+    @OneToOne(mappedBy = "training")
+    private Model model;
+
+    @Column(name = "results", columnDefinition = "TEXT")
+    @Lob
+    private String results;
+
 }

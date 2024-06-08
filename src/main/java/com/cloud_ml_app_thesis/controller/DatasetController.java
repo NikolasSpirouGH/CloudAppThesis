@@ -1,6 +1,5 @@
 package com.cloud_ml_app_thesis.controller;
 
-
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.payload.DatasetConfigurationRequest;
 import com.cloud_ml_app_thesis.service.DatasetService;
@@ -27,12 +26,12 @@ public class DatasetController {
     @PostMapping("/upload-dataset")
     public ResponseEntity<String> uploadDataset(@RequestParam MultipartFile file, @RequestParam String email){
         String fileUrl = datasetService.uploadDataset(file, email);
-        return ResponseEntity.ok("Upload succeed." + fileUrl.toString());
+        return ResponseEntity.ok(fileUrl);
     }
 
     @GetMapping("/get-datasets")
-    public ResponseEntity<List<Dataset>> getDatasets(@RequestParam String email){
-        List<Dataset> datasetUrls = datasetService.getDatasetUrls(email);
+    public ResponseEntity<List<String>> getDatasets(@RequestParam String email){
+        List<String> datasetUrls = datasetService.getDatasetUrls(email);
         System.out.println(datasetUrls);
         return ResponseEntity.ok(datasetUrls);
     }
@@ -42,7 +41,5 @@ public class DatasetController {
         datasetService.datasetConfiguration(request);
         return ResponseEntity.ok("Dataset configured.");
     }
-
-
 
 }

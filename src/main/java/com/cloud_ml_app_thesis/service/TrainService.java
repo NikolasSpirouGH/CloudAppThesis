@@ -1,147 +1,188 @@
 package com.cloud_ml_app_thesis.service;
 
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
+import com.cloud_ml_app_thesis.entity.Algorithm;
+import com.cloud_ml_app_thesis.entity.AlgorithmConfiguration;
+import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
+import com.cloud_ml_app_thesis.entity.Training;
+import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
+import com.cloud_ml_app_thesis.repository.*;
+
+import io.minio.errors.MinioException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.*;
 
-import weka.core.Option;
-import weka.core.OptionHandler;
-import weka.core.Utils;
+import weka.core.Instances;
 import weka.classifiers.Classifier;
-import java.lang.reflect.Modifier;
-import java.util.Enumeration;
+import weka.clusterers.Clusterer;
+
+import java.util.concurrent.CompletableFuture;
 
 @Service
+@RequiredArgsConstructor
 public class TrainService {
 
-    public String getClassifierOptions(String classifierName){
-        try {
-            Classifier classifier = (Classifier) Class.forName("weka.classifiers." + classifierName).getDeclaredConstructor().newInstance();
-            String defaultOptions[] = ((OptionHandler) classifier).getOptions();
-            return Utils.joinOptions(defaultOptions);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+    private final TrainRepository trainRepository;
 
+    private final ModelService modelService;
+
+    private final DatasetService datasetService;
+
+    private final AlgorithmService algorithmService;
+
+    private static final Logger logger = LoggerFactory.getLogger(TrainService.class);
+
+    public Integer createTrainingRequest(Integer algoId, Integer datasetConfId) {
+        Training training = new Training();
+        training.setStatus(TrainingStatus.REQUESTED);
+        training.setStartedAt(LocalDateTime.now());
+        trainRepository.save(training);
+        train(algoId, datasetConfId, training.getId());
+        return training.getId();
     }
-    public Map<String, String> getWekaAlgorithms() {
-        Map<String, String> wekaAlgoInfos = new HashMap<>();
 
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forPackage("weka.classifiers"))
-                .setScanners(new SubTypesScanner()));
-
-        Set<Class<? extends Classifier>> classes = reflections.getSubTypesOf(Classifier.class);
-
-        for (Class<? extends Classifier> cls : classes) {
+    @Async
+    public CompletableFuture<Void> train(Integer algoConfId, Integer datasetConfId, Integer trainingId) {
+        return CompletableFuture.runAsync(() -> {
+            Training training = null;
             try {
-                Classifier instance = cls.getDeclaredConstructor().newInstance();
-                String classifierName = cls.getSimpleName();
+                training = initializeTraining(trainingId);
+                if (training == null) return;
 
-                // Retrieve the package path relative to "weka.classifiers"
-                Package pkg = cls.getPackage();
-                String packageName = pkg.getName();
-                String relativePath = packageName.substring(packageName.indexOf("weka.classifiers") + "weka.classifiers".length());
+                DatasetConfiguration datasetConfiguration = datasetService.getDatasetConfiguration(datasetConfId);
+                if (!validateDatasetConfiguration(training, datasetConfiguration)) return;
 
-                System.out.println("Package path: " + relativePath);
+                AlgorithmConfiguration algorithmConfiguration = algorithmService.getAlgorithmConfiguration(algoConfId);
+                Algorithm algorithm = algorithmConfiguration.getAlgorithm();
+                logger.info("Algorithm Name: {}", algorithm.getName());
+                training.setAlgorithmConfiguration(algorithmConfiguration);
 
-                // Check if globalInfo method is available
-                Method globalInfoMethod = null;
-                try {
-                    globalInfoMethod = cls.getMethod("globalInfo");
-                } catch (NoSuchMethodException e) {
-                    System.out.println("No globalInfo() method for " + classifierName);
-                }
+                Instances data = prepareData(datasetConfiguration);
+                data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
 
-                if (globalInfoMethod != null) {
-                    String classifierInfo = (String) globalInfoMethod.invoke(instance);
-                    System.out.println("Name: " + classifierName);
-                    System.out.println("Description: " + classifierInfo);
-                    wekaAlgoInfos.put(classifierName, classifierInfo);
+                boolean isClassifier = algorithmService.isClassifier(algorithm);
+                boolean isClusterer = algorithmService.isClusterer(algorithm);
 
+                if (isClassifier) {
+                    logger.info("Classifier Algorithm Name: {}", algorithm.getClassName());
+                    evaluateAndSaveClassifier(training, algorithm, algorithmConfiguration, data);
+                } else if (isClusterer) {
+                    logger.info("Cluster Algorithm Name: {}", algorithm.getClassName());
+                    evaluateAndSaveClusterer(training, algorithm, algorithmConfiguration, data);
                 } else {
-                    System.out.println("Name: " + classifierName + " (no description available)");
-                    wekaAlgoInfos.put(classifierName, "(no description available)");
+                    logger.error("Unsupported algorithm type: {}", algorithm.getName());
+                    training.setStatus(TrainingStatus.FAILED);
+                    trainRepository.save(training);
                 }
-
-                // Listing options if the classifier implements OptionHandler
-                if (instance instanceof OptionHandler) {
-                    OptionHandler optionHandler = (OptionHandler) instance;
-                    Enumeration<Option> options = optionHandler.listOptions();
-                    System.out.println("Options:");
-                    while (options.hasMoreElements()) {
-                        Option option = options.nextElement();
-                        System.out.println("\t- " + option.synopsis() + " " + option.description());
-                        wekaAlgoInfos.put(option.name(), option.description());
-                    }
-                }
-
-                System.out.println("---");
+            } catch (MinioException e) {
+                handleTrainingFailure(training, e.getMessage());
             } catch (Exception e) {
-                System.err.println("Error processing class " + cls.getName() + ": " + e.getMessage());
+                handleTrainingFailure(training, e);
             }
-        }
-        return wekaAlgoInfos;
+        });
     }
 
-
-
-    private List<Class<? extends Classifier>> findClasses() {
-        List<Class<? extends Classifier>> classes = new ArrayList<>();
-        // Assuming "weka.classifiers" is in a directory in the classpath
-        // This is a simplistic way to gather classes; consider using a library like Reflections (org.reflections:reflections)
-        String[] classifierNames = {
-                "weka.classifiers.trees.J48",
-                "weka.classifiers.bayes.NaiveBayes",
-                // Add other classifier names here
-        };
-
-        for (String className : classifierNames) {
-            try {
-                Class<?> cls = Class.forName(className);
-                if (Classifier.class.isAssignableFrom(cls) && !Modifier.isAbstract(cls.getModifiers())) {
-                    classes.add(cls.asSubclass(Classifier.class));
-                }
-            } catch (ClassNotFoundException e) {
-                System.out.println("Class not found: " + className);
-            }
+    private Training initializeTraining(Integer trainingId) {
+        Optional<Training> trainingOpt = trainRepository.findById(trainingId);
+        if (trainingOpt.isEmpty()) {
+            logger.error("Training ID {} not found.", trainingId);
+            return null;
         }
-        return classes;
+        Training training = trainingOpt.get();
+        training.setStatus(TrainingStatus.RUNNING);
+        trainRepository.save(training);
+        return training;
     }
 
-
-    public Classifier findClassifierByName(String classifierName) throws Exception {
-        // Set up Reflections to scan the weka.classifiers package and its subpackages
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forPackage("weka.classifiers"))
-                .setScanners(new SubTypesScanner()));
-
-        // Get all subclasses of Classifier in the specified package
-        Set<Class<? extends Classifier>> classes = reflections.getSubTypesOf(Classifier.class);
-
-        // Search for the classifier by simple name
-        for (Class<? extends Classifier> cls : classes) {
-            if (cls.getSimpleName().equals(classifierName)) {
-                System.out.println("Found classifier: " + cls.getName());
-
-                return cls.getDeclaredConstructor().newInstance(); // Create a new instance
-            }
+    private boolean validateDatasetConfiguration(Training training, DatasetConfiguration datasetConfiguration) {
+        if (datasetConfiguration.getDataset() == null) {
+            logger.error("Dataset is null for Dataset Configuration ID: {}", datasetConfiguration.getId());
+            training.setStatus(TrainingStatus.FAILED);
+            trainRepository.save(training);
+            return false;
         }
+        logger.info("Dataset File URL: {}", datasetConfiguration.getDataset().getFileUrl());
+        training.setDatasetConfiguration(datasetConfiguration);
+        return true;
+    }
 
-        throw new IllegalArgumentException("Classifier not found: " + classifierName);
+    private Instances prepareData(DatasetConfiguration datasetConfiguration) throws Exception {
+        return datasetService.loadDataset(datasetConfiguration);
+    }
+
+    private void evaluateAndSaveClassifier(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
+        data.randomize(new Random(1));
+        int trainSize = (int) Math.round(data.numInstances() * 0.8);
+        int testSize = data.numInstances() - trainSize;
+        Instances train = new Instances(data, 0, trainSize);
+        Instances test = new Instances(data, trainSize, testSize);
+
+        Classifier cls = algorithmService.getClassifierInstance(algorithm);
+        logger.info("Users options: {}", algorithmConfiguration.getOptions());
+        logger.info("Defaults options: {}", algorithmConfiguration.getAlgorithm().getDefaultOptions());
+        String[] optionsArray = algorithmService.convertToWekaOptions(algorithmConfiguration.getOptions(), algorithm.getDefaultOptions().replace(",", ""));
+        logger.info("Merge options: {}", Arrays.toString(optionsArray));
+        algorithmService.setClassifierOptions(cls, optionsArray);
+
+        cls.buildClassifier(train);
+        String results = modelService.evaluateClassifier(cls, train, test);
+        byte[] modelData = modelService.serializeModel(cls);
+
+        String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);
+        String modelType = "classifier";
+        modelService.saveModel(training.getId(), modelUrl, results, modelType);
+
+        training.setStatus(TrainingStatus.COMPLETE);
+        training.setResults(results);
+        trainRepository.save(training);
+    }
+
+    private void evaluateAndSaveClusterer(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
+        Clusterer clus = algorithmService.getClustererInstance(algorithm);
+        String[] optionsArray = algorithmService.convertToWekaOptions(algorithmConfiguration.getOptions(), algorithmConfiguration.getAlgorithm().getDefaultOptions());
+        logger.info("Options: {}", Arrays.toString(optionsArray));
+        algorithmService.setClustererOptions(clus, optionsArray);
+
+        clus.buildClusterer(data);
+        String results = modelService.evaluateClusterer(clus, data);
+        byte[] modelData = modelService.serializeModel(clus);
+
+        String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);
+        String modelType = "clusterer";
+        modelService.saveModel(training.getId(), modelUrl, results, modelType);
+
+        training.setStatus(TrainingStatus.COMPLETE);
+        training.setResults(results);
+        trainRepository.save(training);
+    }
+
+    private void handleTrainingFailure(Training training, String errorMessage) {
+        logger.error("Training failed: {}", errorMessage);
+        if (training != null) {
+            training.setStatus(TrainingStatus.FAILED);
+            trainRepository.save(training);
+        }
+    }
+
+    private void handleTrainingFailure(Training training, Exception exception) {
+        logger.error("Training failed: {}", exception.getMessage(), exception);
+        if (training != null) {
+            training.setStatus(TrainingStatus.FAILED);
+            trainRepository.save(training);
+        }
+    }
+
+    public Training checkTraining(Integer trainingId) {
+        return trainRepository.findById(trainingId).orElse(null);
+    }
+
+    public List<Training> getTrainings() {
+        return trainRepository.findAllByOrderByStatusAsc();
+
     }
 }

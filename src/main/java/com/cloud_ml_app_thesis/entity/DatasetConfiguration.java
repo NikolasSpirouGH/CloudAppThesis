@@ -24,7 +24,7 @@ public class DatasetConfiguration {
     @Column
     private String targetColumn;
 
-    @ManyToOne(cascade= CascadeType.ALL, fetch=FetchType.LAZY)
+    @ManyToOne(cascade= CascadeType.ALL)
     @JoinColumn(name = "dataset_id")
     private Dataset dataset;
 }

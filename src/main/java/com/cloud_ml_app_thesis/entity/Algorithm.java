@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "algorithms")
+@Table(name = "algorithms", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
 @Setter
 @Getter
 @AllArgsConstructor
@@ -20,17 +20,23 @@ public class Algorithm {
     @Column
     private Integer id;
 
-    @Column
+    @Column(name = "name")
     private String name;
 
-    @Column
-    private String defaultParameters;
-
-    @Column
+    @Column(length = 5000)
     private String description;
 
-    //orphanRemoval = false cause the algorithm can be removed from the app but if the training or the model doesn't we can remove their configuration
-//    @OneToMany(mappedBy = "algorithm_configurations", cascade = CascadeType.ALL, orphanRemoval = false)
-//    private List<AlgorithmConfiguration> algorithmConfigurations;
+    @Column(length = 5000)
+    private String options;
+
+    @Column(length = 5000)
+    private String optionsDescription;
+
+    @Column(length = 5000)
+    private String defaultOptions;
+
+    @Column(name = "class_name")
+    private String className;
+
 
 }

@@ -22,8 +22,8 @@ public class AlgorithmController {
     }
 
     @PostMapping("/choose-algorithm")
-    public ResponseEntity<String> chooseAlgorithm(@RequestParam String name, @RequestParam String options) {
-        algorithmSevice.chooseAlgorithm(name, options);
+    public ResponseEntity<String> chooseAlgorithm(@RequestParam Integer id, @RequestParam(required= false) String options) {
+        algorithmSevice.chooseAlgorithm(id, options);
         return new ResponseEntity<>("Algorithm configuration created.", HttpStatus.CREATED);
     }
 
