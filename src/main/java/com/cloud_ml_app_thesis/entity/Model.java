@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "models")
 @Setter
@@ -32,5 +35,8 @@ public class Model {
     private String status;
 
     @Column(name = "model_type")
-    private String modelType; // e.g., "classifier" or "clusterer"
+    private String modelType;
+
+    @OneToMany(mappedBy = "model", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ModelExecution> executions;
 }

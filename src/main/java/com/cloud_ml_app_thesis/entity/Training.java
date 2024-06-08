@@ -43,8 +43,7 @@ public class Training {
     @OneToOne(mappedBy = "training")
     private Model model;
 
-    @Column(name = "results", columnDefinition = "TEXT")
-    @Lob
+    @Column(name = "results", length = 3000)
     private String results;
 
 }

@@ -70,10 +70,16 @@ public class TrainService {
 
                 if (isClassifier) {
                     logger.info("Classifier Algorithm Name: {}", algorithm.getClassName());
-                    evaluateAndSaveClassifier(training, algorithm, algorithmConfiguration, data);
+                    Classifier cls = trainClassifier(training, algorithm, algorithmConfiguration, data);
+                    training.setStatus(TrainingStatus.COMPLETE);
+                    trainRepository.save(training);
+                    evaluateAndSaveClassifier(training, cls, data);
                 } else if (isClusterer) {
                     logger.info("Cluster Algorithm Name: {}", algorithm.getClassName());
-                    evaluateAndSaveClusterer(training, algorithm, algorithmConfiguration, data);
+                    Clusterer clus = trainClusterer(training, algorithm, algorithmConfiguration, data);
+                    training.setStatus(TrainingStatus.COMPLETE);
+                    trainRepository.save(training);
+                    evaluateAndSaveClusterer(training, clus, data);
                 } else {
                     logger.error("Unsupported algorithm type: {}", algorithm.getName());
                     training.setStatus(TrainingStatus.FAILED);
@@ -115,12 +121,11 @@ public class TrainService {
         return datasetService.loadDataset(datasetConfiguration);
     }
 
-    private void evaluateAndSaveClassifier(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
+    private Classifier trainClassifier(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
         data.randomize(new Random(1));
         int trainSize = (int) Math.round(data.numInstances() * 0.8);
         int testSize = data.numInstances() - trainSize;
         Instances train = new Instances(data, 0, trainSize);
-        Instances test = new Instances(data, trainSize, testSize);
 
         Classifier cls = algorithmService.getClassifierInstance(algorithm);
         logger.info("Users options: {}", algorithmConfiguration.getOptions());
@@ -130,6 +135,26 @@ public class TrainService {
         algorithmService.setClassifierOptions(cls, optionsArray);
 
         cls.buildClassifier(train);
+        return cls;
+    }
+
+    private Clusterer trainClusterer(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
+        Clusterer clus = algorithmService.getClustererInstance(algorithm);
+        String[] optionsArray = algorithmService.convertToWekaOptions(algorithmConfiguration.getOptions(), algorithmConfiguration.getAlgorithm().getDefaultOptions());
+        logger.info("Options: {}", Arrays.toString(optionsArray));
+        algorithmService.setClustererOptions(clus, optionsArray);
+
+        clus.buildClusterer(data);
+        return clus;
+    }
+
+    private void evaluateAndSaveClassifier(Training training, Classifier cls, Instances data) throws Exception {
+        data.randomize(new Random(1));
+        int trainSize = (int) Math.round(data.numInstances() * 0.8);
+        int testSize = data.numInstances() - trainSize;
+        Instances train = new Instances(data, 0, trainSize);
+        Instances test = new Instances(data, trainSize, testSize);
+
         String results = modelService.evaluateClassifier(cls, train, test);
         byte[] modelData = modelService.serializeModel(cls);
 
@@ -137,18 +162,11 @@ public class TrainService {
         String modelType = "classifier";
         modelService.saveModel(training.getId(), modelUrl, results, modelType);
 
-        training.setStatus(TrainingStatus.COMPLETE);
         training.setResults(results);
         trainRepository.save(training);
     }
 
-    private void evaluateAndSaveClusterer(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
-        Clusterer clus = algorithmService.getClustererInstance(algorithm);
-        String[] optionsArray = algorithmService.convertToWekaOptions(algorithmConfiguration.getOptions(), algorithmConfiguration.getAlgorithm().getDefaultOptions());
-        logger.info("Options: {}", Arrays.toString(optionsArray));
-        algorithmService.setClustererOptions(clus, optionsArray);
-
-        clus.buildClusterer(data);
+    private void evaluateAndSaveClusterer(Training training, Clusterer clus, Instances data) throws Exception {
         String results = modelService.evaluateClusterer(clus, data);
         byte[] modelData = modelService.serializeModel(clus);
 
@@ -156,7 +174,6 @@ public class TrainService {
         String modelType = "clusterer";
         modelService.saveModel(training.getId(), modelUrl, results, modelType);
 
-        training.setStatus(TrainingStatus.COMPLETE);
         training.setResults(results);
         trainRepository.save(training);
     }

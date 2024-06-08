@@ -162,46 +162,6 @@ public class ModelService {
         }
     }
 
-    public List<Double> predict(Integer modelId, Integer datasetId) throws Exception {
-        Object model = loadModel(modelId);
-        DatasetConfiguration datasetConfiguration = datasetConfigurationRepository.findById(datasetId)
-                .orElseThrow(() -> new RuntimeException("Dataset configuration not found with id: " + datasetId));
-        Instances dataset = datasetService.loadDataset(datasetConfiguration);
 
-        if (model instanceof Classifier) {
-            return predictWithClassifier((Classifier) model, dataset);
-        } else if (model instanceof Clusterer) {
-            return predictWithClusterer((Clusterer) model, dataset);
-        } else {
-            throw new RuntimeException("Unsupported model type");
-        }
-    }
-
-    private List<Double> predictWithClassifier(Classifier classifier, Instances dataset) throws Exception {
-        logger.info("Number of instances in the dataset: {}", dataset.numInstances());
-
-        List<Double> predictions = new ArrayList<>();
-        for (int i = 0; i < dataset.numInstances(); i++) {
-            try {
-                double prediction = classifier.classifyInstance(dataset.instance(i));
-                predictions.add(prediction);
-                logger.info("Instance {}: Predicted value: {}", i, prediction);
-            } catch (Exception e) {
-                logger.error("Error predicting instance {}: {}", i, e.getMessage(), e);
-                throw e; // Re-throw the exception after logging it
-            }
-        }
-        logger.info("Predictions completed successfully. Total predictions: {}", predictions.size());
-        return predictions;
-    }
-
-    private List<Double> predictWithClusterer(Clusterer clusterer, Instances dataset) throws Exception {
-        List<Double> predictions = new ArrayList<>();
-        for (int i = 0; i < dataset.numInstances(); i++) {
-            int cluster = clusterer.clusterInstance(dataset.instance(i));
-            predictions.add((double) cluster);
-        }
-        return predictions;
-    }
 }
 

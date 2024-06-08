@@ -13,9 +13,5 @@ public class ModelController {
     @Autowired
     private ModelService modelService;
 
-    @PostMapping("/predict")
-    public List<Double> predict(@RequestParam Integer modelId, @RequestParam Integer datasetId) throws Exception {
-      return  modelService.predict(modelId, datasetId);
 
-    }
 }
