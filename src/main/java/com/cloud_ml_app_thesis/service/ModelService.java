@@ -1,21 +1,16 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.entity.Model;
-import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
 import io.minio.GetObjectArgs;
-import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
-import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -26,10 +21,7 @@ import weka.core.SerializationHelper;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,10 +30,6 @@ public class ModelService {
     private final MinioClient minioClient;
 
     private final ModelRepository modelRepository;
-
-    private final DatasetService datasetService;
-
-    private final DatasetConfigurationRepository datasetConfigurationRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class);
 
@@ -129,8 +117,10 @@ public class ModelService {
             throw new RuntimeException("Invalid model URI: " + modelUri);
         }
 
+        String minioUrl = pathParts[0];
         String bucketName = pathParts[1];
         String objectName = String.join("/", Arrays.copyOfRange(pathParts, 2, pathParts.length));
+        logger.info("Minio URL: {}", minioUrl);
         logger.info("Bucket Name: {}", bucketName);
         logger.info("Object Name: {}", objectName);
 
@@ -141,6 +131,7 @@ public class ModelService {
                         .build())) {
             Object model = SerializationHelper.read(modelStream);
             logger.info("Model loaded successfully");
+
 
             if ("classifier".equalsIgnoreCase(modelEntity.getModelType()) && model instanceof Classifier) {
                 return model;

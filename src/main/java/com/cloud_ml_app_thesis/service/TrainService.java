@@ -63,7 +63,7 @@ public class TrainService {
                 training.setAlgorithmConfiguration(algorithmConfiguration);
 
                 Instances data = prepareData(datasetConfiguration);
-                data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
+                //data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
 
                 boolean isClassifier = algorithmService.isClassifier(algorithm);
                 boolean isClusterer = algorithmService.isClusterer(algorithm);
@@ -123,8 +123,7 @@ public class TrainService {
 
     private Classifier trainClassifier(Training training, Algorithm algorithm, AlgorithmConfiguration algorithmConfiguration, Instances data) throws Exception {
         data.randomize(new Random(1));
-        int trainSize = (int) Math.round(data.numInstances() * 0.8);
-        int testSize = data.numInstances() - trainSize;
+        int trainSize = (int) Math.round(data.numInstances() * 0.6);
         Instances train = new Instances(data, 0, trainSize);
 
         Classifier cls = algorithmService.getClassifierInstance(algorithm);
@@ -150,12 +149,12 @@ public class TrainService {
 
     private void evaluateAndSaveClassifier(Training training, Classifier cls, Instances data) throws Exception {
         data.randomize(new Random(1));
-        int trainSize = (int) Math.round(data.numInstances() * 0.8);
+        int trainSize = (int) Math.round(data.numInstances() * 0.6);
         int testSize = data.numInstances() - trainSize;
-        Instances train = new Instances(data, 0, trainSize);
         Instances test = new Instances(data, trainSize, testSize);
 
-        String results = modelService.evaluateClassifier(cls, train, test);
+        test.setClassIndex(test.numAttributes() - 1);
+        String results = modelService.evaluateClassifier(cls, test, test);
         byte[] modelData = modelService.serializeModel(cls);
 
         String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);

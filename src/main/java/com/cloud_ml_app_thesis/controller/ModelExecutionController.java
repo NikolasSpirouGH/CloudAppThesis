@@ -21,7 +21,7 @@ public class ModelExecutionController {
                                                        @RequestParam Integer datasetId) {
         try {
             ModelExecution execution = modelExecutionService.executeModel(modelId, datasetId);
-            return ResponseEntity.ok("Prediction OK");
+            return ResponseEntity.ok("Prediction OK: " + execution.getModel());
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }

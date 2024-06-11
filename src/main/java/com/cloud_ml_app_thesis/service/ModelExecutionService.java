@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
+import weka.core.Attribute;
 import weka.core.Instances;
 
 import java.time.LocalDateTime;
@@ -32,8 +33,9 @@ public class ModelExecutionService {
     private static final Logger logger = LoggerFactory.getLogger(ModelExecutionService.class);
 
     public ModelExecution executeModel(Integer modelId, Integer datasetId) throws Exception {
-        // Perform prediction
-        List<Double> predictions = predict(modelId, datasetId);
+        logger.info("Starting model execution for model ID: {} and dataset ID: {}", modelId, datasetId);
+
+        List<String> predictions = predict(modelId, datasetId);
         ModelExecution execution = new ModelExecution();
         execution.setModel(modelRepository.findById(modelId).get());
         execution.setExecutedAt(LocalDateTime.now());
@@ -41,32 +43,43 @@ public class ModelExecutionService {
         execution.setPredictionResult(predictions.toString());
         execution.setSuccess(true);
 
+        logger.info("Model execution completed successfully with predictions: {}", predictions);
         return modelExecutionRepository.save(execution);
     }
 
-    public List<Double> predict(Integer modelId, Integer datasetId) throws Exception {
+
+    public List<String> predict(Integer modelId, Integer datasetId) throws Exception {
         Object model = modelService.loadModel(modelId);
+        logger.info("Model loaded: {}", model.getClass().getName());
         DatasetConfiguration datasetConfiguration = datasetConfigurationRepository.findById(datasetId)
                 .orElseThrow(() -> new RuntimeException("Dataset configuration not found with id: " + datasetId));
-        Instances dataset = datasetService.loadDataset(datasetConfiguration);
+        Instances dataset = datasetService.loadPredictionDataset(datasetConfiguration);
+
+        logger.info("Loaded dataset with {} instances for prediction", dataset.numInstances());
+        logger.info("Dataset structure: {}", dataset);
 
         if (model instanceof Classifier) {
+            logger.info("Loading classifier...");
             return predictWithClassifier((Classifier) model, dataset);
         } else if (model instanceof Clusterer) {
             return predictWithClusterer((Clusterer) model, dataset);
         } else {
+            logger.error("Unsupported model type: {}", model.getClass().getName());
             throw new RuntimeException("Unsupported model type");
         }
     }
 
-    private List<Double> predictWithClassifier(Classifier classifier, Instances dataset) throws Exception {
-        logger.info("Number of instances in the dataset: {}", dataset.numInstances());
-        List<Double> predictions = new ArrayList<>();
+    private List<String> predictWithClassifier(Classifier classifier, Instances dataset) throws Exception {
+        dataset.setClassIndex(dataset.numAttributes() - 1);
+        Attribute classAttribute = dataset.classAttribute(); // Get the class attribute
+        logger.info("Performing prediction with classifier on dataset with {} instances", dataset.numInstances());
+        List<String> predictions = new ArrayList<>();
         for (int i = 0; i < dataset.numInstances(); i++) {
             try {
                 double prediction = classifier.classifyInstance(dataset.instance(i));
-                predictions.add(prediction);
-                logger.info("Instance {}: Predicted value: {}", i, prediction);
+                String predictedLabel = classAttribute.value((int) prediction); // Get the class label
+                logger.info("Instance {}: Predicted value: {}", i, predictedLabel);
+                predictions.add(predictedLabel);
             } catch (Exception e) {
                 logger.error("Error predicting instance {}: {}", i, e.getMessage(), e);
                 throw e; // Re-throw the exception after logging it
@@ -76,19 +89,21 @@ public class ModelExecutionService {
         return predictions;
     }
 
-    private List<Double> predictWithClusterer(Clusterer clusterer, Instances dataset) throws Exception {
-        List<Double> predictions = new ArrayList<>();
+    private List<String> predictWithClusterer(Clusterer clusterer, Instances dataset) throws Exception {
+        logger.info("Performing prediction with clusterer on dataset with {} instances", dataset.numInstances());
+        List<String> predictions = new ArrayList<>();
         for (int i = 0; i < dataset.numInstances(); i++) {
             try {
                 int cluster = clusterer.clusterInstance(dataset.instance(i));
-                predictions.add((double) cluster);
-                logger.info("Instance {}: Predicted value: {}", i, predictions);
+                String clusterLabel = "Cluster " + cluster; // Here you can map to more meaningful labels if available
+                logger.info("Instance {}: Predicted cluster: {}", i, clusterLabel);
+                predictions.add(clusterLabel);
             } catch (Exception e) {
                 logger.error("Error predicting instance {}: {}", i, e.getMessage(), e);
                 throw e; // Re-throw the exception after logging it
             }
         }
-        logger.info("Predictions completed successfully. Total predictions: {}", predictions.size());
+        logger.info("Cluster predictions completed successfully. Total predictions: {}", predictions.size());
         return predictions;
     }
 }

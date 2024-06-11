@@ -150,11 +150,12 @@ public class DatasetService {
         }
 
         Instances data = new ConverterUtils.DataSource(datasetStream).getDataSet();
-        data = selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
+        int prediction = 0;
+        data = selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn(), prediction);
         return data;
     }
 
-    public Instances selectColumns(Instances data, String basicAttributesColumns, String targetClassColumn) throws Exception {
+    public Instances selectColumns(Instances data, String basicAttributesColumns, String targetClassColumn, int prediction) throws Exception {
         List<String> columnNames = new ArrayList<>();
 
         // Log the original dataset attributes
@@ -165,7 +166,7 @@ public class DatasetService {
 
         // Default to all columns except the last one if basic attributes columns are not provided
         if (basicAttributesColumns == null || basicAttributesColumns.isEmpty()) {
-            for (int i = 0; i < data.numAttributes() - 1; i++) {
+            for (int i = 0; i < data.numAttributes(); i++) {
                 columnNames.add(data.attribute(i).name());
             }
         } else {
@@ -175,18 +176,23 @@ public class DatasetService {
         }
         logger.info("Selected basic attributes columns: {}", columnNames);
 
-        // Default to the last column if target class column is not provided
-        if (targetClassColumn == null || targetClassColumn.isEmpty()) {
-            targetClassColumn = data.attribute(data.numAttributes() - 1).name();
-        } else {
-            targetClassColumn = data.attribute(Integer.parseInt(targetClassColumn) - 1).name();
-        }
-        logger.info("Target class column: {}", targetClassColumn);
+        if (prediction == 0) { // Training
+            // Default to the last column if target class column is not provided
+            if (targetClassColumn == null || targetClassColumn.isEmpty()) {
+                logger.info("I am in train");
+                targetClassColumn = data.attribute(data.numAttributes() - 1).name();
+            } else {
+                logger.info("i am in else");
+                targetClassColumn = data.attribute(Integer.parseInt(targetClassColumn) - 1).name();
+            }
+            logger.info("Target class column: {}", targetClassColumn);
 
-        // Ensure the target class column is included in the selection
-        if (!columnNames.contains(targetClassColumn)) {
-            columnNames.add(targetClassColumn);
+            // Ensure the target class column is included in the selection
+            if (!columnNames.contains(targetClassColumn)) {
+                columnNames.add(targetClassColumn);
+            }
         }
+
         logger.info("Final columns to keep: {}", columnNames);
 
         // Create a list of attribute indices to keep
@@ -206,24 +212,29 @@ public class DatasetService {
 
         // Apply the filter to get the selected columns
         Instances filteredData = Filter.useFilter(data, removeFilter);
-        // Get the correct index for the target class column after filtering
-        int targetIndex = -1;
-        for (int i = 0; i < filteredData.numAttributes(); i++) {
-            if (filteredData.attribute(i).name().equals(targetClassColumn)) {
-                targetIndex = i;
-                break;
+
+        if (prediction == 0) { // Training
+            // Get the correct index for the target class column after filtering
+            int targetIndex = -1;
+            for (int i = 0; i < filteredData.numAttributes(); i++) {
+                if (filteredData.attribute(i).name().equals(targetClassColumn)) {
+                    targetIndex = i;
+                    break;
+                }
             }
+            if (targetIndex == -1) {
+                throw new Exception("Target class column not found in filtered data");
+            }
+            filteredData.setClassIndex(targetIndex);
         }
-        if (targetIndex == -1) {
-            throw new Exception("Target class column not found in filtered data");
-        }
-        filteredData.setClassIndex(targetIndex);
 
         logger.info("Filtered dataset attributes: ");
         for (int i = 0; i < filteredData.numAttributes(); i++) {
             logger.info("Attribute {}: {}", i + 1, filteredData.attribute(i).name());
         }
-
+        if(prediction == 1) {
+            filteredData.setClassIndex(-1);
+        }
         return filteredData;
     }
 
@@ -273,5 +284,35 @@ public class DatasetService {
             return ""; // empty extension
         }
         return fileName.substring(lastIndex);
+    }
+
+    public Instances loadPredictionDataset(DatasetConfiguration datasetConfiguration) throws Exception {
+        URI datasetUri = new URI(datasetConfiguration.getDataset().getFileUrl());
+        logger.info("Dataset URI: {}", datasetUri);
+        String bucketName = Paths.get(datasetUri.getPath()).getName(0).toString();
+        String objectName = Paths.get(datasetUri.getPath()).subpath(1, Paths.get(datasetUri.getPath()).getNameCount()).toString();
+        logger.info("Bucket Name: {}", bucketName);
+        logger.info("Object Name: {}", objectName);
+
+        InputStream datasetStream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build()
+        );
+        logger.info("Dataset Stream obtained successfully.");
+
+        // Convert the dataset to ARFF format if it is in CSV or Excel format
+        String fileExtension = getFileExtension(objectName);
+        if (fileExtension.equalsIgnoreCase(".csv")) {
+            String arffFilePath = csvToArff(datasetStream, objectName);
+            datasetStream = Files.newInputStream(Paths.get(arffFilePath));
+        }
+
+        Instances data = new ConverterUtils.DataSource(datasetStream).getDataSet();
+        int prediction = 1;
+        data = selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), null, prediction); // No target column for prediction
+        data.setClassIndex(-1);
+        return data;
     }
 }
