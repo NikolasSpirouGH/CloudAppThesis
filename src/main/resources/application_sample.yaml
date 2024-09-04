@@ -1,0 +1,53 @@
+
+spring:
+  application:
+    name: CloudAppMLProject
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app-db?useUnicode=true&characterEncoding=UTF-8
+    username: username
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+        #mail:
+        # host: smtp.gmail.com
+        #port: 587
+        #username: ${USERNAME}
+        #password: ${PASSWORD}
+        #properties:
+        #  mail:
+        #   smtp:
+        #    auth: true
+        #    starttls:
+        #     enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 15MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+minio:
+  access:
+    name: name
+    secret: secret
+  url: http://127.0.0.1:9000
+  bucket:
+    name: ml-models
+
+
+server:
+  port: 8080

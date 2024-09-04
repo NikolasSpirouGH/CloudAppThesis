@@ -1,0 +1,15 @@
+package com.cloud_ml_app_thesis.payload.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.Map;
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class InformationResponse implements CustomResponse{
+    private String INFORMATION_RESPONSE;
+}
