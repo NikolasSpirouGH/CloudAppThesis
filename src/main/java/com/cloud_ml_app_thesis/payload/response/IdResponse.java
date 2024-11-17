@@ -5,11 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ErrorResponse implements CustomResponse{
-    //TODO maybe need to be protected
-    private String ERROR_MESSAGE;
+
+public class IdResponse implements CustomResponse{
+    private String message;
+    private String id;
 }

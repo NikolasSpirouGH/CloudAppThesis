@@ -3,7 +3,6 @@ package com.cloud_ml_app_thesis.util;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.exception.FileProcessingException;
 import com.cloud_ml_app_thesis.service.DatasetService;
-import io.minio.GetObjectArgs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,7 +17,6 @@ import weka.filters.unsupervised.attribute.Remove;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -38,7 +36,7 @@ public class DatasetUtil {
         }
 
         // Default to all columns except the last one if basic attributes columns are not provided
-        if (basicAttributesColumns == null || basicAttributesColumns.isEmpty()) {
+        if (basicAttributesColumns == null || basicAttributesColumns.isEmpty() || basicAttributesColumns.equals("DEFAULT")) {
             for (int i = 0; i < data.numAttributes(); i++) {
                 columnNames.add(data.attribute(i).name());
             }
@@ -51,7 +49,7 @@ public class DatasetUtil {
 
         if (prediction == 0) { // Training
             // Default to the last column if target class column is not provided
-            if (targetClassColumn == null || targetClassColumn.isEmpty()) {
+            if (targetClassColumn == null || targetClassColumn.isEmpty() || targetClassColumn.equals("DEFAULT")) {
                 logger.info("I am in train");
                 targetClassColumn = data.attribute(data.numAttributes() - 1).name();
             } else {
@@ -159,7 +157,7 @@ public class DatasetUtil {
         return fileName.substring(lastIndex);
     }
 
-    public static Instances loadDataset(MultipartFile file, String filename, DatasetConfiguration datasetConfiguration) throws Exception {
+    public static Instances prepareDataset(MultipartFile file, String filename, DatasetConfiguration datasetConfiguration) throws Exception {
         InputStream datasetStream = file.getInputStream();
         // Convert the dataset to ARFF format if it is in CSV or Excel format
         String fileExtension = getFileExtension(filename);

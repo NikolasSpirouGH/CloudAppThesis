@@ -42,4 +42,8 @@ public class TrainingRequest {
     @Positive(message = "datasetConfigurationId must be greater than zero")
     private String datasetConfigurationId;
 
+    private String trainingId;
+
+    private String modelId;
+
 }

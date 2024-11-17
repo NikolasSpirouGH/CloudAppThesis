@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -92,6 +93,7 @@ public class TrainService {
         return null;
     }
     public CustomResponse startTraining(MultipartFile file, TrainingRequest request) {
+
         Training training = new Training();
         training.setStatus(TrainingStatus.REQUESTED);
 
@@ -107,7 +109,7 @@ public class TrainService {
             throw new AlgorithmNotFoundException("Algorithm could not be found");
         }
 
-        Optional<AppUser> user = userRepository.findByUsername("nickriz");
+        Optional<User> user = userRepository.findByUsername("nickriz");
         if(user.isEmpty()){
            /* training.setStatus(TrainingStatus.FAILED);
             trainRepository.save(training);*/
@@ -162,7 +164,7 @@ public class TrainService {
 
 
 
-                Instances data = DatasetUtil.loadDataset(dataset, filename, datasetConfiguration);
+                Instances data = DatasetUtil.prepareDataset(dataset, filename, datasetConfiguration);
                 //data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
 
                 boolean isClassifier = AlgorithmUtil.isClassifier(algorithmClassName);
@@ -444,4 +446,106 @@ public class TrainService {
 
         return dto;
   }
+
+  private Object findTrainCase(TrainingRequest request, boolean multipartFileExists, MultipartFile multipartFile, String username){
+      Instances
+
+      String datasetId = request.getDatasetId();
+      boolean datasetIdExist = ValidationUtil.stringExists(datasetId);
+
+      String datasetConfigurationId = request.getDatasetConfigurationId();
+      boolean datasetConfigurationIdExist = ValidationUtil.stringExists(datasetConfigurationId);
+
+      String basicCharacteristicsColumns = request.getBasicCharacteristicsColumns();
+      boolean basicCharacteristicsColumnsExist = ValidationUtil.stringExists(basicCharacteristicsColumns);
+
+      String targetClassColumn = request.getTargetClassColumn();
+      boolean targetClassColumnExist = ValidationUtil.stringExists(targetClassColumn);
+
+      String algorithmOptions = request.getAlgorithmOptions();
+      boolean algorithmOptionsExist = ValidationUtil.stringExists(algorithmOptions);
+
+      String algorithmConfigurationId = request.getAlgorithmConfigurationId();
+      boolean algorithmConfigurationIdExist = ValidationUtil.stringExists(algorithmConfigurationId);
+
+      String trainingId = request.getTrainingId();
+      boolean trainingIdExist = ValidationUtil.stringExists(trainingId);
+
+      String modelId = request.getModelId();
+      boolean modelIdExist = ValidationUtil.stringExists(modelId);
+
+      // 1st check - Can't provide trainingId and modelId at the same time
+      if(trainingIdExist && modelIdExist){
+          return new ErrorResponse("You can't train a model based on a Training and a Model at the same time.");
+      }
+
+      // 2nd check - Can't provide datasetId and a new File
+      if(datasetIdExist && multipartFileExists){
+          return new ErrorResponse("You can't train a model with an already uploaded Dataset and a new Dataset File at the same time.");
+      }
+
+      // 3rd check - Can't provide datasetId and datasetConfigurationId at the same time
+      if(datasetIdExist && datasetConfigurationIdExist){
+          return new ErrorResponse("You can't train a model providing a datasetId and a datasetConfigurationId at the same time.");
+      }
+      // 4rth check - Can't provide algorithmId and algorithmConfigurationId at the same time
+      if(algorithmOptionsExist && algorithmConfigurationIdExist){
+          return new ErrorResponse("You can't train a model providing a algorithmId and a algorithmConfigurationId at the same time.");
+      }
+
+      // 5th check - If MultiPartFile is provided then upload the dataset and get the datasetId to continue
+      if(multipartFileExists){
+          CustomResponse uploadFileResponse = datasetService.uploadDataset(multipartFile, username);
+          if(uploadFileResponse instanceof IdResponse){
+              datasetId = ((IdResponse)uploadFileResponse).getId();
+              datasetIdExist = true;
+          } else if (uploadFileResponse instanceof ErrorResponse) {
+              return (ErrorResponse) uploadFileResponse;
+          } else{
+              return new ErrorStatusResponse("Unexpected Error while trying to upload the File.", HttpStatus.INTERNAL_SERVER_ERROR);
+          }
+      }
+
+      // 6th check if the user provided an older Train to train the new Model based on it
+      if(trainingIdExist){
+        //  (MultipartFile file, String filename, DatasetConfiguration datasetConfiguration
+         //We need to load the dataset based on datasetId
+        if(datasetIdExist && !multipartFileExists){
+                MultipartFile dataset = datasetService.getDatasetByTrainingId();
+               DatasetUtil.prepareDataset(trainingId);
+          } // new dataset was provided so we have datasetId and File
+            else if(datasetIdExist && multipartFileExists){
+
+          }
+
+      } else if(ValidationUtil.stringExists(request.getModelId())){
+
+      } else{
+
+      }
+  }
+
+  //In the load methods we may need pass the user in the cases that something is uploaded first time
+    // like a dataset file or an algorithm configurations
+  //Load DatasetConfiguration process
+  private DatasetConfiguration loadDatasetConfiguration(Integer datasetConfigurationId){
+
+  }
+
+  private DatasetConfiguration loadDatasetConfiguration(Integer datasetId, String basicAttributesColumns,String targetClassColumn){
+
+  }
+  private DatasetConfiguration loadDatasetConfiguration(MultipartFile file, String basicAttributesColumns,String targetClassColumn){
+
+  }
+
+  //Load AlgorithmConfiguration process
+    private AlgorithmConfiguration loadAlgorithmConfiguration(Integer algorithmConfigurationId){
+
+    }
+
+    private AlgorithmConfiguration loadAlgorithmConfiguration(Integer algorithmId, String options){
+
+    }
+
 }

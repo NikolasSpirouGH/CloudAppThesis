@@ -2,10 +2,7 @@ package com.cloud_ml_app_thesis.controller;
 
 import com.cloud_ml_app_thesis.payload.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataResponse;
-import com.cloud_ml_app_thesis.payload.response.InformationResponse;
-import com.cloud_ml_app_thesis.payload.response.ObjectsDataResponse;
+import com.cloud_ml_app_thesis.payload.response.*;
 import com.cloud_ml_app_thesis.service.DatasetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +36,8 @@ public class DatasetController {
     public ResponseEntity<CustomResponse> uploadDataset(@RequestPart("file") MultipartFile file, @RequestPart("username")String username) {
         try {
             CustomResponse response = datasetService.uploadDataset(file, username);
-          if(response instanceof DataResponse){
-              return ResponseEntity.ok().body((DataResponse) response);
+          if(response instanceof IdResponse){
+              return ResponseEntity.ok().body((IdResponse) response);
           } else {
               return ResponseEntity.badRequest().body((ErrorResponse) response);
           }

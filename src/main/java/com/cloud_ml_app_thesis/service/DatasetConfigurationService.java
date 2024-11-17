@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset_configuration.ConfiguredDatasetSelectTableDTO;
-import com.cloud_ml_app_thesis.entity.AppUser;
+import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.enumeration.DatasetConfigurationStatus;
@@ -52,7 +52,7 @@ public class DatasetConfigurationService {
 
     public CustomResponse uploadDatasetConfiguration(Integer datasetId, String username,
                                                      String basicAttributesColumns, String targetClassColumn){
-       AppUser user = userRepository.findByUsername(username)
+       User user = userRepository.findByUsername(username)
                .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
         Dataset dataset = datasetRepository.findById(datasetId)

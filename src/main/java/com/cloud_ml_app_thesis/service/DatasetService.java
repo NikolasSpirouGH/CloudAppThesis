@@ -1,9 +1,10 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset.DatasetSelectTableDTO;
-import com.cloud_ml_app_thesis.entity.AppUser;
+import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
+import com.cloud_ml_app_thesis.entity.Training;
 import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
@@ -16,6 +17,7 @@ import com.cloud_ml_app_thesis.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,12 +126,12 @@ public class DatasetService {
 
     @Transactional
     public CustomResponse uploadDataset(MultipartFile file, String username) {
-        Optional<AppUser>  optionalAppUser = userRepository.findByUsername(username);
+        Optional<User>  optionalAppUser = userRepository.findByUsername(username);
         if(!optionalAppUser.isPresent()){
             //TODO
             throw new IllegalArgumentException("User not found.");
         }
-        AppUser user = optionalAppUser.get();
+        User user = optionalAppUser.get();
         String originalFilename = file.getOriginalFilename();
         if(originalFilename == null || originalFilename.isBlank()){
             return new ErrorResponse("Filename cannot be empty.");
@@ -161,10 +163,16 @@ public class DatasetService {
             throw e;
         }
 
-        return new DataResponse("Dataset successfully saved to the cloud", Collections.singletonMap("datasetId", dataset.getId()));
+        return new IdResponse("Dataset successfully saved to the cloud", dataset.getId().toString());
     }
 
-    public Dataset uploadDataset(MultipartFile file, AppUser user)  {
+    public MultipartFile getDatasetByTrainingId(Integer trainingId){
+        Training training = trainRepository.findById(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
+        datasetRepository.φινδΒυ
+
+    }
+
+    public Dataset uploadDataset(MultipartFile file, User user)  {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename == null || originalFilename.isBlank()){
@@ -245,7 +253,7 @@ public class DatasetService {
 //*********************************************************************************************************************
 
     public List<String> getDatasetUrls(String email) {
-        Optional<AppUser> user = userRepository.findByEmail(email);
+        Optional<User> user = userRepository.findByEmail(email);
         if(user.isEmpty()) {
             //TODO LOGGER AND EXCEPTION HANDLING
             System.out.println("User do not exists");

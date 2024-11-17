@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -37,7 +36,7 @@ public class Training {
 
     @ManyToOne
     @JoinColumn(name="user_id")
-    private AppUser user;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name="dataset_id")

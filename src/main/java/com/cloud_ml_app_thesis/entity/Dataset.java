@@ -8,7 +8,6 @@ import lombok.*;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class Dataset {
     @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private AppUser user;
+    private User user;
 
     @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
