@@ -1,5 +1,6 @@
 package com.cloud_ml_app_thesis.repository;
 
+import com.cloud_ml_app_thesis.entity.Model;
 import com.cloud_ml_app_thesis.entity.Training;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,8 @@ public interface TrainRepository extends JpaRepository<Training, Integer> {
 
     Optional<List<Training>> findAllByUserIdAndStatus(Integer userId, TrainingStatus status);
     Optional<List<Training>> findAllByUserId(Integer userId);
+
+    Optional<Training> findByModel(Model model);
 
     long countByDatasetConfigurationDatasetId(Integer datasetId);
     long countByDatasetConfigurationDatasetIdAndStatus(Integer datasetId, TrainingStatus status);

@@ -14,19 +14,17 @@ import com.cloud_ml_app_thesis.util.DatasetUtil;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import weka.core.Instances;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
-@Setter
-@Getter
 @Service
-public class TrainingRequestHelper extends TrainingRequest {
+public class TrainingRequestHelperService{
 
     private final TrainRepository trainRepository;
+    private final ModelRepository modelRepository;
 
     private final UserRepository userRepository;
 
@@ -46,62 +44,40 @@ public class TrainingRequestHelper extends TrainingRequest {
 
     private final AlgorithmService algorithmService;
 
-    private boolean multipartFileExist;
-    private boolean datasetIdExist;
-    private boolean datasetConfigurationIdExist;
-    private boolean basicCharacteristicsColumnsExist;
-    private boolean targetClassColumnExist;
-    private boolean algorithmIdExist;
-    private boolean algorithmOptionsExist;
-    private boolean algorithmConfigurationIdExist;
-    private boolean trainingIdExist;
-    private boolean modelIdExist;
 
-    @Autowired
-    public TrainingRequestHelper(TrainRepository trainRepository, UserRepository userRepository, AlgorithmConfigurationRepository algorithmConfigurationRepository, AlgorithmRepository algorithmRepository, TrainingStatusRepository trainingStatusRepository, DatasetRepository datasetRepository, DatasetConfigurationRepository datasetConfigurationRepository, ModelService modelService, DatasetService datasetService, AlgorithmService algorithmService, TrainingRequest trainingRequest){
-        this.trainRepository = trainRepository;
-        this.userRepository = userRepository;
-        this.algorithmConfigurationRepository = algorithmConfigurationRepository;
-        this.algorithmRepository = algorithmRepository;
-        this.trainingStatusRepository = trainingStatusRepository;
-        this.datasetRepository = datasetRepository;
-        this.datasetConfigurationRepository = datasetConfigurationRepository;
-        this.modelService = modelService;
-        this.datasetService = datasetService;
-        this.algorithmService = algorithmService;
 
-        this.setFile(trainingRequest.getFile());
-        this.multipartFileExist = ValidationUtil.multipartFileExist(trainingRequest.getFile());
+    public TrainingDataInput configureTrainingDataInputByTrainCase(TrainingRequest trainingRequest) throws Exception {
 
-        this.setDatasetId(trainingRequest.getDatasetId());
-        this.datasetIdExist = ValidationUtil.stringExists(trainingRequest.getDatasetId());
+        MultipartFile file = trainingRequest.getFile();
+        boolean multipartFileExist = ValidationUtil.multipartFileExist(trainingRequest.getFile());
 
-        this.setDatasetConfigurationId(trainingRequest.getDatasetConfigurationId());
-        this.datasetConfigurationIdExist=ValidationUtil.stringExists(trainingRequest.getDatasetConfigurationId());
+        String datasetId = trainingRequest.getDatasetId();
+        boolean datasetIdExist = ValidationUtil.stringExists(datasetId);
 
-        this.setBasicCharacteristicsColumns(trainingRequest.getBasicCharacteristicsColumns());
-        this.basicCharacteristicsColumnsExist = ValidationUtil.stringExists(trainingRequest.getBasicCharacteristicsColumns());
+        String datasetConfigurationId = trainingRequest.getDatasetConfigurationId();
+        boolean datasetConfigurationIdExist = ValidationUtil.stringExists(datasetConfigurationId);
 
-        this.setTargetClassColumn(trainingRequest.getTargetClassColumn());
-        this.targetClassColumnExist = ValidationUtil.stringExists(trainingRequest.getTargetClassColumn());
+        String basicCharacteristicsColumns = trainingRequest.getBasicCharacteristicsColumns();
+        boolean basicCharacteristicsColumnsExist = ValidationUtil.stringExists(basicCharacteristicsColumns);
 
-        this.setAlgorithmId(trainingRequest.getAlgorithmId());
-        this.algorithmIdExist = ValidationUtil.stringExists(trainingRequest.getAlgorithmId());
+        String targetClassColumn = trainingRequest.getTargetClassColumn();
+        boolean targetClassColumnExist = ValidationUtil.stringExists(targetClassColumn);
 
-        this.setAlgorithmOptions(trainingRequest.getAlgorithmOptions());
-        this.algorithmOptionsExist = ValidationUtil.stringExists(trainingRequest.getAlgorithmOptions());
+        String algorithmId = trainingRequest.getAlgorithmId();
+        boolean algorithmIdExist = ValidationUtil.stringExists(algorithmId);
 
-        this.setAlgorithmConfigurationId(trainingRequest.getAlgorithmConfigurationId());
-        this.algorithmConfigurationIdExist = ValidationUtil.stringExists(trainingRequest.getAlgorithmConfigurationId());
+        String algorithmOptions = trainingRequest.getAlgorithmOptions();
+        boolean algorithmOptionsExist = ValidationUtil.stringExists(algorithmOptions);
 
-        this.setTrainingId(trainingRequest.getTrainingId());
-        this.trainingIdExist = ValidationUtil.stringExists(trainingRequest.getTrainingId());
+        String algorithmConfigurationId = trainingRequest.getAlgorithmConfigurationId();
+        boolean algorithmConfigurationIdExist = ValidationUtil.stringExists(algorithmConfigurationId);
 
-        this.setModelId(trainingRequest.getModelId());
-        this.modelIdExist = ValidationUtil.stringExists(trainingRequest.getModelId());
-    }
+        String trainingId = trainingRequest.getTrainingId();
+        boolean trainingIdExist = ValidationUtil.stringExists(trainingId);
 
-    public TrainingDataInput configureTrainingDataInput() throws Exception {
+        String modelId = trainingRequest.getModelId();
+        boolean modelIdExist = ValidationUtil.stringExists(modelId);
+
         TrainingDataInput trainingDataInput = new TrainingDataInput();
         DatasetConfiguration datasetConfiguration = null;
         // 1st check - Can't provide trainingId and modelId at the same time
@@ -139,11 +115,16 @@ public class TrainingRequestHelper extends TrainingRequest {
             return trainingDataInput;
         }
 
+        if(algorithmConfigurationIdExist && datasetConfigurationIdExist && targetClassColumnExist && basicCharacteristicsColumnsExist && algorithmOptionsExist){
+            trainingDataInput.setErrorResponse(new ErrorResponse("You can't retrain a model providing all the configuration again. Please start a new train."));
+            return trainingDataInput;
+        }
+
         // 7th check - If MultiPartFile is provided then upload the dataset and get the datasetId to continue
         if(multipartFileExist){
-            CustomResponse uploadFileResponse = datasetService.uploadDataset(this.getFile(), this.getUsername());
+            CustomResponse uploadFileResponse = datasetService.uploadDataset(file, trainingRequest.getUsername());
             if(uploadFileResponse instanceof IdResponse){
-                this.setDatasetId(((IdResponse)uploadFileResponse).getId());
+             datasetId = ((IdResponse)uploadFileResponse).getId();
                 datasetIdExist = true;
             } else if (uploadFileResponse instanceof ErrorResponse) {
                 trainingDataInput.setErrorResponse((ErrorResponse) uploadFileResponse);
@@ -162,13 +143,13 @@ public class TrainingRequestHelper extends TrainingRequest {
             //first set the DatasetConfiguration
             //TODO change the Exception message
             datasetConfiguration = new DatasetConfiguration();
-            Dataset dataset = datasetRepository.findById(Integer.parseInt(this.getDatasetId())).orElseThrow(() -> new EntityNotFoundException("The dataset for your training could not be found!"));
+            Dataset dataset = datasetRepository.findById(Integer.parseInt(datasetId)).orElseThrow(() -> new EntityNotFoundException("The dataset for your training could not be found!"));
             datasetConfiguration.setDataset(dataset);
             if(basicCharacteristicsColumnsExist){
-                datasetConfiguration.setBasicAttributesColumns(this.getBasicCharacteristicsColumns());
+                datasetConfiguration.setBasicAttributesColumns(basicCharacteristicsColumns);
             }
             if(targetClassColumnExist){
-                datasetConfiguration.setTargetColumn(this.getTargetClassColumn());
+                datasetConfiguration.setTargetColumn(targetClassColumn);
             }
             datasetConfiguration = datasetConfigurationRepository.save(datasetConfiguration);
 
@@ -176,25 +157,24 @@ public class TrainingRequestHelper extends TrainingRequest {
             if(!multipartFileExist){
                 finalDataset = datasetService.loadDatasetInstancesByDatasetConfigurationFromMinio(datasetConfiguration);
             } else{
-                finalDataset = DatasetUtil.prepareDataset(this.getFile(), dataset.getFileName(), datasetConfiguration);
+                finalDataset = DatasetUtil.prepareDataset(file, dataset.getFileName(), datasetConfiguration);
             }
             trainingDataInput.setDataset(finalDataset);
         } /* 2nd Dataset CASE - datasetConfigurationID AND OPTIONALLY ONLY one of the [basicCharacteristicsColumns, targetClassColumn]
             - if something not provided, then the already defined dataset-characteristics of DatasetConfiguration will be set
         */
         else if (datasetConfigurationIdExist) {
-            datasetConfiguration = datasetConfigurationRepository.findById(Integer.parseInt(this.getDatasetConfigurationId())).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
+            datasetConfiguration = datasetConfigurationRepository.findById(Integer.parseInt(datasetConfigurationId)).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
             if(basicCharacteristicsColumnsExist){
-                datasetConfiguration.setBasicAttributesColumns(this.getBasicCharacteristicsColumns());
+                datasetConfiguration.setBasicAttributesColumns(basicCharacteristicsColumns);
             }else if(targetClassColumnExist){
-                datasetConfiguration.setTargetColumn(this.getTargetClassColumn());
+                datasetConfiguration.setTargetColumn(targetClassColumn);
             }
             Instances finalDataset = datasetService.loadDatasetInstancesByDatasetConfigurationFromMinio(datasetConfiguration);
             trainingDataInput.setDataset(finalDataset);
 
         }
-        trainingDataInput.setDatasetConfiguration(datasetConfiguration);
-        trainingDataInput.setFilename(datasetConfiguration.getDataset().getFileName());
+
         //*********** END OF CONFIGURING TRAINING DATASET**************
 
         //*********** CONFIGURING TRAINING AlgorithmConfiguration **************
@@ -206,10 +186,10 @@ public class TrainingRequestHelper extends TrainingRequest {
             - if none Algorithm Option provided, then the default will be set.
         */
         if(algorithmIdExist){
-            Algorithm algorithm = algorithmRepository.findById(Integer.parseInt(this.getAlgorithmId())).orElseThrow(() -> new EntityNotFoundException("The algorithm you provided could not be found."));
+            Algorithm algorithm = algorithmRepository.findById(Integer.parseInt(algorithmId)).orElseThrow(() -> new EntityNotFoundException("The algorithm you provided could not be found."));
             algorithmConfiguration =  new AlgorithmConfiguration(algorithm);
             if(algorithmOptionsExist){
-                algorithmConfiguration.setOptions(this.getAlgorithmOptions());
+                algorithmConfiguration.setOptions(algorithmOptions);
             }
             algorithmConfiguration = algorithmConfigurationRepository.save(algorithmConfiguration);
         }
@@ -217,16 +197,57 @@ public class TrainingRequestHelper extends TrainingRequest {
        /* 2nd AlgorithmConfiguration CASE - algorithmConfigurationId AND OPTIONALLY Options
             - if none Algorithm Option provided, then the Options of the current AlgorithmConfiguration will be set.
         */
-        if(algorithmConfigurationIdExist){
-            algorithmConfiguration = algorithmConfigurationRepository.findById(Integer.parseInt(this.getAlgorithmConfigurationId())).orElseThrow(() -> new EntityNotFoundException("The algorithm configuration you provided could not be found."));
+        else if(algorithmConfigurationIdExist){
+            algorithmConfiguration = algorithmConfigurationRepository.findById(Integer.parseInt(algorithmConfigurationId)).orElseThrow(() -> new EntityNotFoundException("The algorithm configuration you provided could not be found."));
             //TODO (!)CHECK WHY: Intellij warnings that "Condition 'algorithmOptionsExist' is always 'false'" while I am getting the options from the request.
             if(algorithmOptionsExist){
-                algorithmConfiguration.setOptions(this.getAlgorithmOptions());
+                algorithmConfiguration.setOptions(algorithmOptions);
             }
         }
 
-        trainingDataInput.setAlgorithmConfiguration(algorithmConfiguration);
         //*********** END OF CONFIGURING TRAINING AlgorithmConfiguration **************
+        //TODO algorithmId and trainingId or modelID exists return error
+        Training training = null;
+        if(trainingIdExist || modelIdExist){
+
+            if(trainingIdExist){
+                training = trainRepository.findById(Integer.parseInt(trainingId)).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
+
+            }
+
+            if(modelIdExist){
+                training = trainRepository.findByModel(modelRepository.findById(Integer.parseInt(modelId))
+                        .orElseThrow(()-> new EntityNotFoundException("The Model you provided could not be found.")))
+                        .orElseThrow(()-> new EntityNotFoundException("The Training of the Model you provided could not be found."));
+            }
+            //CASE 1: User gives new configure for the existing algorithmConfiguration
+            if(!algorithmConfigurationIdExist){
+                algorithmConfiguration = training.getAlgorithmConfiguration();
+                if(algorithmOptionsExist){
+                    algorithmConfiguration.setOptions(algorithmOptions);
+                    algorithmConfiguration = algorithmConfigurationRepository.save(algorithmConfiguration);
+                }
+            }
+
+            if(!multipartFileExist && !datasetIdExist && !datasetConfigurationIdExist){
+                datasetConfiguration = training.getDatasetConfiguration();
+                if(basicCharacteristicsColumnsExist){
+                    datasetConfiguration.setBasicAttributesColumns(basicCharacteristicsColumns);
+                }
+                if(targetClassColumnExist){
+                    datasetConfiguration.setTargetColumn(targetClassColumn);
+                }
+            }
+        }
+
+        trainingDataInput.setDatasetConfiguration(datasetConfiguration);
+        trainingDataInput.setFilename(datasetConfiguration.getDataset().getFileName());
+        trainingDataInput.setAlgorithmConfiguration(algorithmConfiguration);
+        trainingDataInput.setTraining(training);
+        return trainingDataInput;
+
     }
+
+
 
 }

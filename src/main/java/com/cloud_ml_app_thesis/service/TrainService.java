@@ -40,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class TrainService {
 
+    private final TrainingRequestHelperService trainingRequestHelperService;
     private final TrainRepository trainRepository;
 
     private final UserRepository userRepository;
@@ -466,6 +467,10 @@ public class TrainService {
         return dto;
   }
 
+
+
+/*
+
   private Object findTrainCase(TrainingRequest request, boolean multipartFileExist, MultipartFile multipartFile, String username) throws Exception {
 
       String datasetId = request.getDatasetId();
@@ -539,9 +544,11 @@ public class TrainService {
 
       //*********** CONFIGURING TRAINING DATASET**************
        //A) DATASET config
-        /* 1st Dataset CASE - datasetId-Or-MultipartFile AND OPTIONALLY at least one of the [basicCharacteristicsColumns, targetClassColumn]
-            - if not provided, then last column is the target class and all the previous columns are basic characteristics
         */
+/* 1st Dataset CASE - datasetId-Or-MultipartFile AND OPTIONALLY at least one of the [basicCharacteristicsColumns, targetClassColumn]
+            - if not provided, then last column is the target class and all the previous columns are basic characteristics
+        *//*
+
       TrainingDataInput trainingDataInput = new TrainingDataInput();
       DatasetConfiguration datasetConfiguration = null;
       if(datasetIdExist){
@@ -565,9 +572,11 @@ public class TrainService {
               finalDataset = DatasetUtil.prepareDataset(multipartFile, dataset.getFileName(), datasetConfiguration);
           }
           trainingDataInput.setDataset(finalDataset);
-      } /* 2nd Dataset CASE - datasetConfigurationID AND OPTIONALLY ONLY one of the [basicCharacteristicsColumns, targetClassColumn]
+      } */
+/* 2nd Dataset CASE - datasetConfigurationID AND OPTIONALLY ONLY one of the [basicCharacteristicsColumns, targetClassColumn]
             - if something not provided, then the already defined dataset-characteristics of DatasetConfiguration will be set
-        */
+        *//*
+
       else if (datasetConfigurationIdExist) {
           datasetConfiguration = datasetConfigurationRepository.findById(Integer.parseInt(datasetConfigurationId)).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
           if(basicCharacteristicsColumnsExist){
@@ -587,10 +596,12 @@ public class TrainService {
       //TODO make sure that the default options are set by initialization of the AlgorithmConfiguration Object
       //B) Algorithm config
       AlgorithmConfiguration algorithmConfiguration = null;
-        /* 1st AlgorithmConfiguration CASE - algorithmId AND OPTIONALLY at least
+        */
+/* 1st AlgorithmConfiguration CASE - algorithmId AND OPTIONALLY at least
             one Algorithm Option(algorithm options are crafted as a formatted String)
             - if none Algorithm Option provided, then the default will be set.
-        */
+        *//*
+
       if(algorithmIdExist){
           Algorithm algorithm = algorithmRepository.findById(Integer.parseInt(algorithmId)).orElseThrow(() -> new EntityNotFoundException("The algorithm you provided could not be found."));
           algorithmConfiguration =  new AlgorithmConfiguration(algorithm);
@@ -600,9 +611,11 @@ public class TrainService {
           algorithmConfiguration = algorithmConfigurationRepository.save(algorithmConfiguration);
       }
 
-       /* 2nd AlgorithmConfiguration CASE - algorithmConfigurationId AND OPTIONALLY Options
+       */
+/* 2nd AlgorithmConfiguration CASE - algorithmConfigurationId AND OPTIONALLY Options
             - if none Algorithm Option provided, then the Options of the current AlgorithmConfiguration will be set.
-        */
+        *//*
+
       if(algorithmConfigurationIdExist){
           algorithmConfiguration = algorithmConfigurationRepository.findById(Integer.parseInt(algorithmConfigurationId)).orElseThrow(() -> new EntityNotFoundException("The algorithm configuration you provided could not be found."));
           //TODO (!)CHECK WHY: Intellij warnings that "Condition 'algorithmOptionsExist' is always 'false'" while I am getting the options from the request.
@@ -659,5 +672,6 @@ public class TrainService {
     private AlgorithmConfiguration loadAlgorithmConfiguration(Integer algorithmId, String options){
 
     }
+*/
 
 }
