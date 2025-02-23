@@ -1,5 +1,6 @@
-package com.cloud_ml_app_thesis.entity;
+package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
