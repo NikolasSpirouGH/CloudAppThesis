@@ -9,6 +9,6 @@ import java.util.Optional;
 
 public interface DatasetRepository extends JpaRepository<Dataset, Integer> {
     Optional<Dataset> findByFilePath(String fileUrl);
-    Optional<Dataset> findByTrainingId(Integer trainingID);
+//    Optional<Dataset> findByTrainingId(Integer trainingID);
     Optional<List<Dataset>> findAllByUserUsername(String username);
 }

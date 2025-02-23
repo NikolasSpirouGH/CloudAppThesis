@@ -2,14 +2,13 @@ package com.cloud_ml_app_thesis.entity.status;
 
 import com.cloud_ml_app_thesis.entity.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

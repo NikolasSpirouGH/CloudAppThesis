@@ -1,14 +1,13 @@
 package com.cloud_ml_app_thesis.entity.status;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name= "model_status")
 public class ModelStatus {
     @Id
@@ -17,6 +16,6 @@ public class ModelStatus {
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
     private com.cloud_ml_app_thesis.enumeration.status.ModelStatus name;
-    @Column(name = "name", length = 1000)
+    @Column(name = "description", length = 1000)
     private String description;
 }

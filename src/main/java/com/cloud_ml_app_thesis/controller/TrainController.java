@@ -51,7 +51,7 @@ public class TrainController {
         try {
             /*Path tempFile = Files.createTempFile("upload_", file.getOriginalFilename());
             Files.copy(file.getInputStream(), tempFile, starnd)*/
-            CustomResponse response = trainService.startTraining(file, request);
+            CustomResponse response = trainService.startTraining(request);
             if(response instanceof DataMapResponse) {
                 return ResponseEntity.ok().body((DataMapResponse) response);
             }

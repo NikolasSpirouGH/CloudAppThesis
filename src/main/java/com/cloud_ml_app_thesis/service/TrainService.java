@@ -82,7 +82,7 @@ public class TrainService {
         return null;
     }
 
-    //TODO Check if the Status is being correctly set at the correct time
+    /*//TODO Check if the Status is being correctly set at the correct time
     public CustomResponse startTraining(MultipartFile file, TrainingRequest request) {
 
         Training training = new Training();
@@ -97,15 +97,15 @@ public class TrainService {
         if(algorithmOptional.isPresent()){
             algorithmConfiguration.setAlgorithm(algorithmOptional.get());
         } else {
-           /* training.setStatus(TrainingStatus.FAILED);
-            trainRepository.save(training);*/
+           *//* training.setStatus(TrainingStatus.FAILED);
+            trainRepository.save(training);*//*
             throw new AlgorithmNotFoundException("Algorithm could not be found");
         }
 
         Optional<User> user = userRepository.findByUsername("nickriz");
         if(user.isEmpty()){
-           /* training.setStatus(TrainingStatus.FAILED);
-            trainRepository.save(training);*/
+           *//* training.setStatus(TrainingStatus.FAILED);
+            trainRepository.save(training);*//*
             throw new UserNotFoundException("User could not be found");
         }
         //TODO Why we use replace() and we dont format it by the time we initialize the records in the Database?
@@ -145,20 +145,30 @@ public class TrainService {
             train(training, file, dataset.getFileName(), datasetConfiguration, algorithmOptional.get().getClassName(), algorithmConfiguration);
             return new DataMapResponse("Your model with id '"+training.getId() +"' is being training!",Collections.singletonMap("id", training.getId()));
 
+    }*/
+
+    //TODO Check if the Status is being correctly set at the correct time
+    public CustomResponse startTraining(TrainingRequest request) throws Exception {
+
+
+        TrainingDataInput trainingDataInput =  trainingRequestHelperService.configureTrainingDataInputByTrainCase(request);
+
+        train(trainingDataInput.getTraining(),trainingDataInput.getDataset(), trainingDataInput.getFilename(),trainingDataInput.getDatasetConfiguration(), trainingDataInput.getAlgorithmConfiguration() );
+        return new DataMapResponse("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",Collections.singletonMap("id", trainingDataInput.getTraining().getId()));
+
+
     }
 
 
     @Async
-    public CompletableFuture<Void> train(Training training, MultipartFile dataset, String filename, DatasetConfiguration datasetConfiguration, String algorithmClassName, AlgorithmConfiguration algorithmConfiguration) {
+    public CompletableFuture<Void> train(Training training, Instances data, String filename, DatasetConfiguration datasetConfiguration, AlgorithmConfiguration algorithmConfiguration) {
         return CompletableFuture.runAsync(() -> {
 
             try {
 
-
-
-                Instances data = DatasetUtil.prepareDataset(dataset, filename, datasetConfiguration);
+//                Instances data = DatasetUtil.prepareDataset(dataset, filename, datasetConfiguration);
                 //data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
-
+                String algorithmClassName = algorithmConfiguration.getAlgorithm().getClassName();
                 boolean isClassifier = AlgorithmUtil.isClassifier(algorithmClassName);
                 boolean isClusterer = AlgorithmUtil.isClusterer(algorithmClassName);
 

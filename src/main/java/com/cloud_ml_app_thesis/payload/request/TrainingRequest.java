@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class TrainingRequest {
     private String username;
 
-    MultipartFile file;
+    private MultipartFile file;
     @Pattern(regexp = "^(\\d+|\\d+(,\\d+)+)?$", message = "basicCharacteristicsColumns must be numbers or numbers followed by commas")
     private String basicCharacteristicsColumns;
     @Pattern(regexp = "^\\d*$", message = "targetClassColumn must be a number.")

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface TrainRepository extends JpaRepository<Training, Integer> {
@@ -17,8 +18,8 @@ public interface TrainRepository extends JpaRepository<Training, Integer> {
     Optional<List<Training>> findAllByUserUsernameOrderByFinishedDateDesc(String username);
 
 
-    Optional<List<Training>> findAllByUserIdAndStatus(Integer userId, TrainingStatus status);
-    Optional<List<Training>> findAllByUserId(Integer userId);
+Optional<List<Training>> findAllByUserIdAndStatus(UUID userId, TrainingStatus status);
+    Optional<List<Training>> findAllByUserId(UUID userId);
 
     Optional<Training> findByModel(Model model);
 

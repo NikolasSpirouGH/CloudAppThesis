@@ -245,6 +245,9 @@ public class TrainingRequestHelperService{
         trainingDataInput.setFilename(datasetConfiguration.getDataset().getFileName());
         trainingDataInput.setAlgorithmConfiguration(algorithmConfiguration);
         trainingDataInput.setTraining(training);
+        if(multipartFileExist){
+           trainingDataInput.setDataset(DatasetUtil.prepareDataset(file, datasetConfiguration.getDataset().getFileName(), datasetConfiguration));
+        }
         return trainingDataInput;
 
     }

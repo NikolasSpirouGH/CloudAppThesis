@@ -29,7 +29,8 @@ public class DatasetConfiguration {
     @Column
     private String targetColumn;
 
-    @Column(name = "upload_date", nullable = false)
+    //TODO nullable false
+    @Column(name = "upload_date")
     private ZonedDateTime uploadDate;
 
     @Enumerated(EnumType.STRING)

@@ -24,11 +24,18 @@ spring:
       #    auth: true
       #    starttls:
        #     enable: true
+rsa:
+  private:
+    key-location: classpath:keys/private_key.pem
+  public:
+    key-location: classpath:keys/public_key.pem
+jwt:
+  expirationMs: 3600000  # token expiration time in milliseconds (e.g., 1 hour)
 
-  servlet:
-    multipart:
-      max-file-size: 20MB
-      max-request-size: 15MB
+servlet:
+  multipart:
+    max-file-size: 20MB
+    max-request-size: 15MB
 
 management:
   endpoints:
