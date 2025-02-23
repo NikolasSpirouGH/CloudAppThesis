@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.exception;
 
-import com.cloud_ml_app_thesis.payload.request.ErrorResponse;
+import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

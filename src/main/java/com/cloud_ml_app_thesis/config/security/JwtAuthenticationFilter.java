@@ -7,22 +7,26 @@ import com.google.common.net.HttpHeaders;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private JwtService jwtService;
+    private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    @Autowired
+    private  JwtTokenProvider jwtTokenProvider;
 
     public JwtAuthenticationFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
         this.jwtService = jwtService;
@@ -34,43 +38,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
-    ) throws IOException {
+    ) throws IOException, ServletException {
         try {
             String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-            if (StringUtils.hasText(authHeader) && authHeader.startsWith(("Bearer "))) {
+            if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
-                String username = jwtService.extractUsername(token);
+                String username = jwtTokenProvider.extractUsername(token);
 
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() != null) {
-                    if (jwtService.isTokenValid(token)) {
-                        var userDetails = userDetailsService.loadUserByUsername(username);
-
-                        //Build the authentication token
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    if (jwtTokenProvider.validateToken(token)) {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
+                                userDetails, null, userDetails.getAuthorities()
                         );
-
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                        //Set auth in contect
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
-
                 }
             }
-        } catch (ExpiredJwtException | JwtException e) {
-            //TODO
-            // You can set custom response status/code here
-            // e.g., response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            // Then return or continue chain as needed
-        }
-        try {
-            filterChain.doFilter(request, response);
-            ;
+        } catch (JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or expired JWT token");
+            return;
         } catch (Exception ex) {
-            //TODO
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("An internal error occurred");
+            return;
         }
+        filterChain.doFilter(request, response);
     }
 }

@@ -17,7 +17,7 @@ public class UserStatus {
 
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis.enumeration.status.UserStatus name;
+    private com.cloud_ml_app_thesis.enumeration.status.UserStatus name = com.cloud_ml_app_thesis.enumeration.status.UserStatus.ACTIVE;
 
     @Column(name = "description")
     private String description;

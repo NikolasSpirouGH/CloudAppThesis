@@ -1,6 +1,5 @@
 package com.cloud_ml_app_thesis.controller;
 
-import com.cloud_ml_app_thesis.payload.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
 import com.cloud_ml_app_thesis.payload.response.*;
 import com.cloud_ml_app_thesis.service.DatasetService;
@@ -21,16 +20,12 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("api/datasets")
-
+@RequiredArgsConstructor
 public class DatasetController {
 
 
     private final DatasetService datasetService;
 
-    @Autowired
-    public DatasetController(DatasetService datasetService){
-        this.datasetService = datasetService;
-    }
     // TODO me jwt auth tha pairnoume to user einai gia testing auto
     @PostMapping("/upload-dataset")
     public ResponseEntity<CustomResponse> uploadDataset(@RequestPart("file") MultipartFile file, @RequestPart("username")String username) {

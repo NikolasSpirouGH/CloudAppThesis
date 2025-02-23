@@ -61,18 +61,18 @@ public class RsaKeyProperties {
     }
 
     private RSAPrivateKey loadPrivateKey(){
-        try{
-            String key = Files.readString(Paths.get("classpath:", "src/main/resources/"));
+        try {
+            // Use the configured privateKeyPath and replace "classpath:" accordingly.
+            String key = Files.readString(Paths.get(privateKeyPath.replace("classpath:", "src/main/resources/")));
             String privateKeyContent = key
                     .replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s+", "");
             byte[] decoded = Base64.getDecoder().decode(privateKeyContent);
-
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
-        } catch(IOException | NoSuchAlgorithmException | InvalidKeySpecException e){
+        } catch(IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException("Failed to load RSA private key", e);
         }
     }

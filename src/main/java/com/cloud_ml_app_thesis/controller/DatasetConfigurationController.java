@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.controller;
 
 
-import com.cloud_ml_app_thesis.payload.ErrorResponse;
+import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.payload.response.InformationResponse;

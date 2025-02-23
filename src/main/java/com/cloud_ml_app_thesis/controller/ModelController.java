@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.controller;
 
-import com.cloud_ml_app_thesis.payload.ErrorResponse;
+import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.service.ModelService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,12 +64,6 @@ public class ModelController {
     public CustomResponse getModelsByAccessibility(@PathVariable int accessibilityId){
         //TODO Must check if the type is "SHARED" to find all the "shared" models that Belong, or have been shared
         // to the user Requesting him
-        return new ErrorResponse("Error");
-    }
-
-    @GetMapping("/evaluation/model/{modelId}")
-    public CustomResponse getEvaluationByModelId(@PathVariable int modelId){
-        //TODO consider the shared problem
         return new ErrorResponse("Error");
     }
 

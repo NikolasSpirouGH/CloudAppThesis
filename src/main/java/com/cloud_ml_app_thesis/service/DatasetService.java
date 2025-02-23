@@ -166,11 +166,11 @@ public class DatasetService {
         return new IdResponse("Dataset successfully saved to the cloud", dataset.getId().toString());
     }
 
-    public MultipartFile getDatasetByTrainingId(Integer trainingId){
+    /*public MultipartFile getDatasetByTrainingId(Integer trainingId){
         Training training = trainRepository.findById(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
-        Dataset dataset = datasetRepository.findByTrainTrainingId(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
-
-    }
+        Dataset dataset = datasetRepository.findByTrainingId(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
+        minioService.getFileInputStream(dataset.getOriginalFileName(), dataset.getFilePath());
+    }*/
 
     public Dataset uploadDataset(MultipartFile file, User user)  {
 

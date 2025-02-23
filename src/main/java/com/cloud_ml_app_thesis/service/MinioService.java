@@ -1,6 +1,8 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.exception.FileProcessingException;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -58,6 +61,19 @@ public class MinioService {
         } catch (InvalidKeyException | NoSuchAlgorithmException | IOException e) {
             logger.error("Technical error occurred while uploading the file", e);
             throw new RuntimeException("Technical error occurred while uploading the file", e);
+        }
+    }
+
+    public InputStream getFileInputStream(String bucketName, String fileReference) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileReference)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new FileProcessingException("Error fetching file from MinIO: " + e.getMessage(), e);
         }
     }
 }

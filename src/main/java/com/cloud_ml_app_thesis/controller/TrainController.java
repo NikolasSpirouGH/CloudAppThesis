@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.controller;
 
 import com.cloud_ml_app_thesis.entity.Training;
-import com.cloud_ml_app_thesis.payload.ErrorResponse;
+import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
@@ -28,20 +28,20 @@ public class TrainController {
         this.trainService = trainService;
     }
 
-    @GetMapping("/create-train")
-    ResponseEntity<Map<String, String>> createTrain(){
-        try {
-            Training training = new Training();
-            Integer id = trainService.createTrain(training);
-            if (id == null || id == -1) {
-                return ResponseEntity.badRequest().body(Collections.singletonMap("errorMessage", "Training couldn't be created. If this message occurs, please contact the IT support."));
-            }
-            return ResponseEntity.ok(Collections.singletonMap("id", id.toString()));
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("errorMessage", "Internal server error."));
-        }
-
-    }
+//    @GetMapping("/create-train")
+//    ResponseEntity<Map<String, String>> createTrain(){
+//        try {
+//            Training training = new Training();
+//            Integer id = trainService.createTrain(training);
+//            if (id == null || id == -1) {
+//                return ResponseEntity.badRequest().body(Collections.singletonMap("errorMessage", "Training couldn't be created. If this message occurs, please contact the IT support."));
+//            }
+//            return ResponseEntity.ok(Collections.singletonMap("id", id.toString()));
+//        } catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("errorMessage", "Internal server error."));
+//        }
+//
+//    }
     @PostMapping("/train-model")
     public ResponseEntity<CustomResponse> trainModel(@ModelAttribute TrainingRequest request) {
 

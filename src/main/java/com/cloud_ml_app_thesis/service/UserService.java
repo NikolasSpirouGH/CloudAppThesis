@@ -7,6 +7,7 @@ import com.cloud_ml_app_thesis.enumeration.status.UserStatus;
 import com.cloud_ml_app_thesis.payload.request.CreateUserRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.ErrorStatusResponse;
+import com.cloud_ml_app_thesis.payload.response.SingleObjectDataResponse;
 import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
@@ -25,11 +26,11 @@ public class UserService {
     public CustomResponse createUser(CreateUserRequest request) {
         Optional<User> userExists = userRepository.findByEmail(request.getEmail());
         if(userExists.isPresent()) {
-          return new ErrorStatusResponse("User already exists.", HttpStatus.BAD_REQUEST);;
+          return new ErrorStatusResponse("User already exists.", HttpStatus.BAD_REQUEST);
         }
 
         if(!request.getPassword().equals(request.getPasswordConfirmation())){
-            return new ErrorStatusResponse("Password doesn't match with password confirmation.", HttpStatus.BAD_REQUEST);;
+            return new ErrorStatusResponse("Password doesn't match with password confirmation.", HttpStatus.BAD_REQUEST);
         }
 
         Role userRole = roleRepository.findByName(UserRole.USER)
@@ -50,5 +51,7 @@ public class UserService {
                 .status(userStatus)
                 .build();
         user = userRepository.save(user);
+
+        return new SingleObjectDataResponse(user, "OK");
     }
 }

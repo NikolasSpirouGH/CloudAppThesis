@@ -34,6 +34,8 @@ public class Model {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "type")
+    private String modelType;
     @OneToOne
     @JoinColumn(name = "model_accessibility_id")
     private ModelAccessibility modelAccessibility;

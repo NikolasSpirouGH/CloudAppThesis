@@ -2,16 +2,15 @@ package com.cloud_ml_app_thesis.entity;
 
 import com.cloud_ml_app_thesis.enumeration.UserRole;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name= "roles")
 public class Role {
 

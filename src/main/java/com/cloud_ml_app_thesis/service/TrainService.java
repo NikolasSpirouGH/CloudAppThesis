@@ -361,6 +361,7 @@ public class TrainService {
 
         String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);
         String modelType = "clusterer";
+
         modelService.saveModel(training.getId(), modelUrl, results, modelType);
 
         training.setResults(results);

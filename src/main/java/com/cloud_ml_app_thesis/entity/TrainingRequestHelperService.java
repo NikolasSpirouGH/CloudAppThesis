@@ -129,7 +129,7 @@ public class TrainingRequestHelperService{
             } else if (uploadFileResponse instanceof ErrorResponse) {
                 trainingDataInput.setErrorResponse((ErrorResponse) uploadFileResponse);
             } else{
-                trainingDataInput.setErrorResponse(new ErrorStatusResponse("Unexpected Error while trying to upload the File.", HttpStatus.INTERNAL_SERVER_ERROR));
+                trainingDataInput.setErrorResponse(new ErrorStatusResponse(HttpStatus.INTERNAL_SERVER_ERROR));
             }
         }
 

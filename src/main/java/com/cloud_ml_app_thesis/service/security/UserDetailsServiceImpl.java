@@ -2,6 +2,7 @@ package com.cloud_ml_app_thesis.service.security;
 
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.enumeration.UserRole;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         List authorities = user.getRoles().stream()
                 .map(Role::getName)
-                .map(SimpleGrantedAuthority::new)
+                .map((UserRole role) -> new SimpleGrantedAuthority(role.getAuthority()))
                 .toList();
 
         return new org.springframework.security.core.userdetails.User(

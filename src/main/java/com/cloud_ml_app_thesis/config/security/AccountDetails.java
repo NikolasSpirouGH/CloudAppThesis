@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @RequiredArgsConstructor
@@ -22,7 +23,9 @@ public class AccountDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRoles().getAuthority()));
+        return user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().getAuthority()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -32,7 +35,7 @@ public class AccountDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return user.getUsername();
     }
 
     @Override

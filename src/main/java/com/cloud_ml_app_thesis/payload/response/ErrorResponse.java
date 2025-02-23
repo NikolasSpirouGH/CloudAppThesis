@@ -12,4 +12,9 @@ import lombok.Setter;
 public class ErrorResponse implements CustomResponse{
     //TODO maybe need to be protected
     private String ERROR_MESSAGE;
+    private String exceptionMessage;
+
+    public ErrorResponse(String error){
+        this.ERROR_MESSAGE = error;
+    }
 }

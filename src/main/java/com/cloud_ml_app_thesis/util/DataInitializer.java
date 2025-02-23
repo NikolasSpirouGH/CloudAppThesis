@@ -2,6 +2,7 @@
 package com.cloud_ml_app_thesis.util;
 
 import com.cloud_ml_app_thesis.entity.Algorithm;
+import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.enumeration.UserRole;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatus;
@@ -41,9 +42,9 @@ public class DataInitializer implements CommandLineRunner {
 
     private void recreateAdmins() {
         List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE, null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece", UserRole.ADMIN, UserStatus.ACTIVE, null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", UserRole.USER, UserStatus.ACTIVE, null, null, null)
+                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
+                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null)
         );
 
         admins.forEach(admin -> {
