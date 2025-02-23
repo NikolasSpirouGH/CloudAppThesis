@@ -4,10 +4,10 @@ import com.cloud_ml_app_thesis.dto.dataset_configuration.ConfiguredDatasetSelect
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
-import com.cloud_ml_app_thesis.enumeration.DatasetConfigurationStatus;
-import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
+import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatus;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataResponse;
+import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.payload.response.InformationResponse;
 import com.cloud_ml_app_thesis.payload.response.ObjectsDataResponse;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
@@ -71,7 +71,7 @@ public class DatasetConfigurationService {
             logger.error("Failed to save the Dataset Configuration fort Dataset '{}' by user '{}'.", datasetId, username );
             throw e;
         }
-        return new DataResponse("Your dataset configuration has benn saved with id '"+datasetConfiguration.getId() +"'.", Collections.singletonMap("id", datasetConfiguration.getId()));
+        return new DataMapResponse("Your dataset configuration has benn saved with id '"+datasetConfiguration.getId() +"'.", Collections.singletonMap("id", datasetConfiguration.getId()));
     }
     public CustomResponse getDatasetConfigurations(String username){
         Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatus.CUSTOM);

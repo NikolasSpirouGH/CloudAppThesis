@@ -2,10 +2,9 @@ package com.cloud_ml_app_thesis.controller;
 
 import com.cloud_ml_app_thesis.entity.Training;
 import com.cloud_ml_app_thesis.payload.ErrorResponse;
-import com.cloud_ml_app_thesis.payload.request.StartTrainingRequest;
 import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataResponse;
+import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.service.TrainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 
@@ -55,8 +52,8 @@ public class TrainController {
             /*Path tempFile = Files.createTempFile("upload_", file.getOriginalFilename());
             Files.copy(file.getInputStream(), tempFile, starnd)*/
             CustomResponse response = trainService.startTraining(file, request);
-            if(response instanceof DataResponse) {
-                return ResponseEntity.ok().body((DataResponse) response);
+            if(response instanceof DataMapResponse) {
+                return ResponseEntity.ok().body((DataMapResponse) response);
             }
             return ResponseEntity.internalServerError().body(new ErrorResponse("Unexpected error while trying to start your model training."));
         } catch (Exception e) {

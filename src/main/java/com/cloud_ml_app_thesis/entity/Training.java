@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.entity;
 
 
-import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
+import com.cloud_ml_app_thesis.entity.status.TrainingStatus;
 import jakarta.persistence.*;
 
 import lombok.Getter;
@@ -26,8 +26,8 @@ public class Training {
     @Column
     private ZonedDateTime finishedDate;
 
-    @Column
-    @Enumerated(EnumType.STRING)
+    @OneToOne
+    @JoinColumn(name = "status_id")
     private TrainingStatus status;
 
     @ManyToOne
@@ -49,3 +49,4 @@ public class Training {
     private String results;
 
 }
+

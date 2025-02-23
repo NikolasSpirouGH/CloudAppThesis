@@ -1,7 +1,6 @@
 package com.cloud_ml_app_thesis.dto.dataset_configuration;
 
-import com.cloud_ml_app_thesis.enumeration.DatasetStatus;
-import jakarta.persistence.Column;
+import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibility;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +17,7 @@ public class ConfiguredDatasetSelectTableDTO {
     private Long fileSize;
     private String contentType;
     private ZonedDateTime uploadDate;
-    private DatasetStatus status;
+    private DatasetAccessibility status;
     private String description;
     private String basicAttributesColumns;
     private String targetColumn;

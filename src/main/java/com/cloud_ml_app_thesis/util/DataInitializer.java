@@ -4,7 +4,7 @@ package com.cloud_ml_app_thesis.util;
 import com.cloud_ml_app_thesis.entity.Algorithm;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.enumeration.UserRole;
-import com.cloud_ml_app_thesis.enumeration.UserStatus;
+import com.cloud_ml_app_thesis.enumeration.status.UserStatus;
 import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

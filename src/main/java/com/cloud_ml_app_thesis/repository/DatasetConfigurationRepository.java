@@ -1,8 +1,7 @@
 package com.cloud_ml_app_thesis.repository;
 
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
-import com.cloud_ml_app_thesis.enumeration.DatasetConfigurationStatus;
-import jdk.jshell.Snippet;
+import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 

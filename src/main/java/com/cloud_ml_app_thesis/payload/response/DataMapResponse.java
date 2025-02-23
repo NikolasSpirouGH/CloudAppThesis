@@ -12,7 +12,7 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class DataResponse implements CustomResponse{
+public class DataMapResponse implements CustomResponse{
         private String message;
         private Map<String, Object> DATA_RESPONSE;
 

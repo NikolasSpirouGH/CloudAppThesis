@@ -1,11 +1,20 @@
 package com.cloud_ml_app_thesis.entity;
+import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
+import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
+import weka.core.Instance;
+import weka.core.Instances;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
 public class TrainingDataInput {
-    Training training;
-    MultipartFile dataset;
-    String filename;
-    DatasetConfiguration datasetConfiguration;
-    String algorithmClassName; 
-    AlgorithmConfiguration algorithmConfiguration;
+    private Training training;
+    private Instances dataset; // OK
+    private String filename; // OK
+    private DatasetConfiguration datasetConfiguration; // OK
+//    private String algorithmClassName; //commented because we can do algorithmConfiguration.getAlgorithm().getClassName();
+    private AlgorithmConfiguration algorithmConfiguration; // OK
+    private ErrorResponse errorResponse = null;
 }

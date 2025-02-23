@@ -1,19 +1,16 @@
 package com.cloud_ml_app_thesis.controller;
 
 
-import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.payload.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataResponse;
+import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.payload.response.InformationResponse;
 import com.cloud_ml_app_thesis.payload.response.ObjectsDataResponse;
 import com.cloud_ml_app_thesis.service.DatasetConfigurationService;
-import com.cloud_ml_app_thesis.service.DatasetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @CrossOrigin(origins = "*")
@@ -37,8 +34,8 @@ public class DatasetConfigurationController {
             Integer datasetIdInteger = Integer.parseInt(datasetId);
             CustomResponse response = datasetConfigurationService.uploadDatasetConfiguration(datasetIdInteger, username,
                     basicAttributesColumns, targetClassColumn);
-            if(response instanceof DataResponse){
-                return ResponseEntity.ok().body((DataResponse) response);
+            if(response instanceof DataMapResponse){
+                return ResponseEntity.ok().body((DataMapResponse) response);
             } else {
                 return ResponseEntity.badRequest().body((ErrorResponse) response);
             }

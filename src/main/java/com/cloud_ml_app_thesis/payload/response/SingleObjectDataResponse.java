@@ -14,5 +14,6 @@ import lombok.Setter;
 public class SingleObjectDataResponse implements CustomResponse{
 
     private Object SINGLE_DATA;
+    private String message;
 
 }

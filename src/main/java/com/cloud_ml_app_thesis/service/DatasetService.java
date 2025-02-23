@@ -5,7 +5,7 @@ import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.entity.Training;
-import com.cloud_ml_app_thesis.enumeration.TrainingStatus;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatus;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
 import com.cloud_ml_app_thesis.payload.response.*;
@@ -156,7 +156,7 @@ public class DatasetService {
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
         try {
-            datasetRepository.save(dataset);
+           dataset = datasetRepository.save(dataset);
 
         } catch (DataAccessException e){
             logger.error("Failed to save the Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), username );
@@ -168,7 +168,7 @@ public class DatasetService {
 
     public MultipartFile getDatasetByTrainingId(Integer trainingId){
         Training training = trainRepository.findById(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
-        datasetRepository.φινδΒυ
+        Dataset dataset = datasetRepository.findByTrainTrainingId(trainingId).orElseThrow(() -> new EntityNotFoundException("Training with id " + trainingId + " does not exist"));
 
     }
 
@@ -271,7 +271,7 @@ public class DatasetService {
 
 
     //TODO CHECK THE PATHS and more
-    public Instances loadDataset(DatasetConfiguration datasetConfiguration) throws Exception {
+    public Instances loadDatasetInstancesByDatasetConfigurationFromMinio(DatasetConfiguration datasetConfiguration) throws Exception {
         URI datasetUri = new URI(datasetConfiguration.getDataset().getFilePath());
         logger.info("Dataset URI: {}", datasetUri);
         String bucketName = Paths.get(datasetUri.getPath()).getName(0).toString();

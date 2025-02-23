@@ -1,12 +1,12 @@
 package com.cloud_ml_app_thesis.entity;
 
+import com.cloud_ml_app_thesis.entity.accessibility.ModelAccessibility;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,8 +34,9 @@ public class Model {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "model_type")
-    private String modelType;
+    @OneToOne
+    @JoinColumn(name = "model_accessibility_id")
+    private ModelAccessibility modelAccessibility;
 
     @OneToMany(mappedBy = "model", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ModelExecution> executions;

@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.entity;
 
-import com.cloud_ml_app_thesis.enumeration.DatasetConfigurationStatus;
+import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -41,6 +41,9 @@ public class DatasetConfiguration {
     @JoinColumn(name = "dataset_id")
     private Dataset dataset;
 
+    public DatasetConfiguration(Dataset dataset) {
+        this.dataset = dataset;
+    }
     public DatasetConfiguration(String basicAttributesColumns, String targetColumn,
                                 ZonedDateTime uploadDate, DatasetConfigurationStatus status, Dataset dataset) {
         this.id = null;

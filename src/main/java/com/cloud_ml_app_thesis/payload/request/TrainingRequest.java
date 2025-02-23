@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 @DatasetProvisionLogicValidation
 @AlgorithmProvisionLogicValidation
 public class TrainingRequest {
+    private String username;
 
     MultipartFile file;
     @Pattern(regexp = "^(\\d+|\\d+(,\\d+)+)?$", message = "basicCharacteristicsColumns must be numbers or numbers followed by commas")

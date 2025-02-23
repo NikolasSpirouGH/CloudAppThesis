@@ -1,13 +1,14 @@
 package com.cloud_ml_app_thesis.entity;
 
 import com.cloud_ml_app_thesis.enumeration.UserRole;
-import com.cloud_ml_app_thesis.enumeration.UserStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import lombok.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -18,8 +19,8 @@ import java.util.List;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(unique = true)
     private String username;
@@ -45,18 +46,20 @@ public class User {
     @Column
     private String country;
 
-    @Column
-    @JsonManagedReference
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles;
 
-    @Column
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
+    @OneToOne
+    @JoinColumn(name = "status_id")
+    private  com.cloud_ml_app_thesis.entity.status.UserStatus status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;
-
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
