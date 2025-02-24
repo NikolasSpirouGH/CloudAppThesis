@@ -1,6 +1,5 @@
 package com.cloud_ml_app_thesis.entity;
 
-import com.cloud_ml_app_thesis.enumeration.UserRole;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -54,7 +53,7 @@ public class User {
     )
     private Set<Role> roles;
 
-    @OneToOne
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "status_id")
     private  com.cloud_ml_app_thesis.entity.status.UserStatus status;
 

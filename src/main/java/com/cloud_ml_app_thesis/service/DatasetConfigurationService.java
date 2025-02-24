@@ -5,7 +5,7 @@ import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
-import com.cloud_ml_app_thesis.enumeration.status.TrainingStatus;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.payload.response.InformationResponse;
@@ -16,6 +16,7 @@ import com.cloud_ml_app_thesis.repository.TrainRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.MinioClient;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class DatasetConfigurationService {
     private final DatasetRepository datasetRepository;
     private final DatasetConfigurationRepository datasetConfigurationRepository;
@@ -99,10 +101,10 @@ public class DatasetConfigurationService {
         dto.setUploadDate(datasetConfiguration.getUploadDate());
 
         //Setting the training participation statistics
-        long completeCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatus.COMPLETED);
+        long completeCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
         dto.setCompleteTrainingCount(completeCount);
 
-        long failedCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatus.FAILED);
+        long failedCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
         dto.setFailedTrainingCount(failedCount);
 
         return dto;

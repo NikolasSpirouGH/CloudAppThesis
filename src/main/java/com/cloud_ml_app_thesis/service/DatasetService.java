@@ -4,8 +4,7 @@ import com.cloud_ml_app_thesis.dto.dataset.DatasetSelectTableDTO;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
-import com.cloud_ml_app_thesis.entity.Training;
-import com.cloud_ml_app_thesis.enumeration.status.TrainingStatus;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
 import com.cloud_ml_app_thesis.payload.response.*;
@@ -17,10 +16,9 @@ import com.cloud_ml_app_thesis.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import javassist.NotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -52,6 +50,7 @@ import com.cloud_ml_app_thesis.exception.FileProcessingException;
 
 
 @Service
+@RequiredArgsConstructor
 public class DatasetService {
 
     private final DatasetRepository datasetRepository;
@@ -72,19 +71,6 @@ public class DatasetService {
     @Value(" http://127.0.0.1:9000")
     private String minioUrl;
 
-    @Autowired
-    public DatasetService(DatasetRepository datasetRepository, DatasetConfigurationRepository datasetConfigurationRepository
-                          ,TrainRepository trainRepository, UserRepository userRepository,
-                          MinioService minioService, MinioClient minioClient, ObjectMapper objectMapper){
-        this.datasetRepository = datasetRepository;
-        this.datasetConfigurationRepository= datasetConfigurationRepository;
-        this.userRepository= userRepository;
-        this.minioService= minioService;
-        this.minioClient= minioClient;
-        this.objectMapper = objectMapper;
-        this.trainRepository = trainRepository;
-
-    }
 
 /*
     public Integer uploadDataset(MultipartFile file, String email) {
@@ -242,10 +228,10 @@ public class DatasetService {
     private DatasetSelectTableDTO convertToDTO(Dataset dataset){
         DatasetSelectTableDTO dto = objectMapper.convertValue(dataset, DatasetSelectTableDTO.class);
 
-        long completeCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatus.COMPLETED);
+        long completeCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
         dto.setCompleteTrainingCount(completeCount);
 
-        long failedCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatus.FAILED);
+        long failedCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
         dto.setFailedTrainingCount(failedCount);
 
         return dto;

@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.entity.Model;
+import com.cloud_ml_app_thesis.entity.status.ModelStatus;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
 import io.minio.GetObjectArgs;
@@ -25,7 +26,7 @@ import java.net.URI;
 import java.util.*;
 
 @Service
-
+@RequiredArgsConstructor
 public class ModelService {
 
     private final MinioClient minioClient;
@@ -39,12 +40,6 @@ public class ModelService {
     @Value("${minio.url}")
     private String minioUrl;
 
-    @Autowired
-    public ModelService(MinioClient minioClient, ModelRepository modelRepository, TrainRepository trainRepository){
-        this.minioClient = minioClient;
-        this.modelRepository = modelRepository;
-        this.trainRepository = trainRepository;
-    }
     public String saveModelToMinio(String bucketName, String objectName, byte[] data) throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         minioClient.putObject(
@@ -70,7 +65,7 @@ public class ModelService {
         model.setTraining(trainRepository.findById(trainingId).get());
         model.setUrlModelMinio(modelUrl); // Truncate if needed
         model.setEvaluation(results); // Truncate if needed
-        model.setStatus("COMPLETED");
+        model.setStatus(new ModelStatus());
         model.setModelType(modelType);
         modelRepository.save(model);
     }

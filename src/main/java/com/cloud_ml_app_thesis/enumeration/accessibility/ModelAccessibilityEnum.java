@@ -1,5 +1,5 @@
 package com.cloud_ml_app_thesis.enumeration.accessibility;
 
-public enum ModelAccessibility {
+public enum ModelAccessibilityEnum {
     PRIVATE, PUBLIC, SHARED
 }

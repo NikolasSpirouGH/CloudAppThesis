@@ -4,10 +4,22 @@ package com.cloud_ml_app_thesis.util;
 import com.cloud_ml_app_thesis.entity.Algorithm;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.enumeration.UserRole;
-import com.cloud_ml_app_thesis.enumeration.status.UserStatus;
+import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
+import com.cloud_ml_app_thesis.entity.status.ModelStatus;
+import com.cloud_ml_app_thesis.entity.status.TrainingStatus;
+import com.cloud_ml_app_thesis.entity.status.UserStatus;
+import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
+import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
+import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
+import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
 import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
+import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
+import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepository;
+import com.cloud_ml_app_thesis.repository.status.ModelStatusRepository;
+import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
+import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -29,22 +41,79 @@ import java.util.*;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserStatusRepository userStatusRepository;
     private final AlgorithmRepository algorithmRepository;
+    private final TrainingStatusRepository trainingStatusRepository;
+    private final ModelStatusRepository modelStatusRepository;
+    private final DatasetAccessibilityRepository datasetAccessibilityRepository;
 
     private final String adminPassword = "adminPassword"; // Replace with actual password retrieval
     private final String userPassword = "userPassword"; // Replace with actual password retrieval
 
     @Override
     public void run(String... args) {
-        recreateAdmins();
+        initializeUserStatuses();
+        initializeTrainingStatuses();
+        initializeModelStatuses();
+        initializeDatasetAccessibility();
         initializeAlgorithms();
+        initializeUserRoles();
+        recreateAdmins();
+
+
     }
 
+    private void initializeUserRoles(){
+        if (roleRepository.count() == 0) {
+            List<Role> userRolesList = new ArrayList<>();
+            for(int i=0; i< UserRoleEnum.values().length; i++){
+                userRolesList.add(new Role(null, UserRoleEnum.values()[i], "Some description", null));
+            }
+            roleRepository.saveAll(userRolesList);
+        }
+    }
+    private void initializeUserStatuses(){
+        if (userStatusRepository.count() == 0) {
+            List<UserStatus> userStatusesList = new ArrayList<>();
+            for(int i=0; i< UserStatusEnum.values().length; i++){
+                userStatusesList.add(new UserStatus(null, UserStatusEnum.values()[i], "Some description", null));
+            }
+            userStatusRepository.saveAll(userStatusesList);
+        }
+    }
+    private void initializeTrainingStatuses(){
+        if (trainingStatusRepository.count() == 0) {
+            List<TrainingStatus> trainingStatusesList = new ArrayList<>();
+            for(int i=0; i< TrainingStatusEnum.values().length; i++){
+                trainingStatusesList.add(new TrainingStatus(null, TrainingStatusEnum.values()[i], "Some description", null));
+            }
+            trainingStatusRepository.saveAll(trainingStatusesList);
+        }
+    }
+    private void initializeModelStatuses(){
+        if (modelStatusRepository.count() == 0) {
+            List<ModelStatus> modelStatusesList = new ArrayList<>();
+            for(int i=0; i< ModelStatusEnum.values().length; i++){
+                modelStatusesList.add(new ModelStatus(null, ModelStatusEnum.values()[i], "Some description", null));
+            }
+            modelStatusRepository.saveAll(modelStatusesList);
+        }
+    }
+    private void initializeDatasetAccessibility(){
+        if (datasetAccessibilityRepository.count() == 0) {
+            List<DatasetAccessibility> datasetAccessibilityList = new ArrayList<>();
+            for(int i = 0; i< DatasetAccessibilityEnum.values().length; i++){
+                datasetAccessibilityList.add(new DatasetAccessibility(null, DatasetAccessibilityEnum.values()[i], "Some description", null));
+            }
+            datasetAccessibilityRepository.saveAll(datasetAccessibilityList);
+        }
+    }
     private void recreateAdmins() {
         List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRole.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null)
+                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
+                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null)
         );
 
         admins.forEach(admin -> {

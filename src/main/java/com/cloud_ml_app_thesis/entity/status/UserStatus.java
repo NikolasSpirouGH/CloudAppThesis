@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.entity.status;
 
 import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,11 +17,12 @@ public class UserStatus {
 
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis.enumeration.status.UserStatus name = com.cloud_ml_app_thesis.enumeration.status.UserStatus.ACTIVE;
+    private UserStatusEnum name = UserStatusEnum.ACTIVE;
 
     @Column(name = "description")
     private String description;
 
-    @OneToOne(mappedBy = "status")
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 }

@@ -1,5 +1,8 @@
 package com.cloud_ml_app_thesis.entity.status;
 
+import com.cloud_ml_app_thesis.entity.Model;
+import com.cloud_ml_app_thesis.entity.Training;
+import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +18,9 @@ public class ModelStatus {
     private Integer id;
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis.enumeration.status.ModelStatus name;
+    private ModelStatusEnum name;
     @Column(name = "description", length = 1000)
     private String description;
+    @OneToOne(mappedBy = "status")
+    private Model model;
 }

@@ -1,13 +1,11 @@
 package com.cloud_ml_app_thesis.config.security;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
@@ -17,63 +15,60 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
-@Configuration
-@PropertySource("classpath:application.yaml")
+@Component
 public class RsaKeyProperties {
 
-    @Value("${rsa.public.key-location")
-    private String publicKeyPath;
+    private final RSAPublicKey publicKey;
+    private final RSAPrivateKey privateKey;
 
-    @Value("${rsa.private.key-location}")
-    private String privateKeyPath;
-
-    private RSAPublicKey publicKey;
-    private RSAPrivateKey privateKey;
+    public RsaKeyProperties(
+            @Value("${rsa.public.key-location}") String publicKeyPath,
+            @Value("${rsa.private.key-location}") String privateKeyPath
+    ) {
+        this.publicKey = loadPublicKey(publicKeyPath);
+        this.privateKey = loadPrivateKey(privateKeyPath);
+    }
 
     public RSAPublicKey getPublicKey() {
-        if(publicKey == null){
-            publicKey = loadPublicKey();
-        }
         return publicKey;
     }
-    public RSAPrivateKey getPrivateKey(){
-        if(privateKey == null){
-            privateKey = loadPrivateKey();
-        }
+
+    public RSAPrivateKey getPrivateKey() {
         return privateKey;
     }
 
-    private RSAPublicKey loadPublicKey(){
-        try{
-            String key = Files.readString(Paths.get(publicKeyPath.replace("classpath:", "src/main/resources/")));
-            String publicKeyContent = key
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s+", "");
-            byte[] decoded = Base64.getDecoder().decode(publicKeyContent);
-
-            X509EncodedKeySpec  keySpec = new X509EncodedKeySpec(decoded);
+    private RSAPublicKey loadPublicKey(String path) {
+        try {
+            String key = readKeyFromClasspath(path);
+            byte[] decoded = Base64.getDecoder().decode(key);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return (RSAPublicKey)  keyFactory.generatePublic(keySpec);
-        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e){
+            return (RSAPublicKey) keyFactory.generatePublic(keySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
             throw new RuntimeException("Failed to load RSA public key", e);
         }
     }
 
-    private RSAPrivateKey loadPrivateKey(){
+    private RSAPrivateKey loadPrivateKey(String path) {
         try {
-            // Use the configured privateKeyPath and replace "classpath:" accordingly.
-            String key = Files.readString(Paths.get(privateKeyPath.replace("classpath:", "src/main/resources/")));
-            String privateKeyContent = key
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s+", "");
-            byte[] decoded = Base64.getDecoder().decode(privateKeyContent);
+            String key = readKeyFromClasspath(path);
+            byte[] decoded = Base64.getDecoder().decode(key);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
-        } catch(IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
             throw new RuntimeException("Failed to load RSA private key", e);
         }
+    }
+
+    private String readKeyFromClasspath(String path) throws IOException {
+        // Use ClassPathResource to load file from resources folder
+        ClassPathResource resource = new ClassPathResource(path.replace("classpath:", ""));
+        return new String(Files.readAllBytes(resource.getFile().toPath()))
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s+", "");
     }
 }

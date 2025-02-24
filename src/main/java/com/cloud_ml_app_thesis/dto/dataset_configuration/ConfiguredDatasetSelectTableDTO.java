@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.dto.dataset_configuration;
 
-import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibility;
+import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +17,7 @@ public class ConfiguredDatasetSelectTableDTO {
     private Long fileSize;
     private String contentType;
     private ZonedDateTime uploadDate;
-    private DatasetAccessibility status;
+    private DatasetAccessibilityEnum status;
     private String description;
     private String basicAttributesColumns;
     private String targetColumn;

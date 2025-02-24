@@ -4,12 +4,14 @@ import com.cloud_ml_app_thesis.entity.Algorithm;
 import com.cloud_ml_app_thesis.entity.AlgorithmConfiguration;
 import com.cloud_ml_app_thesis.repository.AlgorithmConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AlgorithmConfigurationService {
 
     private AlgorithmRepository algorithmRepository;

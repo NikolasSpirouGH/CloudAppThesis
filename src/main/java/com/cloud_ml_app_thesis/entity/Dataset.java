@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.entity;
 
 
-import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibility;
+import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
@@ -46,9 +46,10 @@ public class Dataset {
 
     @Column(name = "upload_date", nullable = false)
     private ZonedDateTime uploadDate;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private DatasetAccessibility status = DatasetAccessibility.PRIVATE;
+
+    @OneToOne
+    @JoinColumn(name = "accessibility_id", nullable = false)
+    private DatasetAccessibility accessibility;
 
     @Column(name = "description")
     private String description;

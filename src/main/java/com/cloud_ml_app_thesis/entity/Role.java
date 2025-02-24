@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.entity;
 
-import com.cloud_ml_app_thesis.enumeration.UserRole;
+import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,7 +20,7 @@ public class Role {
 
     @Column(nullable = false, unique = true)
     @Enumerated(EnumType.STRING)
-    private UserRole name;
+    private UserRoleEnum name;
 
     @Column
     private String description;

@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.entity.status;
 
 import com.cloud_ml_app_thesis.entity.Training;
+import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +18,7 @@ public class TrainingStatus {
 
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis.enumeration.status.TrainingStatus name;
+    private TrainingStatusEnum name;
 
     @Column(name = "description", length = 1000)
     private String description;

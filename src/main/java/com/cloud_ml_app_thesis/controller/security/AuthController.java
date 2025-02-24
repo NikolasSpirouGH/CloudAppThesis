@@ -5,6 +5,7 @@ import com.cloud_ml_app_thesis.payload.request.UserRegistrationRequest;
 import com.cloud_ml_app_thesis.payload.response.AuthResponse;
 import com.cloud_ml_app_thesis.service.security.AuthService;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;

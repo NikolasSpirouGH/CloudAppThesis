@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.entity.accessibility;
 
 import com.cloud_ml_app_thesis.entity.Model;
+import com.cloud_ml_app_thesis.enumeration.accessibility.ModelAccessibilityEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +18,10 @@ public class ModelAccessibility {
     private Integer id;
     @Column
     @Enumerated(EnumType.STRING)
-    private com.cloud_ml_app_thesis.enumeration.accessibility.ModelAccessibility name;
+    private ModelAccessibilityEnum name;
     @Column
     private String description;
 
-    @OneToOne(mappedBy = "modelAccessibility")
+    @OneToOne(mappedBy = "accessibility")
     private Model model;
 }

@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import weka.core.Instances;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class TrainingRequestHelperService{
 
     private final TrainRepository trainRepository;

@@ -2,8 +2,8 @@ package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.enumeration.UserRole;
-import com.cloud_ml_app_thesis.enumeration.status.UserStatus;
+import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
+import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
 import com.cloud_ml_app_thesis.payload.request.CreateUserRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.ErrorStatusResponse;
@@ -11,6 +11,7 @@ import com.cloud_ml_app_thesis.payload.response.SingleObjectDataResponse;
 import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private UserRepository userRepository;
@@ -33,10 +35,10 @@ public class UserService {
             return new ErrorStatusResponse("Password doesn't match with password confirmation.", HttpStatus.BAD_REQUEST);
         }
 
-        Role userRole = roleRepository.findByName(UserRole.USER)
+        Role userRole = roleRepository.findByName(UserRoleEnum.USER)
                 .orElseThrow(() -> new RuntimeException("Unexpected Error. If this error keep occurs, please contact the support."));
 
-        com.cloud_ml_app_thesis.entity.status.UserStatus userStatus = userStatusRepository.findByName(UserStatus.ACTIVE)
+        com.cloud_ml_app_thesis.entity.status.UserStatus userStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Unexpected Error. If this error keep occurs, please contact the support."));
 
         User user = User.builder()

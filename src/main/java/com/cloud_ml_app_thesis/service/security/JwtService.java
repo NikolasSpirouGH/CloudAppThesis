@@ -21,7 +21,7 @@ public class JwtService {
 
     public JwtService(
             RsaKeyProperties rsaKeyProperties,
-            @Value("${jwt.expiration}") long jwtExpirationMs
+            @Value("${jwt.expirationMs}") long jwtExpirationMs
     ){
         this.publicKey = rsaKeyProperties.getPublicKey();
         this.privateKey = rsaKeyProperties.getPrivateKey();
