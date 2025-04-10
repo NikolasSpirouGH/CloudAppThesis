@@ -84,12 +84,7 @@ public class JwtTokenProvider {
                 .getSubject();
     }
     public Authentication getAuthentication(String token) {
-        String username = Jwts.parser()
-                .verifyWith(rsaKeyProperties.getPublicKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        String username = extractUsername(token);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + username));
         AccountDetails userDetails = new AccountDetails(user);

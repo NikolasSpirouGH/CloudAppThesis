@@ -2,7 +2,6 @@ package com.cloud_ml_app_thesis.config.security;
 
 import com.cloud_ml_app_thesis.entity.User;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
-@RequiredArgsConstructor
 public class AccountDetails implements UserDetails {
 
     private User user;

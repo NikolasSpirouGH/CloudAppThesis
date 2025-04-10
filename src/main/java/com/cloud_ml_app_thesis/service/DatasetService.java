@@ -1,26 +1,38 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset.DatasetSelectTableDTO;
+import com.cloud_ml_app_thesis.dto.request.dataset.DatasetCreateRequest;
+import com.cloud_ml_app_thesis.dto.request.dataset.DatasetSearchRequest;
+import com.cloud_ml_app_thesis.dto.request.dataset.DatasetUploadRequest;
+import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.entity.Dataset;
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
-import com.cloud_ml_app_thesis.payload.request.CreateDatasetConfigurationRequest;
-import com.cloud_ml_app_thesis.payload.response.*;
+
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
-import com.cloud_ml_app_thesis.repository.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
+import com.cloud_ml_app_thesis.specification.DatasetSpecification;
 import com.cloud_ml_app_thesis.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,11 +65,13 @@ import com.cloud_ml_app_thesis.exception.FileProcessingException;
 @RequiredArgsConstructor
 public class DatasetService {
 
+    private final MinioService minioService;
+    private final CategoryService categoryService;
+
     private final DatasetRepository datasetRepository;
     private final DatasetConfigurationRepository datasetConfigurationRepository;
     private final TrainRepository trainRepository;
     private final UserRepository userRepository;
-    private final MinioService minioService;
 
     private static final Logger logger = LoggerFactory.getLogger(DatasetService.class);
 
@@ -68,7 +82,7 @@ public class DatasetService {
     @Value("ml-datasets")
     private String bucketName;
 
-    @Value(" http://127.0.0.1:9000")
+    @Value("http://127.0.0.1:9000")
     private String minioUrl;
 
 
@@ -110,23 +124,61 @@ public class DatasetService {
     }
 */
 
-    @Transactional
-    public CustomResponse uploadDataset(MultipartFile file, String username) {
-        Optional<User>  optionalAppUser = userRepository.findByUsername(username);
-        if(!optionalAppUser.isPresent()){
-            //TODO
-            throw new IllegalArgumentException("User not found.");
+
+    public Page<Dataset> searchDatasets(DatasetSearchRequest request, int page, int size, String sortBy, String sortDirection) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName());
+        String username = isAuthenticated ? authentication.getName() : null;
+
+        boolean hasExplicitAccess = isAuthenticated && authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || auth.getAuthority().equals("ROLE_DATASET_MANAGER"));
+
+        // Enforce validation rules before executing query
+        if (!isAuthenticated) {
+            // Unauthenticated users **MUST request only public datasets**
+            if (request.getIsPublic() == null || !request.getIsPublic()) {
+                throw new AuthorizationDeniedException("You can see only public datasets. For further access, please login or register.");
+            }
+        } else if (!hasExplicitAccess) {
+            // Regular users **CANNOT search for private datasets of other users**
+            if (request.getIsPublic() == null || !request.getIsPublic()) {
+                if (request.getOwnerUsername() != null && !request.getOwnerUsername().equals(username)) {
+                    throw new AuthorizationDeniedException("You cannot search for private datasets of other users.");
+                }
+                request.setOwnerUsername(username); // Restrict private dataset search to the authenticated user
+            }
         }
-        User user = optionalAppUser.get();
+        //  Fetch category IDs for deep search (if enabled)
+        Set<Integer> categoryIds = request.getCategoryId() != null
+                ? categoryService.getChildCategoryIds(request.getCategoryId(), request.getIncludeChildCategories() != null && request.getIncludeChildCategories())
+                : null;
+
+        Specification<Dataset> spec = DatasetSpecification.getDatasetsByCriteria(request, categoryIds);
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.fromString(sortDirection), sortBy)
+        );
+
+        return datasetRepository.findAll(spec, pageable);
+    }
+    @Transactional
+    public ApiResponse<?> uploadDataset(DatasetUploadRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
+
         String originalFilename = file.getOriginalFilename();
-        if(originalFilename == null || originalFilename.isBlank()){
-            return new ErrorResponse("Filename cannot be empty.");
+        if(originalFilename.isBlank()){
+            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
 
-        String objectName = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
-        //TODO
+        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
+
         try {
-            minioService.uploadFile(file, objectName);
+            minioService.uploadFile(file, uniqueFilename);
         } catch (MinioFileUploadException e) {
             throw new RuntimeException(e);
         } catch (RuntimeException e) {
@@ -135,8 +187,8 @@ public class DatasetService {
         Dataset dataset = new Dataset();
         dataset.setUser(user);
         dataset.setOriginalFileName(originalFilename);
-        dataset.setFileName(objectName);
-        dataset.setFilePath("dataset/" + objectName);
+        dataset.setFileName(uniqueFilename);
+        dataset.setFilePath("dataset/" + uniqueFilename);
         dataset.setFileSize(file.getSize());
         dataset.setContentType(file.getContentType());
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
@@ -149,7 +201,92 @@ public class DatasetService {
             throw e;
         }
 
-        return new IdResponse("Dataset successfully saved to the cloud", dataset.getId().toString());
+        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
+    }
+  @Transactional
+    public ApiResponse<?> uploadDataset(MultipartFile file) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
+
+        String originalFilename = file.getOriginalFilename();
+        if(originalFilename.isBlank()){
+            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+        }
+
+        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
+
+        try {
+            minioService.uploadFile(file, uniqueFilename);
+        } catch (MinioFileUploadException e) {
+            throw new RuntimeException(e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+        Dataset dataset = new Dataset();
+        dataset.setUser(user);
+        dataset.setOriginalFileName(originalFilename);
+        dataset.setFileName(uniqueFilename);
+        dataset.setFilePath("dataset/" + uniqueFilename);
+        dataset.setFileSize(file.getSize());
+        dataset.setContentType(file.getContentType());
+        dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+
+        try {
+           dataset = datasetRepository.save(dataset);
+
+        } catch (DataAccessException e){
+            logger.error("Failed to save the Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), username );
+            throw e;
+        }
+
+        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
+    }
+    @Transactional
+    public ApiResponse<?> createDataset(DatasetCreateRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User userRequested = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User requested the creation could not be found"));
+        User ownerUser = userRepository.findByUsername(request.getOwnerUsername()).orElseThrow(() -> new EntityNotFoundException("User requested the creation could not be found"));
+
+        MultipartFile file = request.getFile();
+
+        String originalFilename = file.getOriginalFilename();
+        if(originalFilename.isBlank()){
+            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+        }
+
+        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename,ownerUser.getUsername());
+
+        Optional<Dataset> datasetTemp = datasetRepository.findByFileName();
+
+        try {
+            minioService.uploadFile(file, uniqueFilename);
+        } catch (MinioFileUploadException e) {
+            throw new RuntimeException(e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+        Dataset dataset = new Dataset();
+        dataset.setUser(ownerUser);
+        dataset.setOriginalFileName(originalFilename);
+        dataset.setFileName(uniqueFilename);
+        dataset.setFilePath("dataset/" + uniqueFilename);
+        dataset.setFileSize(file.getSize());
+        dataset.setContentType(file.getContentType());
+        dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+
+        try {
+           dataset = datasetRepository.save(dataset);
+
+        } catch (DataAccessException e){
+            logger.error("Failed to save the Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), username );
+            throw e;
+        }
+
+        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
     }
 
     /*public MultipartFile getDatasetByTrainingId(Integer trainingId){
@@ -190,39 +327,19 @@ public class DatasetService {
             logger.error("Failed to save Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), user.getUsername() );
             throw e;
         }
-
-
     }
 
-    public Integer datasetConfiguration(CreateDatasetConfigurationRequest request){
-        Dataset dataset = null;
-        try {
-            dataset = datasetRepository.findById(request.getDatasetId()).orElseThrow(() -> new NotFoundException("..."));
-        } catch (NotFoundException e) {
-            return null;
-        }
-        DatasetConfiguration datasetConfiguration = new DatasetConfiguration( request.getBasicAttributesColumns(), request.getTargetColumn(), ZonedDateTime.now(ZoneId.of("Europe/Athens")), dataset);
-        try {
-            DatasetConfiguration uploadedDatasetConfiguration = datasetConfigurationRepository.save(datasetConfiguration);
-            logger.info("Saved dataset configuration with ID {}", uploadedDatasetConfiguration.getId());
-            return uploadedDatasetConfiguration.getId();
-        } catch (DataAccessException e) {
-            logger.error("Failed to save dataset configuration", e);
-            //TODO Throw Custom Exception that will be handled from @ControllerAdvisor Class
-            e.getMessage();
-        }
-        return null;
-    }
+
 //*********************************************************************************************************************
-    public CustomResponse getDatasets(String username){
+    public ApiResponse<?> getDatasets(String username){
         Optional<List<Dataset>> datasetsOptional = datasetRepository.findAllByUserUsername(username);
         if(datasetsOptional.isPresent()){
             List<DatasetSelectTableDTO> datasetSelectTableDTOS = datasetsOptional.get().stream()
                     .map(this::convertToDTO)
                     .toList();
-            return new ObjectsDataResponse(datasetSelectTableDTOS);
+            return new ApiResponse<List<DatasetSelectTableDTO>>(datasetSelectTableDTOS, null, null, new Metadata());
         }
-        return new InformationResponse("Could not find datasets for user '" + username + "'.");
+        return new ApiResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata());
     }
 
     private DatasetSelectTableDTO convertToDTO(Dataset dataset){
@@ -238,16 +355,17 @@ public class DatasetService {
     }
 //*********************************************************************************************************************
 
-    public List<String> getDatasetUrls(String email) {
+    public ApiResponse<List<String>> getDatasetUrls(String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if(user.isEmpty()) {
             //TODO LOGGER AND EXCEPTION HANDLING
             System.out.println("User do not exists");
         }
-        return user.map(u -> u.getDatasets().stream()
+        List<String> datasetUrls = user.map(u -> u.getDatasets().stream()
                         .map(Dataset::getFilePath)
                         .collect(Collectors.toList()))
                         .orElse(Collections.emptyList());
+        return new ApiResponse<List<String>>(datasetUrls, null, null, new Metadata());
     }
 
     public DatasetConfiguration getDatasetConfiguration(Integer datasetConfId) throws Exception {

@@ -1,5 +1,7 @@
 package com.cloud_ml_app_thesis.entity;
 
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.entity.status.UserStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -53,9 +55,9 @@ public class User {
     )
     private Set<Role> roles;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "status_id")
-    private  com.cloud_ml_app_thesis.entity.status.UserStatus status;
+    @ManyToOne
+    @JoinColumn(name = "status_id", nullable = false)
+    private UserStatus status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;

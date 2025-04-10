@@ -26,7 +26,7 @@ public class Training {
     @Column
     private ZonedDateTime finishedDate;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "status_id")
     private TrainingStatus status;
 

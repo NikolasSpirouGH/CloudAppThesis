@@ -11,7 +11,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name= "model_status")
+@Table(name= "CONST_MODEL_STATUSES")
 public class ModelStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +21,4 @@ public class ModelStatus {
     private ModelStatusEnum name;
     @Column(name = "description", length = 1000)
     private String description;
-    @OneToOne(mappedBy = "status")
-    private Model model;
 }

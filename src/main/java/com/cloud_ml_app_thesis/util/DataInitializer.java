@@ -2,6 +2,7 @@
 package com.cloud_ml_app_thesis.util;
 
 import com.cloud_ml_app_thesis.entity.Algorithm;
+import com.cloud_ml_app_thesis.entity.Category;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
@@ -14,6 +15,7 @@ import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
 import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
+import com.cloud_ml_app_thesis.repository.CategoryRepository;
 import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepository;
@@ -44,6 +46,7 @@ public class DataInitializer implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final UserStatusRepository userStatusRepository;
     private final AlgorithmRepository algorithmRepository;
+    private final CategoryRepository categoryRepository;
     private final TrainingStatusRepository trainingStatusRepository;
     private final ModelStatusRepository modelStatusRepository;
     private final DatasetAccessibilityRepository datasetAccessibilityRepository;
@@ -54,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         initializeUserStatuses();
+        initializeCategories();
         initializeTrainingStatuses();
         initializeModelStatuses();
         initializeDatasetAccessibility();
@@ -62,6 +66,13 @@ public class DataInitializer implements CommandLineRunner {
         recreateAdmins();
 
 
+    }
+
+    private void initializeCategories(){
+        Category category = new Category();
+        category.setName("Uncategorized");
+        category.setDescription("Category for entities that have no parent category.");
+        categoryRepository.save(category);
     }
 
     private void initializeUserRoles(){
@@ -77,7 +88,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userStatusRepository.count() == 0) {
             List<UserStatus> userStatusesList = new ArrayList<>();
             for(int i=0; i< UserStatusEnum.values().length; i++){
-                userStatusesList.add(new UserStatus(null, UserStatusEnum.values()[i], "Some description", null));
+                userStatusesList.add(new UserStatus(null, UserStatusEnum.values()[i], "Some description"));
             }
             userStatusRepository.saveAll(userStatusesList);
         }
@@ -86,7 +97,7 @@ public class DataInitializer implements CommandLineRunner {
         if (trainingStatusRepository.count() == 0) {
             List<TrainingStatus> trainingStatusesList = new ArrayList<>();
             for(int i=0; i< TrainingStatusEnum.values().length; i++){
-                trainingStatusesList.add(new TrainingStatus(null, TrainingStatusEnum.values()[i], "Some description", null));
+                trainingStatusesList.add(new TrainingStatus(null, TrainingStatusEnum.values()[i], "Some description"));
             }
             trainingStatusRepository.saveAll(trainingStatusesList);
         }
@@ -95,7 +106,7 @@ public class DataInitializer implements CommandLineRunner {
         if (modelStatusRepository.count() == 0) {
             List<ModelStatus> modelStatusesList = new ArrayList<>();
             for(int i=0; i< ModelStatusEnum.values().length; i++){
-                modelStatusesList.add(new ModelStatus(null, ModelStatusEnum.values()[i], "Some description", null));
+                modelStatusesList.add(new ModelStatus(null, ModelStatusEnum.values()[i], "Some description"));
             }
             modelStatusRepository.saveAll(modelStatusesList);
         }
@@ -104,16 +115,18 @@ public class DataInitializer implements CommandLineRunner {
         if (datasetAccessibilityRepository.count() == 0) {
             List<DatasetAccessibility> datasetAccessibilityList = new ArrayList<>();
             for(int i = 0; i< DatasetAccessibilityEnum.values().length; i++){
-                datasetAccessibilityList.add(new DatasetAccessibility(null, DatasetAccessibilityEnum.values()[i], "Some description", null));
+                datasetAccessibilityList.add(new DatasetAccessibility(null, DatasetAccessibilityEnum.values()[i], "Some description"));
             }
             datasetAccessibilityRepository.saveAll(datasetAccessibilityList);
         }
     }
     private void recreateAdmins() {
+        UserStatus defaultStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Default status not found"));
         List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new com.cloud_ml_app_thesis.entity.status.UserStatus(), null, null, null)
+                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description"), null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description"), null, null, null),
+                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description" ), null, null, null)
         );
 
         admins.forEach(admin -> {

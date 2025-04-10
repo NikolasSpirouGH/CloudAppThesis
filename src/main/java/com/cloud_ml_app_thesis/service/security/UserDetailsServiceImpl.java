@@ -1,5 +1,6 @@
 package com.cloud_ml_app_thesis.service.security;
 
+import com.cloud_ml_app_thesis.config.security.AccountDetails;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
@@ -28,15 +29,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        List authorities = user.getRoles().stream()
-                .map(Role::getName)
-                .map((UserRoleEnum role) -> new SimpleGrantedAuthority(role.getAuthority()))
-                .toList();
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                authorities
-        );
+        return new AccountDetails(user);
     }
 }

@@ -1,32 +1,27 @@
 package com.cloud_ml_app_thesis.controller;
 
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
 import com.cloud_ml_app_thesis.entity.Training;
-import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
-import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
+
+import com.cloud_ml_app_thesis.dto.request.training.TrainingStartRequest;
+
 import com.cloud_ml_app_thesis.service.TrainService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
 
 
 @RestController
 @RequestMapping("api/train")
 @Slf4j
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class TrainController {
     private final TrainService trainService;
 
-    @Autowired
-    public TrainController(TrainService trainService) {
-        this.trainService = trainService;
-    }
 
 //    @GetMapping("/create-train")
 //    ResponseEntity<Map<String, String>> createTrain(){
@@ -43,7 +38,7 @@ public class TrainController {
 //
 //    }
     @PostMapping("/train-model")
-    public ResponseEntity<CustomResponse> trainModel(@ModelAttribute TrainingRequest request) {
+    public ResponseEntity<ApiResponse<?>> trainModel(@ModelAttribute TrainingStartRequest request) {
 
 
         MultipartFile file = request.getFile();

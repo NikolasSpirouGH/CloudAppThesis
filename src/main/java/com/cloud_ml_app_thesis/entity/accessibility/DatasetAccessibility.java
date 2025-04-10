@@ -1,6 +1,5 @@
 package com.cloud_ml_app_thesis.entity.accessibility;
 
-import com.cloud_ml_app_thesis.entity.Dataset;
 import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,7 +12,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name="dataset_accessibility")
+@Table(name="CONST_DATASET_ACCESSIBILITIES")
 public class DatasetAccessibility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +25,4 @@ public class DatasetAccessibility {
     @Column
     private String description;
 
-    @OneToOne(mappedBy = "accessibility")
-    Dataset dataset;
 }

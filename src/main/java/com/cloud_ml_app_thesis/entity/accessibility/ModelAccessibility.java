@@ -11,17 +11,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @RequiredArgsConstructor
-@Table(name= "model_accessibilities")
+@Table(name= "CONST_MODEL_ACCESSIBILITES")
 public class ModelAccessibility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @Column
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ModelAccessibilityEnum name;
-    @Column
-    private String description;
 
-    @OneToOne(mappedBy = "accessibility")
-    private Model model;
+    @Column(nullable = false)
+    private String description;
 }

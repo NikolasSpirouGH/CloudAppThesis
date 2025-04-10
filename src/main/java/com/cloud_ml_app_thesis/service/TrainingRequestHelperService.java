@@ -1,16 +1,15 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.entity.*;
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.response.ErrorStatusResponse;
 import com.cloud_ml_app_thesis.payload.response.IdResponse;
 import com.cloud_ml_app_thesis.repository.*;
+import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
-import com.cloud_ml_app_thesis.service.AlgorithmService;
-import com.cloud_ml_app_thesis.service.DatasetService;
-import com.cloud_ml_app_thesis.service.ModelService;
 import com.cloud_ml_app_thesis.util.DatasetUtil;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import jakarta.persistence.EntityNotFoundException;

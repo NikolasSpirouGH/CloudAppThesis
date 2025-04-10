@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "models")
@@ -36,13 +37,21 @@ public class Model {
     @Column(name = "type")
     private String modelType;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "status_id")
     private ModelStatus status;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "accessibility_id")
     private ModelAccessibility accessibility;
+
+    @ManyToMany
+    @JoinTable(
+            name = "model_categories",
+            joinColumns = @JoinColumn(name ="model_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories;
 
     @OneToMany(mappedBy = "model", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ModelExecution> executions;

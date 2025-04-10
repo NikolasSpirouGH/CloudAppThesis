@@ -1,26 +1,28 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset_configuration.ConfiguredDatasetSelectTableDTO;
+import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.entity.Dataset;
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
-import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
+import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatusEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
-import com.cloud_ml_app_thesis.payload.response.InformationResponse;
-import com.cloud_ml_app_thesis.payload.response.ObjectsDataResponse;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
-import com.cloud_ml_app_thesis.repository.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.MinioClient;
+import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
@@ -52,8 +54,29 @@ public class DatasetConfigurationService {
 
     }
 
-    public CustomResponse uploadDatasetConfiguration(Integer datasetId, String username,
-                                                     String basicAttributesColumns, String targetClassColumn){
+    //TODO APO BIG SPY EINAI AFTO
+    public Integer datasetConfiguration(DatasetConfigurationCreateRequest request){
+        Dataset dataset = null;
+        try {
+            dataset = datasetRepository.findById(request.getId()).orElseThrow(() -> new NotFoundException("..."));
+        } catch (NotFoundException e) {
+            return null;
+        }
+        DatasetConfiguration datasetConfiguration = new DatasetConfiguration( request.getBasicAttributesColumns(), request.getTargetClassColumn(), ZonedDateTime.now(ZoneId.of("Europe/Athens")), dataset);
+        try {
+            DatasetConfiguration uploadedDatasetConfiguration = datasetConfigurationRepository.save(datasetConfiguration);
+            logger.info("Saved dataset configuration with ID {}", uploadedDatasetConfiguration.getId());
+            return uploadedDatasetConfiguration.getId();
+        } catch (DataAccessException e) {
+            logger.error("Failed to save dataset configuration", e);
+            //TODO Throw Custom Exception that will be handled from @ControllerAdvisor Class
+            e.getMessage();
+        }
+        return null;
+    }
+
+    public ResponseEntity<ApiResponse<?>> uploadDatasetConfiguration(Integer datasetId, String username,
+                                                  String basicAttributesColumns, String targetClassColumn){
        User user = userRepository.findByUsername(username)
                .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
@@ -73,19 +96,19 @@ public class DatasetConfigurationService {
             logger.error("Failed to save the Dataset Configuration fort Dataset '{}' by user '{}'.", datasetId, username );
             throw e;
         }
-        return new DataMapResponse("Your dataset configuration has benn saved with id '"+datasetConfiguration.getId() +"'.", Collections.singletonMap("id", datasetConfiguration.getId()));
+        return new ResponseEntity<ApiResponse<?>>(new ApiResponse<String>("Your dataset configuration has benn saved with id '"+datasetConfiguration.getId() +"'.", null, null, new Metadata()),HttpStatus.OK);
     }
-    public CustomResponse getDatasetConfigurations(String username){
-        Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatus.CUSTOM);
+    public ResponseEntity<ApiResponse<?>> getDatasetConfigurations(String username){
+        Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatusEnum.CUSTOM);
 
         if(datasetConfigurationsOptional.isPresent()){
             List<ConfiguredDatasetSelectTableDTO> configuredDatasetSelectTableDTOs = datasetConfigurationsOptional.get()
                     .stream()
                     .map(this::convertToConfiguredDatasetDTO)
                     .toList();
-            return new ObjectsDataResponse(configuredDatasetSelectTableDTOs);
+            return new ResponseEntity<ApiResponse<?>>(new ApiResponse<List<ConfiguredDatasetSelectTableDTO>>(configuredDatasetSelectTableDTOs, null, null, new Metadata()), HttpStatus.OK);
         }
-        return new InformationResponse("Could not find datasets for user '" + username + "'.");
+        return new ResponseEntity<ApiResponse<?>>(new ApiResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata()),HttpStatus.OK);
 
     }
     private ConfiguredDatasetSelectTableDTO convertToConfiguredDatasetDTO(DatasetConfiguration datasetConfiguration){

@@ -37,7 +37,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/algorithms/get-algorithms").permitAll()
+                        .requestMatchers("/api/algorithms/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -47,14 +48,14 @@ public class SecurityConfig {
     /**
      * Our password encoder: Argon2
      */
+//    @Bean
+//    public BCryptPasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-   /* @Bean
     public Argon2PasswordEncoder passwordEncoder() {
         return new Argon2PasswordEncoder(16, 32, 1, 4096, 3);
-    }*/
+    }
 
     /**
      * Provide AuthenticationManager if you need to manually authenticate

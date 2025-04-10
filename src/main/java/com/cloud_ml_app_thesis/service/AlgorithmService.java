@@ -1,9 +1,13 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.dto.request.algorithm.AlgorithmCreateRequest;
+import com.cloud_ml_app_thesis.dto.request.algorithm.AlgorithmUpdateRequest;
 import com.cloud_ml_app_thesis.entity.Algorithm;
 import com.cloud_ml_app_thesis.entity.AlgorithmConfiguration;
 import com.cloud_ml_app_thesis.repository.AlgorithmConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
+import com.cloud_ml_app_thesis.util.ValidationUtil;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -15,9 +19,7 @@ import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.core.Option;
 import weka.core.OptionHandler;
-import weka.clusterers.Clusterer;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -93,6 +95,7 @@ public class AlgorithmService {
         return algorithmRepository.findAll();
     }
 
+    //TODO check if it is necessary to exist
     public void chooseAlgorithm(Integer id, String options) {
         Optional<Algorithm> algorithm = algorithmRepository.findById(id);
         AlgorithmConfiguration algorithmConfiguration = new AlgorithmConfiguration();
@@ -103,10 +106,76 @@ public class AlgorithmService {
     }
 
 
+    public boolean deleteAlgorithm(Integer id){
+        if(!algorithmRepository.existsById(id)){
+            return false;
+        }
+        algorithmRepository.deleteById(id);
+        return true;
+    }
+    public Algorithm updateAlgorithm(Integer id, AlgorithmUpdateRequest request){
+        Algorithm algorithm = algorithmRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Algorithm not found."));
 
-    public AlgorithmConfiguration getAlgorithmConfiguration(Integer algoConfId) throws Exception {
-        return algorithmConfigurationRepository.findById(algoConfId)
-                .orElseThrow(() -> new Exception("Algorithm configuration ID " + algoConfId + " not found."));
+        boolean dataExist = false;
+
+        Integer newId = request.getNewId();
+        if(newId != null){
+            if(algorithmRepository.existsById(newId)){
+                throw new RuntimeException("An algorithm with ID " + newId + " already exists.");
+            }
+            algorithm.setId(newId);
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getName())){
+            algorithm.setName(request.getName());
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getDescription())){
+            algorithm.setDescription(request.getDescription());
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getOptions())){
+            algorithm.setOptions(request.getOptions());
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getOptionsDescription())){
+            algorithm.setOptionsDescription(request.getOptionsDescription());
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getDefaultOptions())){
+            algorithm.setDefaultOptions(request.getDefaultOptions());
+            dataExist = true;
+        }
+        if(ValidationUtil.stringExists(request.getClassName())){
+            algorithm.setClassName(request.getClassName());
+            dataExist = true;
+        }
+
+        if(!dataExist){
+            throw new IllegalArgumentException("At least one field must be provided for update.");
+        }
+        return algorithmRepository.save(algorithm);
+    }
+
+
+    public Algorithm createAlgorithm(AlgorithmCreateRequest request){
+        // Mapping DTO to Entity
+        Algorithm algorithm = new Algorithm();
+        algorithm.setName(request.getName());
+        algorithm.setDescription(request.getDescription());
+        algorithm.setOptions(request.getOptions());
+        algorithm.setOptionsDescription(request.getOptionsDescription());
+        algorithm.setDefaultOptions(request.getDefaultOptions());
+        algorithm.setClassName(request.getClassName());
+
+        // Save and return the saved entity
+        return algorithmRepository.save(algorithm);
+    }
+
+    public AlgorithmConfiguration getAlgorithmConfiguration(Integer id) throws Exception {
+        return algorithmConfigurationRepository.findById(id)
+                .orElseThrow(() -> new Exception("Algorithm configuration ID " + id + " not found."));
     }
 
 

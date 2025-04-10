@@ -10,7 +10,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name= "training_status")
+@Table(name= "CONST_TRAINING_STATUSES")
 public class TrainingStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,4 @@ public class TrainingStatus {
 
     @Column(name = "description", length = 1000)
     private String description;
-
-    @OneToOne(mappedBy = "status")
-    private Training training;
 }

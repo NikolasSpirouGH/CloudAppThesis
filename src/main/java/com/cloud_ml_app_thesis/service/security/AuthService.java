@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 public class AuthService {
     private final UserRepository userRepository;
 //    private final Argon2PasswordEncoder passwordEncoder;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final Argon2PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 

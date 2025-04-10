@@ -1,16 +1,21 @@
 package com.cloud_ml_app_thesis.controller;
 
 
+import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
 import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
 import com.cloud_ml_app_thesis.payload.response.CustomResponse;
 import com.cloud_ml_app_thesis.payload.response.DataMapResponse;
 import com.cloud_ml_app_thesis.payload.response.InformationResponse;
 import com.cloud_ml_app_thesis.payload.response.ObjectsDataResponse;
 import com.cloud_ml_app_thesis.service.DatasetConfigurationService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.Map;
 
 @Slf4j
 @CrossOrigin(origins = "*")
@@ -45,7 +50,7 @@ public class DatasetConfigurationController {
         }
     }
 
-    @GetMapping("/get-dataset-configurations")
+    @GetMapping("/configurations")
     public ResponseEntity<CustomResponse> getDatasetConfigurations(@RequestParam String username){
         CustomResponse response = datasetConfigurationService.getDatasetConfigurations(username);
         if(response instanceof ObjectsDataResponse){
@@ -56,4 +61,14 @@ public class DatasetConfigurationController {
         return ResponseEntity.internalServerError().body(new ErrorResponse("Unexpected while trying to fetch the Datasets."));
 
     }
+
+    @PostMapping("/create-dataset-conf")
+    public ResponseEntity<Map<String, Object>> datasetConfiguration(@Valid @RequestBody DatasetConfigurationCreateRequest request){
+        Integer id = datasetService.datasetConfiguration(request);
+        if(id != null){
+            return ResponseEntity.ok().body(Collections.singletonMap("id", id));
+        }
+        return ResponseEntity.badRequest().body(Collections.singletonMap("errorMessage", "Couldn't create the configured dataset."));
+    }
+
 }

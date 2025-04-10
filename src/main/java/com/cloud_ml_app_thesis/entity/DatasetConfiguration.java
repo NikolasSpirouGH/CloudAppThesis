@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.entity;
 
-import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatus;
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatusEnum;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -35,7 +36,7 @@ public class DatasetConfiguration {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private DatasetConfigurationStatus status;
+    private DatasetConfigurationStatusEnum status;
 
     @JsonBackReference
     @ManyToOne(cascade= CascadeType.ALL)
@@ -46,7 +47,7 @@ public class DatasetConfiguration {
         this.dataset = dataset;
     }
     public DatasetConfiguration(String basicAttributesColumns, String targetColumn,
-                                ZonedDateTime uploadDate, DatasetConfigurationStatus status, Dataset dataset) {
+                                ZonedDateTime uploadDate, DatasetConfigurationStatusEnum status, Dataset dataset) {
         this.id = null;
         this.basicAttributesColumns = basicAttributesColumns;
         this.targetColumn = targetColumn;
@@ -61,9 +62,9 @@ public class DatasetConfiguration {
         this.targetColumn = targetColumn;
         this.uploadDate = uploadDate;
         if(ValidationUtil.stringExists(basicAttributesColumns) || ValidationUtil.stringExists(targetColumn)){
-            this.status = DatasetConfigurationStatus.CUSTOM;
+            this.status = DatasetConfigurationStatusEnum.CUSTOM;
         } else{
-            this.status = DatasetConfigurationStatus.DEFAULT;
+            this.status = DatasetConfigurationStatusEnum.DEFAULT;
         }
         this.dataset = dataset;
     }
@@ -71,18 +72,18 @@ public class DatasetConfiguration {
     public void setBasicAttributesColumns(String columns){
         this.basicAttributesColumns = columns;
         if(ValidationUtil.stringExists(columns) || ValidationUtil.stringExists(this.targetColumn)){
-                this.status = DatasetConfigurationStatus.DEFAULT;
+                this.status = DatasetConfigurationStatusEnum.DEFAULT;
                 return;
         } else {
-            this.status = DatasetConfigurationStatus.CUSTOM;
+            this.status = DatasetConfigurationStatusEnum.CUSTOM;
         }
     }
     public void setTargetColumn(String column){
         this.targetColumn = column;
         if(ValidationUtil.stringExists(column) || ValidationUtil.stringExists(this.basicAttributesColumns)){
-                this.status = DatasetConfigurationStatus.DEFAULT;
+                this.status = DatasetConfigurationStatusEnum.DEFAULT;
         } else{
-            this.status = DatasetConfigurationStatus.CUSTOM;
+            this.status = DatasetConfigurationStatusEnum.CUSTOM;
         }
 
     }
