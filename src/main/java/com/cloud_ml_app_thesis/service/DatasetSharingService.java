@@ -27,6 +27,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static com.cloud_ml_app_thesis.util.SecurityUtils.hasAnyRole;
+
 @Service
 @RequiredArgsConstructor
 public class DatasetSharingService {
@@ -145,32 +147,55 @@ public class DatasetSharingService {
      */
     @Transactional
     public Dataset copySharedDataset(Integer datasetId, User currentUser, String targetUsername) {
-        Dataset original = datasetRepository.findById(datasetId)
+        Dataset originalDataset = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new EntityNotFoundException("Dataset not found"));
 
-        // Check if the dataset is shared with the current user
-        datasetShareRepository.findByDatasetAndSharedWithUser(original, currentUser)
-                .orElseThrow(() -> new EntityNotFoundException("Dataset is not shared with user"));
+        boolean isPrivileged = hasAnyRole(currentUser, UserRoleEnum.ADMIN.toString(), UserRoleEnum.DATASET_MANAGER.toString());
 
-        // Check if the dataset has already been copied by the current user
+
+        // Determine target user
+        User targetUser;
+        //copy a dataset that is shared with him case
+        if(targetUsername == null || targetUsername.equals(currentUser.getUsername())){
+            targetUser= currentUser;
+            // If regular user, ensure the dataset is shared with them
+            if (!isPrivileged) {
+                datasetShareRepository.findByDatasetAndSharedWithUser(originalDataset, currentUser)
+                        .orElseThrow(() -> new AccessDeniedException("Dataset is not shared with this user."));
+            }
+        } else { //The user must be privileged to copy for another
+            //Prevent regular users from copying for others
+            if(!isPrivileged){
+                throw new AccessDeniedException("Only ADMIN or DATASET_MANAGER can copy for another user.");
+            }
+            targetUser = userRepository.findByUsername(targetUsername)
+                    .orElseThrow(() -> new EntityNotFoundException("Target user not found"));
+        }
+
+        // Check if the dataset has already been copied by the target user
+        if(hasUserCopiedDataset(originalDataset, targetUser)){
+            //Maybe not RuntimeException
+            throw new IllegalStateException("Dataset already copied.");
+        }
 
         Dataset copy = new Dataset();
         copy.setUser(currentUser);
-        copy.setOriginalFileName(original.getOriginalFileName());
-        copy.setFileName("COPY_" + System.currentTimeMillis() + "_" + original.getFileName());
-        copy.setFilePath(original.getFilePath()); // TODO: optionally duplicate the file physically
-        copy.setFileSize(original.getFileSize());
-        copy.setContentType(original.getContentType());
+        copy.setOriginalFileName(originalDataset.getOriginalFileName());
+        copy.setFileName("COPY_" + System.currentTimeMillis() + "_" + originalDataset.getFileName());
+        copy.setFilePath(originalDataset.getFilePath()); // TODO: optionally duplicate the file physically
+        copy.setFileSize(originalDataset.getFileSize());
+        copy.setContentType(originalDataset.getContentType());
         copy.setUploadDate(ZonedDateTime.now());
-        copy.setAccessibility(original.getAccessibility());
-        copy.setCategories(original.getCategories());
-        copy.setDescription("Copy of dataset ID " + original.getId());
+        copy.setAccessibility(originalDataset.getAccessibility());
+        copy.setCategories(originalDataset.getCategories());
+        copy.setDescription("Copy of dataset ID " + originalDataset.getId());
 
         Dataset savedCopy = datasetRepository.save(copy);
 
         DatasetCopy copyLog = new DatasetCopy();
-        copyLog.setOriginalDataset(original);
+        copyLog.setOriginalDataset(originalDataset);
         copyLog.setCopiedBy(currentUser);
+        copyLog.setCopyOperatedBy(currentUser);
         copyLog.setCopyDate(ZonedDateTime.now());
         datasetCopyRepository.save(copyLog);
 
@@ -180,7 +205,7 @@ public class DatasetSharingService {
     /**
      * Check if a user has already copied a dataset
      */
-    public boolean hasUserCopiedDataset(Dataset dataset, User user) {
+    private boolean hasUserCopiedDataset(Dataset dataset, User user) {
         return datasetCopyRepository.existsByOriginalDatasetAndCopiedBy(dataset, user);
     }
 
@@ -190,7 +215,7 @@ public class DatasetSharingService {
         }
 
         //TODO why it throws exception here? Can someone just be authenticated having the role USER or another role?
-        if (!SecurityUtils.hasAnyRole(currentUser, SecurityUtils.authority(UserRoleEnum.ADMIN), SecurityUtils.authority(UserRoleEnum.DATASET_MANAGER))) {
+        if (!hasAnyRole(currentUser, SecurityUtils.authority(UserRoleEnum.ADMIN), SecurityUtils.authority(UserRoleEnum.DATASET_MANAGER))) {
             throw new AccessDeniedException("Only ADMIN or DATASET_MANAGER can copy for another user.");
         }
 

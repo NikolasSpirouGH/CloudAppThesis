@@ -28,5 +28,9 @@ public class DatasetCopy {
     @JoinColumn(name = "copied_by_user_id", nullable = false)
     private User copiedBy;
 
+    @ManyToOne
+    @JoinColumn(name = "copy_operated_by_user_id", nullable = false)
+    private User copyOperatedBy;
+
     private ZonedDateTime copyDate;
 }
