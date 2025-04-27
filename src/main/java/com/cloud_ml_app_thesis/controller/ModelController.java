@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.controller;
 
-import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
+import com.cloud_ml_app_thesis.dto.request.*;
+import com.cloud_ml_app_thesis.dto.response.*;
 import com.cloud_ml_app_thesis.service.ModelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;

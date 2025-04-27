@@ -3,11 +3,14 @@ package com.cloud_ml_app_thesis.controller;
 import com.cloud_ml_app_thesis.dto.request.dataset.*;
 import com.cloud_ml_app_thesis.dto.response.ApiResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
+import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 
+import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.service.DatasetService;
 import com.cloud_ml_app_thesis.service.DatasetSharingService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -34,6 +37,7 @@ public class DatasetController {
 
     private final DatasetService datasetService;
     private final DatasetSharingService datasetSharingService;
+    private final UserRepository userRepository;
 
     @PostMapping("/search")
     public ResponseEntity<Page<Dataset>> searchDatasets(
@@ -50,12 +54,14 @@ public class DatasetController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
         String username = userDetails.getUsername();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        ApiResponse<?> response = datasetService.uploadDataset(file, request);
-        if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
-            return ResponseEntity.internalServerError().body(response);
+        ApiResponse<?> datasetResponse = datasetService.uploadDataset(request.getFile(), user);
+        if (datasetResponse.getErrorCode() != null && !datasetResponse.getErrorCode().isBlank()) {
+            return ResponseEntity.internalServerError().body(datasetResponse);
         }
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok().body(datasetResponse);
     }
 
     @PostMapping
@@ -73,8 +79,10 @@ public class DatasetController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<?>> updateDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUpdateRequest request) {
         String username = userDetails.getUsername();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        ApiResponse<?> response = datasetService.uploadDataset(file, username);
+        ApiResponse<?> response = datasetService.uploadDataset(request.getFile(), user);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }

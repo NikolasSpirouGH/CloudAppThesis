@@ -27,9 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -75,28 +73,39 @@ public class DatasetConfigurationService {
         return null;
     }
 
-    public ResponseEntity<ApiResponse<?>> uploadDatasetConfiguration(Integer datasetId, String username,
-                                                  String basicAttributesColumns, String targetClassColumn){
-       User user = userRepository.findByUsername(username)
-               .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadDatasetConfiguration(Integer datasetId, String username,
+                                                                                       String basicAttributesColumns, String targetClassColumn) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
         Dataset dataset = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + datasetId));
 
-        if(!dataset.getUser().getUsername().equals(username)){
+        if (!dataset.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("Dataset does not belong to the specified user");
         }
 
-        DatasetConfiguration datasetConfiguration = new DatasetConfiguration(basicAttributesColumns, targetClassColumn, ZonedDateTime.now(ZoneId.of("Europe/Athens")),dataset);
+        DatasetConfiguration datasetConfiguration = new DatasetConfiguration(
+                basicAttributesColumns,
+                targetClassColumn,
+                ZonedDateTime.now(ZoneId.of("Europe/Athens")),
+                dataset
+        );
 
         try {
             datasetConfigurationRepository.save(datasetConfiguration);
-
-        } catch (DataAccessException e){
-            logger.error("Failed to save the Dataset Configuration fort Dataset '{}' by user '{}'.", datasetId, username );
-            throw e;
+        } catch (DataAccessException e) {
+            logger.error("Failed to save the Dataset Configuration for Dataset '{}' by user '{}'.", datasetId, username);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "DB_SAVE_ERROR", "Failed to save dataset configuration", null));
         }
-        return new ResponseEntity<ApiResponse<?>>(new ApiResponse<String>("Your dataset configuration has benn saved with id '"+datasetConfiguration.getId() +"'.", null, null, new Metadata()),HttpStatus.OK);
+
+        // Prepare response data
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("id", datasetConfiguration.getId());
+        responseData.put("timestamp", ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+
+        return ResponseEntity.ok(new ApiResponse<>(responseData, "", "Your dataset configuration has been saved.", null));
     }
     public ResponseEntity<ApiResponse<?>> getDatasetConfigurations(String username){
         Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatusEnum.CUSTOM);

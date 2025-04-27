@@ -171,7 +171,7 @@ public class DatasetService {
 
         User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
 
-        String originalFilename = file.getOriginalFilename();
+        String originalFilename = request.getOriginalFileName();
         if(originalFilename.isBlank()){
             return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
@@ -179,7 +179,7 @@ public class DatasetService {
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
 
         try {
-            minioService.uploadFile(file, uniqueFilename);
+            minioService.uploadFile(request.getFile(), uniqueFilename);
         } catch (MinioFileUploadException e) {
             throw new RuntimeException(e);
         } catch (RuntimeException e) {
@@ -190,8 +190,8 @@ public class DatasetService {
         dataset.setOriginalFileName(originalFilename);
         dataset.setFileName(uniqueFilename);
         dataset.setFilePath("dataset/" + uniqueFilename);
-        dataset.setFileSize(file.getSize());
-        dataset.setContentType(file.getContentType());
+        dataset.setFileSize(request.getFile().getSize());
+        dataset.setContentType(request.getFile().getContentType());
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
         try {
@@ -261,7 +261,7 @@ public class DatasetService {
 
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename,ownerUser.getUsername());
 
-        Optional<Dataset> datasetTemp = datasetRepository.findByFileName();
+        Optional<Dataset> datasetTemp = datasetRepository.findByFileName(request.getFileName());
 
         try {
             minioService.uploadFile(file, uniqueFilename);
@@ -296,7 +296,7 @@ public class DatasetService {
         minioService.getFileInputStream(dataset.getOriginalFileName(), dataset.getFilePath());
     }*/
 
-    public Dataset uploadDataset(MultipartFile file, User user)  {
+    public ApiResponse<Dataset> uploadDataset(MultipartFile file, User user)  {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename == null || originalFilename.isBlank()){
@@ -322,7 +322,7 @@ public class DatasetService {
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
         try {
-           return datasetRepository.save(dataset);
+            return new ApiResponse<>(dataset, null, "Dataset uploaded successfully", null);
 
         } catch (DataAccessException e){
             logger.error("Failed to save Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), user.getUsername() );
