@@ -30,7 +30,7 @@ public class DatasetSharingController {
             Authentication authentication
     ) {
         String sharedByUsername = authentication.getName();
-        datasetSharingService.shareDatasetWithUsers(datasetId, request.getUsernames(), sharedByUsername, dto.getComment());
+        datasetSharingService.shareDatasetWithUsers(datasetId, request.getUsernames(), sharedByUsername, request.getComment());
         return ResponseEntity.ok().build();
     }
 
@@ -41,7 +41,7 @@ public class DatasetSharingController {
             @PathVariable Integer datasetId,
             @RequestBody DatasetRemoveSharedUsersRequest request
     ) {
-        datasetSharingService.removeUsersFromSharedDataset(userDetails, datasetId, request.getUsernames());
+        datasetSharingService.removeUsersFromSharedDataset(userDetails, datasetId, request.getUsernames(), "");
         return ResponseEntity.ok().build();
     }
 

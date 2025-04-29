@@ -2,11 +2,8 @@ package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
-import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
-import com.cloud_ml_app_thesis.payload.response.ErrorStatusResponse;
-import com.cloud_ml_app_thesis.payload.response.IdResponse;
+import com.cloud_ml_app_thesis.dto.request.training.TrainingStartRequest;
+import com.cloud_ml_app_thesis.dto.response.*;
 import com.cloud_ml_app_thesis.repository.*;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
@@ -46,7 +43,7 @@ public class TrainingRequestHelperService{
 
 
 
-    public TrainingDataInput configureTrainingDataInputByTrainCase(TrainingRequest trainingRequest) throws Exception {
+    public TrainingDataInput configureTrainingDataInputByTrainCase(TrainingStartRequest trainingRequest) throws Exception {
 
         MultipartFile file = trainingRequest.getFile();
         boolean multipartFileExist = ValidationUtil.multipartFileExist(trainingRequest.getFile());
@@ -82,55 +79,51 @@ public class TrainingRequestHelperService{
         DatasetConfiguration datasetConfiguration = null;
         // 1st check - Can't provide trainingId and modelId at the same time
         if(trainingIdExist && modelIdExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model based on a Training and a Model at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse(null, "", "You can't train a model based on a Training and a Model at the same time.", null));
             return trainingDataInput;
         }
 
         // 2nd check - Can't provide datasetId and a new File
         if(datasetIdExist && multipartFileExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model with an already uploaded Dataset and a new Dataset File at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't train a model with an already uploaded Dataset and a new Dataset File at the same time."));
             return trainingDataInput;
         }
 
         // 3rd check - Can't provide datasetId and datasetConfigurationId at the same time
         if(datasetIdExist && datasetConfigurationIdExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model providing a datasetId and a datasetConfigurationId at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't train a model providing a datasetId and a datasetConfigurationId at the same time."));
             return trainingDataInput;
         }
 
         // 4th check - Can't provide datasetId and datasetConfigurationId at the same time
         if(datasetConfigurationIdExist && basicCharacteristicsColumnsExist && targetClassColumnExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model providing a datasetConfigurationId and booth basic characteristics columns and target class column at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't train a model providing a datasetConfigurationId and booth basic characteristics columns and target class column at the same time."));
             return trainingDataInput;
         }
 
         // 5th check - Can't provide algorithmId and algorithmConfigurationId at the same time
         if(algorithmIdExist && algorithmConfigurationIdExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model providing a algorithmId and a algorithmConfigurationId at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't train a model providing a algorithmId and a algorithmConfigurationId at the same time."));
             return trainingDataInput;
         }
         // 6th check - Can't provide algorithmId and algorithmConfigurationId at the same time
         if(algorithmConfigurationIdExist && algorithmOptionsExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't train a model providing algorithm options and a algorithmConfigurationId at the same time."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't train a model providing algorithm options and a algorithmConfigurationId at the same time."));
             return trainingDataInput;
         }
 
         if(algorithmConfigurationIdExist && datasetConfigurationIdExist && targetClassColumnExist && basicCharacteristicsColumnsExist && algorithmOptionsExist){
-            trainingDataInput.setErrorResponse(new ErrorResponse("You can't retrain a model providing all the configuration again. Please start a new train."));
+            trainingDataInput.setErrorResponse(new ApiResponse("You can't retrain a model providing all the configuration again. Please start a new train."));
             return trainingDataInput;
         }
 
         // 7th check - If MultiPartFile is provided then upload the dataset and get the datasetId to continue
         if(multipartFileExist){
-            CustomResponse uploadFileResponse = datasetService.uploadDataset(file, trainingRequest.getUsername());
-            if(uploadFileResponse instanceof IdResponse){
-             datasetId = ((IdResponse)uploadFileResponse).getId();
+            ApiResponse uploadFileResponse = datasetService.uploadDataset(file, trainingRequest.getUsername());
+             datasetId = (uploadFileResponse).getId();
                 datasetIdExist = true;
-            } else if (uploadFileResponse instanceof ErrorResponse) {
-                trainingDataInput.setErrorResponse((ErrorResponse) uploadFileResponse);
-            } else{
-                trainingDataInput.setErrorResponse(new ErrorStatusResponse(HttpStatus.INTERNAL_SERVER_ERROR));
-            }
+                trainingDataInput.setErrorResponse((ApiResponse) uploadFileResponse);
+                trainingDataInput.setErrorResponse(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR));
         }
 
         //*********** CONFIGURING TRAINING DATASET**************
