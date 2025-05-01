@@ -28,8 +28,8 @@ public class AlgorithmConfigurationService {
         algorithmConfigurationRepository.deleteById(id);
         return true;
     }
-    public AlgorithmConfiguration createAlgorithmConfiguration(AlgorithmConfigurationCreateRequest request){
-        Algorithm algorithm = algorithmRepository.findById(request.getAlgorithmId()).orElseThrow(() -> new EntityNotFoundException("Algorithm was not found"));
+    public AlgorithmConfiguration createAlgorithmConfiguration(AlgorithmConfigurationCreateRequest request, int algoId) {
+        Algorithm algorithm = algorithmRepository.findById(algoId).orElseThrow(() -> new EntityNotFoundException("Algorithm was not found"));
 
         AlgorithmConfiguration algorithmConfiguration = new AlgorithmConfiguration();
         algorithmConfiguration.setOptions(request.getOptions());

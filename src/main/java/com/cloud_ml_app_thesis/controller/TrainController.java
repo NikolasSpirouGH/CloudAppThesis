@@ -51,13 +51,14 @@ public class TrainController {
             /*Path tempFile = Files.createTempFile("upload_", file.getOriginalFilename());
             Files.copy(file.getInputStream(), tempFile, starnd)*/
             User user = userRepository.findByUsername("bigspy").orElseThrow();
-            CustomResponse response = trainService.startTraining(request, user);
-            if(response instanceof DataMapResponse) {
-                return ResponseEntity.ok().body((DataMapResponse) response);
+            ApiResponse<?> response = trainService.startTraining(request, user);
+            if(response.getMessage() != null) {
+                return ResponseEntity.internalServerError().body(response);
             }
-            return ResponseEntity.internalServerError().body(new ErrorResponse("Unexpected error while trying to start your model training."));
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(new ErrorResponse("Unexpected error while trying to start your model training."));
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(null);
         }
     }
 

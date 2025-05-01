@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.controller;
 
-import com.cloud_ml_app_thesis.payload.request.CreateUserRequest;
+import com.cloud_ml_app_thesis.dto.request.user.UserCreateRequest;
 import com.cloud_ml_app_thesis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/create-user")
-    public ResponseEntity<String> createUser(@RequestBody CreateUserRequest createUserRequest) {
+    public ResponseEntity<String> createUser(@RequestBody UserCreateRequest createUserRequest) {
         userService.createUser(createUserRequest);
         return ResponseEntity.ok("User created.");
     }

@@ -322,6 +322,7 @@ public class DatasetService {
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
         try {
+            dataset = datasetRepository.save(dataset);
             return new ApiResponse<>(dataset, null, "Dataset uploaded successfully", null);
 
         } catch (DataAccessException e){

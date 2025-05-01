@@ -50,7 +50,7 @@ public class DatasetController {
     }
 
 
-    @PostMapping
+    @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
         String username = userDetails.getUsername();
@@ -64,7 +64,7 @@ public class DatasetController {
         return ResponseEntity.ok().body(datasetResponse);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATASET_MANAGER')")
     public ResponseEntity<ApiResponse<?>> createDataset(@ModelAttribute DatasetCreateRequest request) {
 
@@ -108,7 +108,7 @@ public class DatasetController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/info/{id}")
+    @GetMapping("/infos/{id}")
     public ResponseEntity<ApiResponse<?>> getDatasetsInfo(@AuthenticationPrincipal UserDetails userDetails) {
         String username = null;
         if(userDetails != null){
@@ -130,7 +130,7 @@ public class DatasetController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getDataset(@PathVariable String id) {
 
-        ApiResponse<?> response = datasetService.getDataset(id);
+        ApiResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -139,7 +139,7 @@ public class DatasetController {
     @GetMapping("/info/{id}")
     public ResponseEntity<ApiResponse<?>> getDatasetInfo(@PathVariable String id) {
 
-        ApiResponse<?> response = datasetService.getDatasetInfo(id);
+        ApiResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -149,7 +149,7 @@ public class DatasetController {
     @GetMapping("/download/{id}")
     public ResponseEntity<ApiResponse<?>> downloadDataset(@PathVariable String id) {
 
-        ApiResponse<?> response = datasetService.downloadDataset(id);
+        ApiResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }

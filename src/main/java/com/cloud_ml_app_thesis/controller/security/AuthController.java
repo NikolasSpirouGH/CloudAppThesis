@@ -5,8 +5,8 @@ import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.status.UserStatus;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
-import com.cloud_ml_app_thesis.payload.request.LoginRequest;
-import com.cloud_ml_app_thesis.payload.request.UserRegistrationRequest;
+import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
+import com.cloud_ml_app_thesis.dto.request.user.UserRegisterRequest;
 import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
@@ -83,15 +83,15 @@ public class AuthController {
 //    }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerAccount(@RequestBody UserRegistrationRequest registerRequest) {
-        if(!registerRequest.password().equals(registerRequest.confirmPassword())){
+    public ResponseEntity<String> registerAccount(@RequestBody UserRegisterRequest registerRequest) {
+        if(!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())){
             throw new IllegalArgumentException("Your password doesn't match your password confirmation.");
         }
-        if (userRepository.existsByUsername(registerRequest.username())) {
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new IllegalArgumentException("Username already in use.");
         }
 
-        if (userRepository.existsByEmail(registerRequest.username())) {
+        if (userRepository.existsByEmail(registerRequest.getUsername())) {
             throw new IllegalArgumentException("Email already in use.");
         }
 
@@ -100,16 +100,16 @@ public class AuthController {
 
         UserStatus status = userStatusRepository.findByName(UserStatusEnum.INACTIVE).orElseThrow(() -> new EntityNotFoundException("Could not find Inactive Status."));
         User user = new User();
-        user.setEmail(registerRequest.email());
-        user.setUsername(registerRequest.username());
-        user.setPassword(passwordEncoder.encode(registerRequest.password()));
+        user.setEmail(registerRequest.getEmail());
+        user.setUsername(registerRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setRoles(Set.of(role));
         user.setStatus(status);
-        user.setAge(registerRequest.age());
-        user.setFirstName(registerRequest.firstName());
-        user.setLastName(registerRequest.lastName());
-        user.setCountry(registerRequest.country());
-        user.setProfession(registerRequest.profession());
+        user.setAge(registerRequest.getAge());
+        user.setFirstName(registerRequest.getFirstName());
+        user.setLastName(registerRequest.getLastName());
+        user.setCountry(registerRequest.getCountry());
+        user.setProfession(registerRequest.getProfession());
 
 //        Account account = new Account();
 //        account.setEmail(registerRequest.email());
@@ -125,8 +125,8 @@ public class AuthController {
     public String authenticateAccount(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.username(),
-                        loginRequest.password()
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
                 )
         );
 

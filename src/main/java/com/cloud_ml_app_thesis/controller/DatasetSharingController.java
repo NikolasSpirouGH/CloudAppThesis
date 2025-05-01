@@ -68,7 +68,7 @@ public class DatasetSharingController {
             Authentication authentication
     ) {
         User user = (User) authentication.getPrincipal();
-        datasetSharingService.declineDatasetShare(datasetId, user);
+     //   datasetSharingService.declineDatasetShare(datasetId, user);
         return ResponseEntity.ok().build();
     }
 }

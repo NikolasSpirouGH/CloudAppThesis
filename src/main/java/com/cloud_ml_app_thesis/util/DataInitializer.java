@@ -29,6 +29,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Component;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
@@ -53,18 +54,18 @@ public class DataInitializer implements CommandLineRunner {
 
     private final String adminPassword = "adminPassword"; // Replace with actual password retrieval
     private final String userPassword = "userPassword"; // Replace with actual password retrieval
+    private final Argon2PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
         initializeUserStatuses();
-        initializeCategories();
         initializeTrainingStatuses();
         initializeModelStatuses();
         initializeDatasetAccessibility();
         initializeAlgorithms();
         initializeUserRoles();
         recreateAdmins();
-
+        initializeCategories();
 
     }
 
@@ -72,7 +73,9 @@ public class DataInitializer implements CommandLineRunner {
         Category category = new Category();
         category.setName("Uncategorized");
         category.setDescription("Category for entities that have no parent category.");
+        category.setCreatedBy(userRepository.findByUsername("bigspy").orElseThrow());
         categoryRepository.save(category);
+
     }
 
     private void initializeUserRoles(){
@@ -124,11 +127,11 @@ public class DataInitializer implements CommandLineRunner {
         UserStatus defaultStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Default status not found"));
         List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", adminPassword, 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description"), null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", adminPassword, 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description"), null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", userPassword, 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), new UserStatus(1, UserStatusEnum.ACTIVE, "Some description" ), null, null, null)
+                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)),defaultStatus, null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), defaultStatus, null, null, null),
+                new User(null, "johnken","john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), defaultStatus, null, null, null)
         );
-
+        categoryRepository.deleteAll();
         admins.forEach(admin -> {
             userRepository.findByEmail(admin.getEmail())
                     .ifPresent(userRepository::delete);

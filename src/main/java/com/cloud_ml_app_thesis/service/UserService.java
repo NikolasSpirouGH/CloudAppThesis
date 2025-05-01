@@ -1,13 +1,12 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.dto.request.user.UserCreateRequest;
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
-import com.cloud_ml_app_thesis.payload.request.CreateUserRequest;
-import com.cloud_ml_app_thesis.payload.response.CustomResponse;
-import com.cloud_ml_app_thesis.payload.response.ErrorStatusResponse;
-import com.cloud_ml_app_thesis.payload.response.SingleObjectDataResponse;
 import com.cloud_ml_app_thesis.repository.RoleRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
@@ -25,14 +24,14 @@ public class UserService {
     private UserRepository userRepository;
     private RoleRepository roleRepository;
     private UserStatusRepository userStatusRepository;
-    public CustomResponse createUser(CreateUserRequest request) {
+    public ApiResponse<?> createUser(UserCreateRequest request) {
         Optional<User> userExists = userRepository.findByEmail(request.getEmail());
         if(userExists.isPresent()) {
-          return new ErrorStatusResponse("User already exists.", HttpStatus.BAD_REQUEST);
+          return new ApiResponse<>("User already exists.", null, null, new Metadata());
         }
 
-        if(!request.getPassword().equals(request.getPasswordConfirmation())){
-            return new ErrorStatusResponse("Password doesn't match with password confirmation.", HttpStatus.BAD_REQUEST);
+        if(!request.getPassword().equals(request.getConfirmPassword())){
+            return new ApiResponse("Password doesn't match with password confirmation.",null, null, new Metadata());
         }
 
         Role userRole = roleRepository.findByName(UserRoleEnum.USER)
@@ -54,6 +53,6 @@ public class UserService {
                 .build();
         user = userRepository.save(user);
 
-        return new SingleObjectDataResponse(user, "OK");
+        return new ApiResponse<>(user, "OK", null, new Metadata());
     }
 }

@@ -120,7 +120,7 @@ public class TrainingRequestHelperService{
         // 7th check - If MultiPartFile is provided then upload the dataset and get the datasetId to continue
         if(multipartFileExist){
             ApiResponse uploadFileResponse = datasetService.uploadDataset(file, user);
-             datasetId = (String) uploadFileResponse.getDataHeader();
+             datasetId = ((Dataset)uploadFileResponse.getDataHeader()).getId().toString();
                 datasetIdExist = true;
                 trainingDataInput.setErrorResponse((ApiResponse) uploadFileResponse);
                 trainingDataInput.setErrorResponse(new ApiResponse(null, "", "You can't retrain a model providing all the configuration again. Please start a new train." , new Metadata()));

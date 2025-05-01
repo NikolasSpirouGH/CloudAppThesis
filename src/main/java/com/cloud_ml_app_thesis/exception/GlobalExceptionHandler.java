@@ -1,6 +1,8 @@
 package com.cloud_ml_app_thesis.exception;
 
-import com.cloud_ml_app_thesis.payload.response.ErrorResponse;
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
+import com.cloud_ml_app_thesis.dto.response.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,28 +17,28 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(value = {Exception.class})
-    public ResponseEntity<Object> handleGenericException(Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", ex.getMessage());
+    public ResponseEntity<ApiResponse<?>> handleGenericException(Exception ex, WebRequest request) {
+        ApiResponse<?> errorResponse = new ApiResponse<>(null, null, "Internal Server Error",new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(FileProcessingException.class)
-    public ResponseEntity<ErrorResponse> handleFileProcessingException(FileProcessingException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("File processing error", ex.getMessage());
+    public ResponseEntity<ApiResponse<?>> handleFileProcessingException(FileProcessingException ex) {
+        ApiResponse<?> errorResponse = new ApiResponse<>(null, null,"File processing error", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MinioFileUploadException.class)
-    public ResponseEntity<ErrorResponse> handleMinioFileUploadException(MinioFileUploadException ex) {
+    public ResponseEntity<ApiResponse<?>> handleMinioFileUploadException(MinioFileUploadException ex) {
         logger.error("Minio file upload exception: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = new ErrorResponse("File upload failed", ex.getMessage());
+        ApiResponse<?> errorResponse = new ApiResponse<>(null, null, "File upload failed", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AlgorithmNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAlgorithmNotFoundException(AlgorithmNotFoundException ex) {
+    public ResponseEntity<ApiResponse<?>> handleAlgorithmNotFoundException(AlgorithmNotFoundException ex) {
         logger.error("Algorithm not found exception: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = new ErrorResponse("Algorithm could not be found", ex.getMessage());
+        ApiResponse errorResponse = new ApiResponse(null, null, "Algorithm could not be found", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

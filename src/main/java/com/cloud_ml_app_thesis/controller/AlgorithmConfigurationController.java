@@ -39,9 +39,9 @@ public class AlgorithmConfigurationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping
-    public ResponseEntity<AlgorithmConfiguration> createAlgorithmConfiguration(@RequestBody AlgorithmConfigurationCreateRequest request) {
-        return  ResponseEntity.ok(algorithmConfigurationService.createAlgorithmConfiguration(request));
+    @PostMapping("/{algoId}")
+    public ResponseEntity<AlgorithmConfiguration> createAlgorithmConfiguration(@RequestBody AlgorithmConfigurationCreateRequest request, @PathVariable @Positive Integer algoId) {
+        return  ResponseEntity.ok(algorithmConfigurationService.createAlgorithmConfiguration(request, algoId));
     }
 
     @PatchMapping("/{id}")
