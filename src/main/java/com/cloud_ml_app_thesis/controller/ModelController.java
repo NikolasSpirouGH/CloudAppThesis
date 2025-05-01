@@ -44,7 +44,7 @@ public class ModelController {
             responseCode = "200",
             description = "A Generic Response object in JSON format.",
             content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = CustomResponse.class)))
+                    array = @ArraySchema(schema = @Schema(implementation = ApiResponse.class)))
     )
     @ResponseBody
     @GetMapping(path = "/status/{modelId}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)

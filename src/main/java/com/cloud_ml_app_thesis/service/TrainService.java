@@ -4,8 +4,8 @@ import com.cloud_ml_app_thesis.dto.train.MyTrainingDTO;
 import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
-import com.cloud_ml_app_thesis.payload.request.TrainingRequest;
-import com.cloud_ml_app_thesis.payload.response.*;
+import com.cloud_ml_app_thesis.dto.request.training.*;
+import com.cloud_ml_app_thesis.dto.response.*;
 import com.cloud_ml_app_thesis.repository.*;
 
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
@@ -146,10 +146,10 @@ public class TrainService {
     }*/
 
     //TODO Check if the Status is being correctly set at the correct time
-    public CustomResponse startTraining(TrainingRequest request) throws Exception {
+    public ApiResponse<?> startTraining(TrainingStartRequest request, User user) throws Exception {
 
 
-        TrainingDataInput trainingDataInput =  trainingRequestHelperService.configureTrainingDataInputByTrainCase(request);
+        TrainingDataInput trainingDataInput =  trainingRequestHelperService.configureTrainingDataInputByTrainCase(request, user);
 
         train(trainingDataInput.getTraining(),trainingDataInput.getDataset(), trainingDataInput.getFilename(),trainingDataInput.getDatasetConfiguration(), trainingDataInput.getAlgorithmConfiguration() );
         return new DataMapResponse("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",Collections.singletonMap("id", trainingDataInput.getTraining().getId()));

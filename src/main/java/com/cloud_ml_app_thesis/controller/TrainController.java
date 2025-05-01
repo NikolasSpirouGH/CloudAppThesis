@@ -5,11 +5,14 @@ import com.cloud_ml_app_thesis.entity.Training;
 
 import com.cloud_ml_app_thesis.dto.request.training.TrainingStartRequest;
 
+import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.service.TrainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,9 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class TrainController {
     private final TrainService trainService;
+    private final UserRepository userRepository;
 
 
-//    @GetMapping("/create-train")
+    //    @GetMapping("/create-train")
 //    ResponseEntity<Map<String, String>> createTrain(){
 //        try {
 //            Training training = new Training();
@@ -46,7 +50,8 @@ public class TrainController {
         try {
             /*Path tempFile = Files.createTempFile("upload_", file.getOriginalFilename());
             Files.copy(file.getInputStream(), tempFile, starnd)*/
-            CustomResponse response = trainService.startTraining(request);
+            User user = userRepository.findByUsername("bigspy").orElseThrow();
+            CustomResponse response = trainService.startTraining(request, user);
             if(response instanceof DataMapResponse) {
                 return ResponseEntity.ok().body((DataMapResponse) response);
             }
