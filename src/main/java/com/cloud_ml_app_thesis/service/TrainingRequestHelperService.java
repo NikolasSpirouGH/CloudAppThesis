@@ -184,6 +184,7 @@ public class TrainingRequestHelperService{
             if(algorithmOptionsExist){
                 algorithmConfiguration.setOptions(algorithmOptions);
             }
+            algorithmConfiguration.setUser(user);
             algorithmConfiguration = algorithmConfigurationRepository.save(algorithmConfiguration);
         }
 
@@ -218,6 +219,7 @@ public class TrainingRequestHelperService{
                 algorithmConfiguration = training.getAlgorithmConfiguration();
                 if(algorithmOptionsExist){
                     algorithmConfiguration.setOptions(algorithmOptions);
+                    algorithmConfiguration.setUser(user);
                     algorithmConfiguration = algorithmConfigurationRepository.save(algorithmConfiguration);
                 }
             }

@@ -8,12 +8,15 @@ import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigur
 import com.cloud_ml_app_thesis.dto.response.ApiResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
+import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
+import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepository;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
@@ -72,6 +75,7 @@ public class DatasetService {
     private final DatasetConfigurationRepository datasetConfigurationRepository;
     private final TrainRepository trainRepository;
     private final UserRepository userRepository;
+    private final DatasetAccessibilityRepository datasetAccessibilityRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(DatasetService.class);
 
@@ -319,6 +323,10 @@ public class DatasetService {
         dataset.setFilePath("dataset/" + objectName);
         dataset.setFileSize(file.getSize());
         dataset.setContentType(file.getContentType());
+        datasetAccessibilityRepository.findAll().forEach(a -> System.out.println("👀 " + a.getName()));
+
+        DatasetAccessibility privateAccessibility = datasetAccessibilityRepository.findByName(DatasetAccessibilityEnum.PRIVATE).orElseThrow(() -> new EntityNotFoundException("Could not find PRIVATE dataset accessibility"));
+        dataset.setAccessibility(privateAccessibility);
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
         try {

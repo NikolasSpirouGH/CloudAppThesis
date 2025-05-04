@@ -20,7 +20,7 @@ public class DatasetAccessibility {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private DatasetAccessibilityEnum accessibility;
+    private DatasetAccessibilityEnum name;
 
     @Column
     private String description;

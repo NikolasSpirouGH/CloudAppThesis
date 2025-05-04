@@ -126,10 +126,14 @@ public class DataInitializer implements CommandLineRunner {
     private void recreateAdmins() {
         UserStatus defaultStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Default status not found"));
+        Role userRole = roleRepository.findByName(UserRoleEnum.USER)
+                .orElseThrow(() -> new RuntimeException("Role USER was not found"));
+        Role adminRole = roleRepository.findByName(UserRoleEnum.ADMIN)
+                .orElseThrow(() -> new RuntimeException("Role USER was not found"));
         List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",  Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)),defaultStatus, null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), defaultStatus, null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(new Role(1, UserRoleEnum.USER, "Standard User", null)), defaultStatus, null, null, null)
+                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",  Set.of(userRole),defaultStatus, null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",Set.of(userRole), defaultStatus, null, null, null),
+                new User(null, "johnken","john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
         );
         categoryRepository.deleteAll();
         admins.forEach(admin -> {
