@@ -43,7 +43,7 @@ public class TrainingRequestHelperService{
 
 
 
-    public TrainingDataInput configureTrainingDataInputByTrainCase(TrainingRequest trainingRequest) throws Exception {
+    public TrainingDataInput configureTrainingDataInputByTrainCase(TrainingStartRequest trainingRequest, User user) throws Exception {
 
         MultipartFile file = trainingRequest.getFile();
         boolean multipartFileExist = ValidationUtil.multipartFileExist(trainingRequest.getFile());
