@@ -2,12 +2,15 @@ package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.entity.Model;
 import com.cloud_ml_app_thesis.entity.status.ModelStatus;
+import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
 import com.cloud_ml_app_thesis.repository.TrainRepository;
+import com.cloud_ml_app_thesis.repository.status.ModelStatusRepository;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,7 @@ public class ModelService {
     private final MinioClient minioClient;
 
     private final ModelRepository modelRepository;
+    private final ModelStatusRepository modelStatusRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class);
 
@@ -62,10 +66,10 @@ public class ModelService {
 
     public void saveModel(Integer trainingId, String modelUrl, String results, String modelType) {
         Model model = new Model();
-        model.setTraining(trainRepository.findById(trainingId).get());
+        model.setTraining(trainRepository.findById(trainingId).orElseThrow(() -> new EntityNotFoundException("Could not find training with id: "+ trainingId)));
         model.setUrlModelMinio(modelUrl); // Truncate if needed
         model.setEvaluation(results); // Truncate if needed
-        model.setStatus(new ModelStatus());
+        model.setStatus(modelStatusRepository.findByName(ModelStatusEnum.FINISHED).orElseThrow(() -> new EntityNotFoundException("Could not find FINISHED model status")));
         model.setModelType(modelType);
         modelRepository.save(model);
     }
