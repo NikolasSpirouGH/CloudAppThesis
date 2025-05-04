@@ -18,7 +18,7 @@ public class DatasetAccessibility {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column
+    @Column(name = "name")
     @Enumerated(EnumType.STRING)
     private DatasetAccessibilityEnum name;
 

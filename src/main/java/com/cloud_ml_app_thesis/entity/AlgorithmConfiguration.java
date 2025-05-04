@@ -30,19 +30,22 @@ public class AlgorithmConfiguration {
 
     public AlgorithmConfiguration(Algorithm algorithm){
         this.algorithm = algorithm;
+        if(ValidationUtil.stringExists(algorithm.getOptions())){
+            this.options = algorithm.getDefaultOptions().replaceAll("\\s+", "");
+        }
     }
-    public void setOption(String options){
+    public void setOptions(String options){
         if(ValidationUtil.stringExists(options)){
-            this.options = options;
+            this.options = options.replaceAll("\\s+", "");
         } else if(algorithm != null){
-            this.options = algorithm.getOptions();
+            this.options = algorithm.getOptions().replaceAll("\\s+", "");
         } else{
             this.options = null;
         }
     }
-    public void setOption(Algorithm algorithm){
+    public void setOptions(Algorithm algorithm){
         if(algorithm != null){
-            this.options = algorithm.getOptions();
+            this.options = algorithm.getOptions().replaceAll("\\s+", "");
         } else{
             this.options = null;
         }

@@ -201,7 +201,7 @@ public class TrainingRequestHelperService{
 
         //*********** END OF CONFIGURING TRAINING AlgorithmConfiguration **************
         //TODO algorithmId and trainingId or modelID exists return error
-        Training training = null;
+        Training training = new Training();
         if(trainingIdExist || modelIdExist){
 
             if(trainingIdExist){
@@ -238,7 +238,9 @@ public class TrainingRequestHelperService{
         trainingDataInput.setDatasetConfiguration(datasetConfiguration);
         trainingDataInput.setFilename(datasetConfiguration.getDataset().getFileName());
         trainingDataInput.setAlgorithmConfiguration(algorithmConfiguration);
+        training = trainRepository.save(training);
         trainingDataInput.setTraining(training);
+
         if(multipartFileExist){
            trainingDataInput.setDataset(DatasetUtil.prepareDataset(file, datasetConfiguration.getDataset().getFileName(), datasetConfiguration));
         }
