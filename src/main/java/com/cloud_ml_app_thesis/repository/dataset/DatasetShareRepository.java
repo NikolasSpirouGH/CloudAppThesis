@@ -12,8 +12,11 @@ import java.util.Set;
 
 public interface DatasetShareRepository extends JpaRepository<DatasetShare, Integer> {
     Optional<DatasetShare> findByDatasetAndSharedWithUser(Dataset dataset, User sharedWithUser);
+    Optional<DatasetShare> findByDatasetAndSharedWithUserUsername(Dataset dataset, String username);
     List<DatasetShare> findByDatasetAndSharedWithUserUsernameIn(Dataset dataset, Set<String> usernames);
     Set<DatasetShare> findByDatasetAndSharedWithUserIn(Dataset dataset, Set<User> usernames);
+
+    void deleteById(Integer id);
     void deleteAllByDataset(Dataset dataset);
     void deleteByDatasetAndSharedWithUserIn(Dataset dataset, List<User> users);
     void deleteByDatasetAndSharedWithUserUsernameIn(Dataset dataset, Set<String> users);

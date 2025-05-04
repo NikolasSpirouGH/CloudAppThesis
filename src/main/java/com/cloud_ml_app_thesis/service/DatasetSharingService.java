@@ -8,6 +8,7 @@ import com.cloud_ml_app_thesis.entity.dataset.DatasetCopy;
 import com.cloud_ml_app_thesis.entity.dataset.DatasetShareHistory;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 import com.cloud_ml_app_thesis.enumeration.action.DatasetShareActionTypeEnum;
+import com.cloud_ml_app_thesis.helper.AuthorizationHelper;
 import com.cloud_ml_app_thesis.repository.action.DatasetSareActionTypeRepository;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetShareHistoryRepository;
@@ -39,7 +40,7 @@ public class DatasetSharingService {
     private final DatasetShareHistoryRepository datasetShareHistoryRepository;
     private final DatasetCopyRepository datasetCopyRepository;
     private final DatasetSareActionTypeRepository datasetSareActionTypeRepository;
-
+    private final AuthorizationHelper authorizationHelper;
     /**
      * Share a dataset with a group of users
      */
@@ -209,6 +210,36 @@ public class DatasetSharingService {
         return datasetCopyRepository.existsByOriginalDatasetAndCopiedBy(dataset, user);
     }
 
+    public void declineDatasetShare(Integer datasetId, String targetUsername, String comments, UserDetails userDetails){
+        Dataset dataset = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new EntityNotFoundException("Dataset requested for reject does not exist."));
+        String sharedWithUsername = userDetails.getUsername();
+
+        if(targetUsername!= null && !targetUsername.isBlank()){
+            // check if he is superuser
+            if(!authorizationHelper.isSuperDatasetUser(userDetails)) {
+                throw new AccessDeniedException("You are not authorized to reject Dataset Sharing for other user.");
+            }
+            sharedWithUsername = targetUsername;
+        }
+
+        User sharedWithUser = userRepository.findByUsername(sharedWithUsername)
+                .orElseThrow(() -> new EntityNotFoundException("User could not be found"));
+
+        User actionUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("User could not be found"));
+        //Check if the dataset is indeed shared
+        DatasetShare datasetShare = datasetShareRepository.findByDatasetAndSharedWithUserUsername(dataset, sharedWithUsername)
+                .orElseThrow(() -> new EntityNotFoundException("The dataset is not shared with the user"));
+
+        datasetShareRepository.deleteById(datasetShare.getId());
+
+        DatasetShareActionType declineAction = datasetSareActionTypeRepository.findByName(DatasetShareActionTypeEnum.DECLINED)
+                .orElseThrow(() -> new EntityNotFoundException("REMOVE action could not be found."));
+
+        datasetShareHistoryRepository.save(new DatasetShareHistory(null, dataset, sharedWithUser, actionUser, ZonedDateTime.now(ZoneId.of("Europe/Athens")), declineAction, comments));
+
+    }
     private User resolveTargetUser(User currentUser, String targetUsername) {
         if (targetUsername == null || targetUsername.equals(currentUser.getUsername())) {
             return currentUser;

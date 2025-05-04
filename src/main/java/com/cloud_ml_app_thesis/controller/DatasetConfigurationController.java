@@ -6,8 +6,8 @@ import com.cloud_ml_app_thesis.dto.response.ApiResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.service.DatasetConfigurationService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,17 +17,14 @@ import java.util.Map;
 @Slf4j
 @CrossOrigin(origins = "*")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("api/dataset-configurations")
 public class DatasetConfigurationController {
+
     private final DatasetConfigurationService datasetConfigurationService;
 
-    @Autowired
-    public DatasetConfigurationController(DatasetConfigurationService datasetConfigurationService) {
-        this.datasetConfigurationService = datasetConfigurationService;
-    }
-
     @PostMapping("/upload-dataset-configuration")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadDataset(@RequestParam("datasetId") String datasetId,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadDatasetConfiguration(@RequestParam("datasetId") String datasetId,
                                                                           @RequestParam("username") String username,
                                                                           @RequestParam("basicAttributesColumns") String basicAttributesColumns,
                                                                           @RequestParam("targetClassColumn") String targetClassColumn) {
