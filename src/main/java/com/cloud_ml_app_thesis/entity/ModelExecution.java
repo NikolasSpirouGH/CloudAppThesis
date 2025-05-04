@@ -1,5 +1,6 @@
 package com.cloud_ml_app_thesis.entity;
 
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +29,6 @@ public class ModelExecution {
     private String predictionResult;
 
     @ManyToOne
-    @JoinColumn(name = "dataset_configuration_id")
-    private DatasetConfiguration datasetConfiguration;
+    @JoinColumn(name = "dataset_id")
+    private Dataset dataset;
 }

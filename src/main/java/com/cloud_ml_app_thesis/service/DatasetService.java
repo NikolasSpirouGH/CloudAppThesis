@@ -574,4 +574,19 @@ public class DatasetService {
         data.setClassIndex(-1);
         return data;
     }
+    public Instances wekaFileToInstances(MultipartFile file) throws Exception {
+        // Convert MultipartFile to InputStream
+        try (InputStream inputStream = file.getInputStream()) {
+            // Use Weka's DataSource to read ARFF or CSV
+            ConverterUtils.DataSource source = new ConverterUtils.DataSource(inputStream);
+            Instances data = source.getDataSet();
+
+            // Optional: set class index (usually last)
+            if (data.classIndex() == -1 && data.numAttributes() > 0) {
+                data.setClassIndex(data.numAttributes() - 1);
+            }
+
+            return data;
+        }
+    }
 }

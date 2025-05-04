@@ -1,15 +1,17 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
-import com.cloud_ml_app_thesis.entity.Model;
+
 import com.cloud_ml_app_thesis.entity.ModelExecution;
+import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.ModelExecutionRepository;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
+import com.cloud_ml_app_thesis.repository.accessibility.ModelAccessibilityRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
 import weka.core.Attribute;
@@ -27,19 +29,18 @@ public class ModelExecutionService {
     private final ModelRepository modelRepository;
     private final ModelService modelService;
     private final ModelExecutionRepository modelExecutionRepository;
-    private final DatasetConfigurationRepository datasetConfigurationRepository;
+    private final ModelAccessibilityRepository modelAccessibilityRepository;
     private final DatasetService datasetService;
 
     private static final Logger logger = LoggerFactory.getLogger(ModelExecutionService.class);
 
-    public ModelExecution executeModel(Integer modelId, Integer datasetId) throws Exception {
-        logger.info("Starting model execution for model ID: {} and dataset ID: {}", modelId, datasetId);
+    public ModelExecution executeModel(Integer modelId, MultipartFile predictDataset) throws Exception {
+        logger.info("Starting model execution for model ID: {} and dataset ID: {}", modelId, predictDataset);
 
-        List<String> predictions = predict(modelId, datasetId);
+        List<String> predictions = predict(modelId, predictDataset);
         ModelExecution execution = new ModelExecution();
         execution.setModel(modelRepository.findById(modelId).get());
         execution.setExecutedAt(LocalDateTime.now());
-        execution.setDatasetConfiguration(datasetConfigurationRepository.findById(datasetId).get());
         execution.setPredictionResult(predictions.toString());
         execution.setSuccess(true);
 
@@ -48,21 +49,20 @@ public class ModelExecutionService {
     }
 
 
-    public List<String> predict(Integer modelId, Integer datasetId) throws Exception {
+    public List<String> predict(Integer modelId, MultipartFile dataset) throws Exception {
         Object model = modelService.loadModel(modelId);
         logger.info("Model loaded: {}", model.getClass().getName());
-        DatasetConfiguration datasetConfiguration = datasetConfigurationRepository.findById(datasetId)
-                .orElseThrow(() -> new RuntimeException("Dataset configuration not found with id: " + datasetId));
-        Instances dataset = datasetService.loadPredictionDataset(datasetConfiguration);
+        Dataset uploadDataset = (Dataset)datasetService.uploadDataset(dataset).getDataHeader();
+        Instances predictDataset = datasetService.wekaFileToInstances(dataset);
 
-        logger.info("Loaded dataset with {} instances for prediction", dataset.numInstances());
+        logger.info("Loaded dataset with {} instances for prediction", predictDataset);
         logger.info("Dataset structure: {}", dataset);
 
         if (model instanceof Classifier) {
             logger.info("Loading classifier...");
-            return predictWithClassifier((Classifier) model, dataset);
+            return predictWithClassifier((Classifier) model, predictDataset);
         } else if (model instanceof Clusterer) {
-            return predictWithClusterer((Clusterer) model, dataset);
+            return predictWithClusterer((Clusterer) model, predictDataset);
         } else {
             logger.error("Unsupported model type: {}", model.getClass().getName());
             throw new RuntimeException("Unsupported model type");
@@ -106,4 +106,6 @@ public class ModelExecutionService {
         logger.info("Cluster predictions completed successfully. Total predictions: {}", predictions.size());
         return predictions;
     }
+
+
 }
