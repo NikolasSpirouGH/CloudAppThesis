@@ -237,6 +237,7 @@ public class DatasetService {
         dataset.setFileSize(file.getSize());
         dataset.setContentType(file.getContentType());
         dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+        dataset.setAccessibility(datasetAccessibilityRepository.findByName(DatasetAccessibilityEnum.PRIVATE).orElseThrow(() -> new EntityNotFoundException("Private Dataset could not be found!")));
 
         try {
            dataset = datasetRepository.save(dataset);
@@ -246,7 +247,7 @@ public class DatasetService {
             throw e;
         }
 
-        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
+        return new ApiResponse<>(dataset, null, null, new Metadata());
     }
     @Transactional
     public ApiResponse<?> createDataset(DatasetCreateRequest request) {

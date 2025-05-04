@@ -24,6 +24,7 @@ public class ModelExecutionController {
             ModelExecution execution = modelExecutionService.executeModel(modelId, predictDataset);
             return ResponseEntity.ok("Prediction OK: " + execution.getModel());
         } catch (Exception e) {
+           e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }
     }

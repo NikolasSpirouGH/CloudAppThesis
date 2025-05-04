@@ -42,6 +42,8 @@ public class ModelExecutionService {
         execution.setModel(modelRepository.findById(modelId).get());
         execution.setExecutedAt(LocalDateTime.now());
         execution.setPredictionResult(predictions.toString());
+        Dataset dataset = (Dataset)datasetService.uploadDataset(predictDataset).getDataHeader();
+        execution.setDataset(dataset);
         execution.setSuccess(true);
 
         logger.info("Model execution completed successfully with predictions: {}", predictions);
@@ -52,7 +54,7 @@ public class ModelExecutionService {
     public List<String> predict(Integer modelId, MultipartFile dataset) throws Exception {
         Object model = modelService.loadModel(modelId);
         logger.info("Model loaded: {}", model.getClass().getName());
-        Dataset uploadDataset = (Dataset)datasetService.uploadDataset(dataset).getDataHeader();
+
         Instances predictDataset = datasetService.wekaFileToInstances(dataset);
 
         logger.info("Loaded dataset with {} instances for prediction", predictDataset);
@@ -68,6 +70,8 @@ public class ModelExecutionService {
             throw new RuntimeException("Unsupported model type");
         }
     }
+
+
 
     private List<String> predictWithClassifier(Classifier classifier, Instances dataset) throws Exception {
         dataset.setClassIndex(dataset.numAttributes() - 1);
