@@ -465,6 +465,32 @@ public class DatasetService {
         return fileName.substring(lastIndex);
     }
 
+    public Instances loadPredictionDataset(Dataset dataset) throws Exception {
+        URI datasetUri = new URI(dataset.getFilePath());
+        logger.info("Dataset URI: {}", datasetUri);
+        String bucketName = Paths.get(datasetUri.getPath()).getName(0).toString();
+        String objectName = Paths.get(datasetUri.getPath()).subpath(1, Paths.get(datasetUri.getPath()).getNameCount()).toString();
+        logger.info("Bucket Name: {}", bucketName);
+        logger.info("Object Name: {}", objectName);
+
+        InputStream datasetStream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build()
+        );
+        logger.info("Dataset Stream obtained successfully.");
+
+        // Convert the dataset to ARFF format if it is in CSV or Excel format
+        String fileExtension = getFileExtension(objectName);
+        if (fileExtension.equalsIgnoreCase(".csv")) {
+            String arffFilePath = csvToArff(datasetStream, objectName);
+            datasetStream = Files.newInputStream(Paths.get(arffFilePath));
+        }
+
+        Instances data = new ConverterUtils.DataSource(datasetStream).getDataSet();
+        return data;
+    }
     public Instances loadPredictionDataset(DatasetConfiguration datasetConfiguration) throws Exception {
         URI datasetUri = new URI(datasetConfiguration.getDataset().getFilePath());
         logger.info("Dataset URI: {}", datasetUri);

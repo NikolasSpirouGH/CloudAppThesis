@@ -38,18 +38,21 @@ public class ModelExecutionController {
     }
 
     @GetMapping("/prediction-result")
-    public ResponseEntity<String> getPredictionResults(
-            @RequestParam Integer modelId,
-            @RequestParam Integer predictionFileId
+    public ResponseEntity<Resource> getPredictionResults(
+            @RequestParam Integer modelExecutionId
     ) {
         try {
-            String result = modelExecutionService.getPredictionResults(modelId, predictionFileId);
-            return ResponseEntity.ok(result);
+            Resource result = modelExecutionService.getPredictionResults(modelExecutionId);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"predictions.arff\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(result);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Execution not found.");
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
