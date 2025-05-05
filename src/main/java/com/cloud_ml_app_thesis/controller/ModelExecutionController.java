@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/model-exec")
 @RequiredArgsConstructor
@@ -25,9 +27,8 @@ public class ModelExecutionController {
             Resource predictionFile = modelExecutionService.executeModel(modelId, predictDataset);
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=prediction_results.arff")
-                    .contentType(MediaType.TEXT_PLAIN)
-                    .contentLength(predictionFile.contentLength())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"predictions.arff\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(predictionFile);
 
         } catch (Exception e) {

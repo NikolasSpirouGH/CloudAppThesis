@@ -46,7 +46,7 @@ public class MinioService {
 
             // Create the PutObjectArgs with the necessary details
             PutObjectArgs putObjectArgs = PutObjectArgs.builder()
-                    .bucket(bucketName)
+                    .bucket("ml-datasets")
                     .object(objectName)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())

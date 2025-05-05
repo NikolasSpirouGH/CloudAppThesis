@@ -63,8 +63,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import com.cloud_ml_app_thesis.exception.FileProcessingException;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class DatasetService {
@@ -90,44 +88,6 @@ public class DatasetService {
     @Value("http://127.0.0.1:9000")
     private String minioUrl;
 
-
-/*
-    public Integer uploadDataset(MultipartFile file, String email) {
-        try {
-            //Xrisimopoioume thn putObject anti gia upload object otan theloume na anevasoume olo to arxeio
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(file.getOriginalFilename())
-                            .stream(file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build());
-
-            Dataset dataset = new Dataset();
-            dataset.setFileUrl(minioUrl + "/" + bucketName + "/" + file.getOriginalFilename());
-            String fileUrl = dataset.getFileUrl();
-            Optional<AppUser> user = userRepository.findByEmail(email);
-            //Tha pairnei ton user me authentication apo to jwt automata
-            if(user.isPresent()) {
-                dataset.setUser(user.get());
-            } else {
-                return null;
-            }
-            dataset.setUploadedDateTime(LocalDateTime.now());
-            dataset.setFileName(file.getOriginalFilename());
-
-            if(datasetRepository.findByFileUrl(fileUrl).isPresent()) {
-                //TODO CUSTOM EXCEPTION AND LOGGING
-                throw new IllegalArgumentException();
-            }
-            dataset = datasetRepository.save(dataset);
-            return dataset.getId();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-*/
 
 
     public Page<Dataset> searchDatasets(DatasetSearchRequest request, int page, int size, String sortBy, String sortDirection) {
@@ -168,89 +128,6 @@ public class DatasetService {
 
         return datasetRepository.findAll(spec, pageable);
     }
-    @Transactional
-    //TODO check what is going on here.
-    public ApiResponse<?> uploadDataset(DatasetUploadRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
-
-        String originalFilename = request.getOriginalFileName();
-        if(originalFilename.isBlank()){
-            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
-        }
-
-        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
-
-        try {
-            minioService.uploadFile(request.getFile(), uniqueFilename);
-        } catch (MinioFileUploadException e) {
-            throw new RuntimeException(e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
-        }
-        Dataset dataset = new Dataset();
-        dataset.setUser(user);
-        dataset.setOriginalFileName(originalFilename);
-        dataset.setFileName(uniqueFilename);
-        dataset.setFilePath("dataset/" + uniqueFilename);
-        dataset.setFileSize(request.getFile().getSize());
-        dataset.setContentType(request.getFile().getContentType());
-        dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-
-        try {
-           dataset = datasetRepository.save(dataset);
-
-        } catch (DataAccessException e){
-            logger.error("Failed to save the Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), username );
-            throw e;
-        }
-
-        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
-    }
-  @Transactional
-    public ApiResponse<?> uploadDataset(MultipartFile file) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
-
-        String originalFilename = file.getOriginalFilename();
-        if(originalFilename.isBlank()){
-            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
-        }
-
-        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
-
-        try {
-            minioService.uploadFile(file, uniqueFilename);
-        } catch (MinioFileUploadException e) {
-            throw new RuntimeException(e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
-        }
-        Dataset dataset = new Dataset();
-        dataset.setUser(user);
-        dataset.setOriginalFileName(originalFilename);
-        dataset.setFileName(uniqueFilename);
-        dataset.setFilePath("dataset/" + uniqueFilename);
-        dataset.setFileSize(file.getSize());
-        dataset.setContentType(file.getContentType());
-        dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-        dataset.setAccessibility(datasetAccessibilityRepository.findByName(DatasetAccessibilityEnum.PRIVATE).orElseThrow(() -> new EntityNotFoundException("Private Dataset could not be found!")));
-
-        try {
-           dataset = datasetRepository.save(dataset);
-
-        } catch (DataAccessException e){
-            logger.error("Failed to save the Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), username );
-            throw e;
-        }
-
-        return new ApiResponse<>(dataset, null, null, new Metadata());
-    }
-
 
     @Transactional
     public ApiResponse<?> createDataset(DatasetCreateRequest request) {
