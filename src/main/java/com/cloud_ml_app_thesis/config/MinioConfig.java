@@ -30,6 +30,9 @@ public class MinioConfig {
     @Value("ml-models")
     private String modelsBucketName;
 
+    @Value("ml-predictions")
+    private String predictionResultsBucketName;
+
     @Bean
     public MinioClient minioClient() {
         try {
@@ -43,6 +46,8 @@ public class MinioConfig {
 
             // Check if models bucket exists, if not create one
             ensureBucketExists(minioClient, modelsBucketName);
+
+            ensureBucketExists(minioClient, predictionResultsBucketName);
 
             return minioClient;
         } catch (MinioException e) {

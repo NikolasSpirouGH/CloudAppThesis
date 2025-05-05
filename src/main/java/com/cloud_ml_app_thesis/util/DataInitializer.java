@@ -14,10 +14,7 @@ import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnu
 import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
-import com.cloud_ml_app_thesis.repository.AlgorithmRepository;
-import com.cloud_ml_app_thesis.repository.CategoryRepository;
-import com.cloud_ml_app_thesis.repository.RoleRepository;
-import com.cloud_ml_app_thesis.repository.UserRepository;
+import com.cloud_ml_app_thesis.repository.*;
 import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepository;
 import com.cloud_ml_app_thesis.repository.status.ModelStatusRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
@@ -55,6 +52,7 @@ public class DataInitializer implements CommandLineRunner {
     private final String adminPassword = "adminPassword"; // Replace with actual password retrieval
     private final String userPassword = "userPassword"; // Replace with actual password retrieval
     private final Argon2PasswordEncoder passwordEncoder;
+    private final ModelExecutionRepository modelExecutionRepository;
 
     @Override
     public void run(String... args) {
@@ -135,6 +133,7 @@ public class DataInitializer implements CommandLineRunner {
                 new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",Set.of(userRole), defaultStatus, null, null, null),
                 new User(null, "johnken","john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
         );
+        modelExecutionRepository.deleteAll();
         categoryRepository.deleteAll();
         admins.forEach(admin -> {
             userRepository.findByEmail(admin.getEmail())

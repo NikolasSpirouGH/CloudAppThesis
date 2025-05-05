@@ -1,22 +1,29 @@
 package com.cloud_ml_app_thesis.service;
 
 
+import com.cloud_ml_app_thesis.dto.response.ApiResponse;
 import com.cloud_ml_app_thesis.entity.ModelExecution;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.ModelExecutionRepository;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
 import com.cloud_ml_app_thesis.repository.accessibility.ModelAccessibilityRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
 import weka.core.Attribute;
+import weka.core.Instance;
 import weka.core.Instances;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,20 +41,38 @@ public class ModelExecutionService {
 
     private static final Logger logger = LoggerFactory.getLogger(ModelExecutionService.class);
 
-    public ModelExecution executeModel(Integer modelId, MultipartFile predictDataset) throws Exception {
-        logger.info("Starting model execution for model ID: {} and dataset ID: {}", modelId, predictDataset);
+    public Resource executeModel(Integer modelId, MultipartFile predictDataset) throws Exception {
+        logger.info("Starting model execution for model ID: {} and dataset: {}", modelId, predictDataset.getOriginalFilename());
 
         List<String> predictions = predict(modelId, predictDataset);
+
+        ApiResponse<?> response = datasetService.uploadPredictionDataset(predictDataset);
+        Dataset dataset = (Dataset) response.getDataHeader();
+
+        Instances predictInstances = datasetService.wekaFileToInstances(predictDataset);
+        predictInstances.setClassIndex(predictInstances.numAttributes() - 1);
+
+        for (int i = 0; i < predictInstances.numInstances(); i++) {
+            Instance instance = predictInstances.instance(i);
+            instance.setClassValue(predictions.get(i));
+        }
+
+        // Save execution in DB
         ModelExecution execution = new ModelExecution();
-        execution.setModel(modelRepository.findById(modelId).get());
+        execution.setModel(modelRepository.findById(modelId).orElseThrow());
         execution.setExecutedAt(LocalDateTime.now());
         execution.setPredictionResult(predictions.toString());
-        Dataset dataset = (Dataset)datasetService.uploadDataset(predictDataset).getDataHeader();
         execution.setDataset(dataset);
         execution.setSuccess(true);
+        modelExecutionRepository.save(execution);
 
         logger.info("Model execution completed successfully with predictions: {}", predictions);
-        return modelExecutionRepository.save(execution);
+
+        // Convert Instances to ARFF format string
+        String updatedArffString = predictInstances.toString();
+        byte[] fileBytes = updatedArffString.getBytes(StandardCharsets.UTF_8);
+
+        return new ByteArrayResource(fileBytes);
     }
 
 
@@ -70,7 +95,6 @@ public class ModelExecutionService {
             throw new RuntimeException("Unsupported model type");
         }
     }
-
 
 
     private List<String> predictWithClassifier(Classifier classifier, Instances dataset) throws Exception {
@@ -112,4 +136,15 @@ public class ModelExecutionService {
     }
 
 
+    public String getPredictionResults(Integer modelId, Integer datasetId) {
+        Optional<ModelExecution> executionOpt = modelExecutionRepository
+                .findByModelIdAndDatasetId(modelId, datasetId);
+
+        if (executionOpt.isEmpty()) {
+            throw new EntityNotFoundException("No execution found for given model and dataset");
+        }
+
+        ModelExecution execution = executionOpt.get();
+        return execution.getPredictionResult(); // Already saved during initial prediction
+    }
 }

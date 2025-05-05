@@ -25,6 +25,7 @@ import com.cloud_ml_app_thesis.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import javassist.NotFoundException;
@@ -249,6 +250,8 @@ public class DatasetService {
 
         return new ApiResponse<>(dataset, null, null, new Metadata());
     }
+
+
     @Transactional
     public ApiResponse<?> createDataset(DatasetCreateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -340,8 +343,47 @@ public class DatasetService {
         }
     }
 
+    public ApiResponse<?> uploadPredictionDataset(MultipartFile file) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
 
-//*********************************************************************************************************************
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User could not be found!"));
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+        }
+
+        String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
+
+        try {
+            // ✅ Use the prediction-specific bucket logic
+            minioService.uploadFileToPredictionBucket(file, uniqueFilename);
+        } catch (MinioFileUploadException e) {
+            throw new RuntimeException("Failed to upload prediction dataset to MinIO", e);
+        }
+
+        Dataset dataset = new Dataset();
+        dataset.setUser(user);
+        dataset.setOriginalFileName(originalFilename);
+        dataset.setFileName(uniqueFilename);
+        dataset.setFilePath("prediction/" + uniqueFilename); // ✅ stored under "prediction/" namespace
+        dataset.setFileSize(file.getSize());
+        dataset.setContentType(file.getContentType());
+        dataset.setUploadDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+
+        DatasetAccessibility privateAccessibility = datasetAccessibilityRepository
+                .findByName(DatasetAccessibilityEnum.PRIVATE)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find PRIVATE dataset accessibility"));
+        dataset.setAccessibility(privateAccessibility);
+
+        dataset = datasetRepository.save(dataset);
+        return new ApiResponse<>(dataset, null, "Prediction dataset uploaded successfully", new Metadata());
+    }
+
+
+    //*********************************************************************************************************************
     public ApiResponse<?> getDatasets(String username){
         Optional<List<Dataset>> datasetsOptional = datasetRepository.findAllByUserUsername(username);
         if(datasetsOptional.isPresent()){

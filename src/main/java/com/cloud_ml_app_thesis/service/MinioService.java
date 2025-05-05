@@ -27,6 +27,7 @@ public class MinioService {
     @Value("${minio.bucket.name}")
     private String bucketName;
 
+
     public MinioService(@Value("${minio.url}") String minioUrl,
                         @Value("${minio.access.name}") String accessKey,
                         @Value("${minio.access.secret}") String secretKey) {
@@ -61,6 +62,20 @@ public class MinioService {
         } catch (InvalidKeyException | NoSuchAlgorithmException | IOException e) {
             logger.error("Technical error occurred while uploading the file", e);
             throw new RuntimeException("Technical error occurred while uploading the file", e);
+        }
+    }
+
+    public void uploadFileToPredictionBucket(MultipartFile file, String objectName) throws MinioFileUploadException {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket("ml-predictions")
+                            .object(objectName)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build());
+        } catch (Exception e) {
+            throw new MinioFileUploadException("Failed to upload prediction file", e);
         }
     }
 
