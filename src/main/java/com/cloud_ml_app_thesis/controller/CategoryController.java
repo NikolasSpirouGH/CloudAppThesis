@@ -5,8 +5,14 @@ import com.cloud_ml_app_thesis.dto.request.category.CategoryRejectRequest;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
 import com.cloud_ml_app_thesis.entity.Category;
 import com.cloud_ml_app_thesis.entity.CategoryRequest;
-import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +24,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 
 import java.util.List;
 
+@Tag(name = "Category Management", description = "Endpoints for managing model categories")
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -28,50 +36,94 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
+    @Operation(summary = "Delete a category", description = "Deletes a category by ID. Only accessible by ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteCategory(@AuthenticationPrincipal UserDetails userDetails, @PathVariable @Positive Integer id){
+    public ResponseEntity<Void> deleteCategory(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "ID of the category to delete") @PathVariable @Positive Integer id) {
         String username = userDetails.getUsername();
         categoryService.deleteCategory(username, id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping
+    @Operation(summary = "Submit a new category request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Category request submitted",
+                    content = @Content(schema = @Schema(implementation = CategoryRequest.class))
+            )
+    })
+    @PostMapping("/addCategory")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CategoryRequest> createCategory(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody CategoryCreateRequest request){
-            String username = userDetails.getUsername();
-            return new ResponseEntity<>(categoryService.createCategory(username, request), HttpStatus.CREATED);
+    public ResponseEntity<MyResponse<?>> createCategory(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CategoryCreateRequest request) {
+        String username = userDetails.getUsername();
+       MyResponse<?> createCategoryRequest = categoryService.createCategory(username, request);
+        return ResponseEntity.ok().body(createCategoryRequest);
     }
 
+    @Operation(summary = "Approve a pending category request")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Category approved",
+                    content = @Content(schema = @Schema(implementation = Category.class)))
+    })
     @PostMapping("{requestId}/approve")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<Category> approveCategoryRequest(@AuthenticationPrincipal UserDetails userDetails, @PathVariable @Positive Integer requestId){
+    public ResponseEntity<MyResponse<?>> approveCategoryRequest(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Request ID to approve") @PathVariable @Positive Integer requestId) {
         String username = userDetails.getUsername();
-        return new ResponseEntity<>(categoryService.approveCategoryRequest(username, requestId), HttpStatus.CREATED);
+        MyResponse<?> approvedRequest = categoryService.approveCategoryRequest(username, requestId);
+        return ResponseEntity.ok().body(approvedRequest);
     }
 
-    //@RequestBody with only the rejection reason to prevent URL length restrictions and encoding issues using @RequestParam
+    @Operation(summary = "Reject a pending category request")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Category rejected",
+                    content = @Content(schema = @Schema(implementation = Category.class)))
+    })
     @PatchMapping("{requestId}/reject")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<Category> rejectCategoryRequest(@AuthenticationPrincipal UserDetails userDetails, @PathVariable @Positive Integer requestId, @RequestBody CategoryRejectRequest request){
+    public ResponseEntity<Category> rejectCategoryRequest(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Request ID to reject") @PathVariable @Positive Integer requestId,
+            @RequestBody CategoryRejectRequest request) {
         String username = userDetails.getUsername();
-        return new ResponseEntity<>(categoryService.rejectCategoryRequest(username, requestId, request.getRejectionReason()), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                categoryService.rejectCategoryRequest(username, requestId, request.getRejectionReason()),
+                HttpStatus.CREATED
+        );
     }
 
-
+    @Operation(summary = "Update an existing category")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Category updated",
+                    content = @Content(schema = @Schema(implementation = Category.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden to modify ID if not admin")
+    })
     @PatchMapping("{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<Category> updateCategory(@AuthenticationPrincipal UserDetails userDetails, @PathVariable @Positive Integer id, @RequestBody CategoryUpdateRequest request){
+    public ResponseEntity<Category> updateCategory(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "ID of the category to update") @PathVariable @Positive Integer id,
+            @RequestBody CategoryUpdateRequest request) {
+
         String username = userDetails.getUsername();
         List<String> userRoles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        if(request.getNewId() != null && !userRoles.contains("ROLE_ADMIN")){
-            throw new AccessDeniedException("Unauthorized: You don't have access to modify the id of the algorithm.");
+        if (request.getNewId() != null && !userRoles.contains("ROLE_ADMIN")) {
+            throw new AccessDeniedException("Unauthorized: You don't have access to modify the id of the category.");
         }
 
         return new ResponseEntity<>(categoryService.updateCategory(username, id, request), HttpStatus.CREATED);
     }
-
 }

@@ -1,8 +1,7 @@
 package com.cloud_ml_app_thesis.controller;
 
 import com.cloud_ml_app_thesis.dto.request.dataset.*;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
-import com.cloud_ml_app_thesis.dto.response.Metadata;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
@@ -11,9 +10,6 @@ import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.service.DatasetService;
 import com.cloud_ml_app_thesis.service.DatasetSharingService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,12 +48,12 @@ public class DatasetController {
 
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
+    public ResponseEntity<MyResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
         String username = userDetails.getUsername();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        ApiResponse<?> datasetResponse = datasetService.uploadDataset(request.getFile(), user);
+        MyResponse<?> datasetResponse = datasetService.uploadDataset(request.getFile(), user);
         if (datasetResponse.getErrorCode() != null && !datasetResponse.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(datasetResponse);
         }
@@ -66,9 +62,9 @@ public class DatasetController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATASET_MANAGER')")
-    public ResponseEntity<ApiResponse<?>> createDataset(@ModelAttribute DatasetCreateRequest request) {
+    public ResponseEntity<MyResponse<?>> createDataset(@ModelAttribute DatasetCreateRequest request) {
 
-        ApiResponse<?> response = datasetService.createDataset(request);
+        MyResponse<?> response = datasetService.createDataset(request);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -77,12 +73,12 @@ public class DatasetController {
 
     @PatchMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<?>> updateDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUpdateRequest request) {
+    public ResponseEntity<MyResponse<?>> updateDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUpdateRequest request) {
         String username = userDetails.getUsername();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        ApiResponse<?> response = datasetService.uploadDataset(request.getFile(), user);
+        MyResponse<?> response = datasetService.uploadDataset(request.getFile(), user);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -90,7 +86,7 @@ public class DatasetController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getDatasets(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<MyResponse<?>> getDatasets(@AuthenticationPrincipal UserDetails userDetails) {
         String username = null;
         if(userDetails != null){
             List<String> roles = userDetails.getAuthorities().stream()
@@ -101,7 +97,7 @@ public class DatasetController {
 
             }
         }
-        ApiResponse<?> response = datasetService.getDatasets(username);
+        MyResponse<?> response = datasetService.getDatasets(username);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -109,7 +105,7 @@ public class DatasetController {
     }
 
     @GetMapping("/infos/{id}")
-    public ResponseEntity<ApiResponse<?>> getDatasetsInfo(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<MyResponse<?>> getDatasetsInfo(@AuthenticationPrincipal UserDetails userDetails) {
         String username = null;
         if(userDetails != null){
             List<String> roles = userDetails.getAuthorities().stream()
@@ -120,7 +116,7 @@ public class DatasetController {
 
             }
         }
-        ApiResponse<?> response = datasetService.getDatasets(username);
+        MyResponse<?> response = datasetService.getDatasets(username);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -128,18 +124,18 @@ public class DatasetController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getDataset(@PathVariable String id) {
+    public ResponseEntity<MyResponse<?>> getDataset(@PathVariable String id) {
 
-        ApiResponse<?> response = null;
+        MyResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
         return ResponseEntity.ok().body(response);
     }
     @GetMapping("/info/{id}")
-    public ResponseEntity<ApiResponse<?>> getDatasetInfo(@PathVariable String id) {
+    public ResponseEntity<MyResponse<?>> getDatasetInfo(@PathVariable String id) {
 
-        ApiResponse<?> response = null;
+        MyResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -147,17 +143,17 @@ public class DatasetController {
     }
 
     @GetMapping("/download/{id}")
-    public ResponseEntity<ApiResponse<?>> downloadDataset(@PathVariable String id) {
+    public ResponseEntity<MyResponse<?>> downloadDataset(@PathVariable String id) {
 
-        ApiResponse<?> response = null;
+        MyResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
         return ResponseEntity.ok().body(response);
     }
     @GetMapping("/{id}/category")
-    public ResponseEntity<ApiResponse<?>> getDatasetsUrls(@RequestParam String email){
-        ApiResponse<?> response = datasetService.getDatasetUrls(email);
+    public ResponseEntity<MyResponse<?>> getDatasetsUrls(@RequestParam String email){
+        MyResponse<?> response = datasetService.getDatasetUrls(email);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }

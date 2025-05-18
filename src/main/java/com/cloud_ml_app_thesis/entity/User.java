@@ -59,6 +59,7 @@ public class User {
     @JoinColumn(name = "status_id")
     private UserStatus status;
 
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;
 
@@ -69,4 +70,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<AlgorithmConfiguration> algorithmConfigurations;
+
+
 }

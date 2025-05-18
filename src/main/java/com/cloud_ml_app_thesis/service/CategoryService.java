@@ -1,7 +1,10 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.dto.category.CategoryRequestDTO;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.status.CategoryRequestStatus;
@@ -18,6 +21,8 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,12 +34,14 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class CategoryService {
     private final CategoryRequestRepository categoryRequestRepository;
     private final CategoryHistoryRepository categoryHistoryRepository;
     private final CategoryRequestStatusRepository categoryRequestStatusRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
 
 
     @Transactional
@@ -76,47 +83,51 @@ public class CategoryService {
         // 5. Delete the category
         categoryRepository.delete(categoryToDelete);
     }
+
     @Transactional
-    public CategoryRequest createCategory(String username, CategoryCreateRequest request){
+    public MyResponse<CategoryRequestDTO> createCategory(String username, CategoryCreateRequest request) {
+        log.info("User '{}' is creating a new category: {}", username, request.getName());
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User could not be found"));
 
         Optional<Category> existingCategory = categoryRepository.findByName(request.getName());
-        if(existingCategory.isPresent()){
+        if (existingCategory.isPresent()) {
+            log.warn("Category '{}' already exists", request.getName());
             throw new EntityExistsException("The category you requested for creation already exists.");
         }
-        boolean isForce = request.isForce();
 
+        boolean isForce = request.isForce();
         Set<Category> parentCategories = new HashSet<>();
 
-        Set<Integer> parentCategoryIds =  request.getParentCategoryIds();
-        if(parentCategoryIds != null){
-            for(Integer parentId : parentCategoryIds){
+        Set<Integer> parentCategoryIds = request.getParentCategoryIds();
+        if (parentCategoryIds != null) {
+            for (Integer parentId : parentCategoryIds) {
                 Category parent = categoryRepository.findById(parentId)
                         .orElseThrow(() -> new EntityNotFoundException("Parent category not found: " + parentId));
                 parentCategories.add(parent);
             }
         }
-        //We have already checked if admin pr CATEGORY_MANAGER requested with force to directly write on Categories Table
+
         CategoryRequestStatusEnum statusEnum = CategoryRequestStatusEnum.PENDING;
         User processedBy = null;
         LocalDateTime requestedAt = LocalDateTime.now();
         LocalDateTime processedAt = null;
 
-        if(isForce){
+        if (isForce) {
+            log.info("Force flag is set. Creating category directly by user '{}'.", username);
             Category category = new Category();
             category.setName(request.getName());
             category.setDescription(request.getDescription());
             category.setCreatedBy(user);
             category.setParentCategories(parentCategories);
-            Integer id = request.getId();
-            if(id != null){
-                category.setId(id);
+            if (request.getId() != null) {
+                category.setId(request.getId());
             }
             categoryRepository.save(category);
             statusEnum = CategoryRequestStatusEnum.APPROVED;
-            processedAt = requestedAt;
             processedBy = user;
+            processedAt = requestedAt;
         }
 
         CategoryRequestStatus categoryRequestStatus = categoryRequestStatusRepository.findByName(statusEnum)
@@ -132,12 +143,89 @@ public class CategoryService {
         categoryRequest.setProcessedAt(processedAt);
         categoryRequest.setParentCategories(parentCategories);
 
-        return categoryRequestRepository.save(categoryRequest);
+        categoryRequestRepository.save(categoryRequest);
+
+        CategoryRequestDTO dto = mapToDto(categoryRequest);
+
+        log.info("Category request for '{}' submitted successfully by user '{}'.", request.getName(), username);
+        return new MyResponse<>(dto, null, "Category created successfully.", new Metadata());
     }
 
     @Transactional
-    public Category approveCategoryRequest(String username, Integer requestId) {
-        return processCategoryRequest(username, requestId,  CategoryRequestStatusEnum.APPROVED, null);
+    public MyResponse<CategoryRequestDTO> approveCategoryRequest(String username, Integer requestId) {
+        log.info("User '{}' is approving category request with ID {}", username, requestId);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("User '{}' not found", username);
+                    return new EntityNotFoundException("User not found");
+                });
+
+        CategoryRequest request = categoryRequestRepository.findById(requestId)
+                .orElseThrow(() -> {
+                    log.error("Category request ID '{}' not found", requestId);
+                    return new EntityNotFoundException("Category request not found");
+                });
+
+        if (request.getStatus().getName() != CategoryRequestStatusEnum.PENDING) {
+            log.warn("Attempt to approve non-pending category request ID {}", requestId);
+            throw new IllegalStateException("Only pending requests can be approved");
+        }
+
+        if (categoryRepository.findByName(request.getName()).isPresent()) {
+            log.warn("Duplicate category name '{}' on approval attempt", request.getName());
+            throw new EntityExistsException("Category with the same name already exists");
+        }
+
+        // 💡 Defensive copy of parent categories to avoid shared collection reference
+        Set<Category> copiedParentCategories = request.getParentCategories() != null
+                ? new HashSet<>(request.getParentCategories())
+                : new HashSet<>();
+
+        // Create new Category
+        Category category = new Category();
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
+        category.setCreatedBy(user);
+        category.setParentCategories(copiedParentCategories);
+
+        // Save Category
+        Category savedCategory = categoryRepository.save(category);
+
+        // Update CategoryRequest
+        request.setApprovedCategory(savedCategory);
+        request.setProcessedAt(LocalDateTime.now());
+        request.setProcessedBy(user);
+        request.setStatus(
+                categoryRequestStatusRepository.findByName(CategoryRequestStatusEnum.APPROVED)
+                        .orElseThrow(() -> {
+                            log.error("APPROVED status not found in DB");
+                            return new EntityNotFoundException("APPROVED status not found");
+                        })
+        );
+
+        // Save updated CategoryRequest
+        categoryRequestRepository.save(request);
+
+        CategoryRequestDTO dto = mapToDto(request);
+        log.info("Successfully approved category request ID {}. Category '{}' created.", requestId, category.getName());
+
+        return new MyResponse<>(dto, null, "Category approved successfully.", new Metadata());
+    }
+
+    private CategoryRequestDTO mapToDto(CategoryRequest request) {
+        CategoryRequestDTO dto = modelMapper.map(request, CategoryRequestDTO.class);
+        dto.setRequestedByUsername(request.getRequestedBy().getUsername());
+        dto.setProcessedByUsername(
+                request.getProcessedBy() != null ? request.getProcessedBy().getUsername() : null
+        );
+        dto.setStatus(request.getStatus().getName().name());
+        dto.setParentCategoryIds(
+                request.getParentCategories() != null
+                        ? request.getParentCategories().stream().map(Category::getId).collect(Collectors.toSet())
+                        : Set.of()
+        );
+        return dto;
     }
 
     @Transactional

@@ -13,7 +13,6 @@ import java.util.Set;
 @Setter
 public class CategoryCreateRequest {
 
-    @Positive(message = "Negative id cannot exist")
     private Integer id;
 
     @NotBlank
@@ -25,7 +24,6 @@ public class CategoryCreateRequest {
     private String description;
 
     //If null it is a parent category
-    @Positive(message = "Negative id cannot exist")
     private Set<Integer> parentCategoryIds;
 
     @NotNull

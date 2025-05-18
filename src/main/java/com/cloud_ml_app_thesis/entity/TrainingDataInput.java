@@ -1,9 +1,6 @@
 package com.cloud_ml_app_thesis.entity;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
-import weka.core.Instance;
 import weka.core.Instances;
 
 @AllArgsConstructor
@@ -17,5 +14,5 @@ public class TrainingDataInput {
     private DatasetConfiguration datasetConfiguration; // OK
 //    private String algorithmClassName; //commented because we can do algorithmConfiguration.getAlgorithm().getClassName();
     private AlgorithmConfiguration algorithmConfiguration; // OK
-    private ApiResponse errorResponse = null;
+    private MyResponse errorResponse = null;
 }

@@ -82,14 +82,14 @@ public class TrainService {
 
 
     //TODO Check if the Status is being correctly set at the correct time
-    public ApiResponse<?> startTraining(TrainingStartRequest request, User user) throws Exception {
+    public MyResponse<?> startTraining(TrainingStartRequest request, User user) throws Exception {
 
 
         TrainingDataInput trainingDataInput =  trainingRequestHelperService.configureTrainingDataInputByTrainCase(request, user);
 
         train(trainingDataInput.getTraining(),trainingDataInput.getDataset(), trainingDataInput.getFilename(),trainingDataInput.getDatasetConfiguration(), trainingDataInput.getAlgorithmConfiguration() );
 
-        return new ApiResponse("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",null, null,new Metadata());
+        return new MyResponse("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",null, null,new Metadata());
 
     }
 
@@ -290,34 +290,34 @@ public class TrainService {
         return trainRepository.findById(trainingId).orElse(null);
     }
 
-    public ApiResponse<?> getTrainings() {
+    public MyResponse<?> getTrainings() {
 
         try {
             Optional<List<Training>> trainings = trainRepository.findAllByOrderByStatusAsc();
             if(trainings.isEmpty()){
-                return new ApiResponse<>(null, "Failed to retrieve the Trainings.",null,new Metadata());
+                return new MyResponse<>(null, "Failed to retrieve the Trainings.",null,new Metadata());
             }
-            return new ApiResponse<>(null, null, null, null);
+            return new MyResponse<>(null, null, null, null);
         } catch (DataAccessException e){
             logger.error("Failed to retrieve the Trainings.",e);
-            return new ApiResponse<>(null, null, null, null);
+            return new MyResponse<>(null, null, null, null);
         }
     }
-    public ApiResponse<?> getTrainings(String username, TrainingStatusEnum status) {
+    public MyResponse<?> getTrainings(String username, TrainingStatusEnum status) {
 
         try {
             Optional<List<Training>> trainings = trainRepository.findAllByUserUsernameAndStatus(username, status);
             if(trainings == null || trainings.isEmpty()){
-                return new ApiResponse("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
+                return new MyResponse("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
             }
-            return new ApiResponse(trainings, null, "Trainings found.", new Metadata());
+            return new MyResponse(trainings, null, "Trainings found.", new Metadata());
         } catch (DataAccessException e){
             logger.error("Failed to retrieve Trainings of user '"+username+"'.",e);
-            return new ApiResponse(null,"An error occurred while tried to retrieve the Trainings of user '"+username+"'.",null,new Metadata());
+            return new MyResponse(null,"An error occurred while tried to retrieve the Trainings of user '"+username+"'.",null,new Metadata());
         }
     }
 
-    public ApiResponse<?> getTrainings(String username) {
+    public MyResponse<?> getTrainings(String username) {
 
         try {
             Optional<List<Training>> trainings = trainRepository.findAllByUserUsernameOrderByFinishedDateDesc(username);
@@ -326,25 +326,25 @@ public class TrainService {
                         .stream()
                         .map(this::convertToMyTrainingDTO)
                         .toList();
-                return new ApiResponse<>(myTrainingDTO, null, null, new Metadata());
+                return new MyResponse<>(myTrainingDTO, null, null, new Metadata());
             }
-            return new ApiResponse<>("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
+            return new MyResponse<>("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
 
         } catch (DataAccessException e){
             logger.error("Failed to retrieve Trainings of user '"+username+"'.",e);
-            return new ApiResponse(null, null, "An error occurred while tried to retrieve the Trainings of user '"+username+"'.",  new Metadata());
+            return new MyResponse(null, null, "An error occurred while tried to retrieve the Trainings of user '"+username+"'.",  new Metadata());
         }
     }
-    public ApiResponse<?> getTraining(int id){
+    public MyResponse<?> getTraining(int id){
       try {
           Optional<Training> trainingOptional = trainRepository.findById(id);
           if(trainingOptional.isPresent()){
-              return new ApiResponse(trainingOptional.get(), null, "Training found.", new Metadata());
+              return new MyResponse(trainingOptional.get(), null, "Training found.", new Metadata());
           }
-          return new ApiResponse<>(null, null, "Training with id '" + id + "' could not be found.", new Metadata());
+          return new MyResponse<>(null, null, "Training with id '" + id + "' could not be found.", new Metadata());
       } catch (DataAccessException e){
           logger.error("Failed to retrieve Training with id '"+id+"'.",e);
-          return new ApiResponse("An error occurred while tried to retrieve data for training with id '"+id+"'.", null, "Failed to retrieve Training with id '", new Metadata());
+          return new MyResponse("An error occurred while tried to retrieve data for training with id '"+id+"'.", null, "Failed to retrieve Training with id '", new Metadata());
       }
     }
 

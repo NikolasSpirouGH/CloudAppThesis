@@ -2,7 +2,7 @@ package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset_configuration.ConfiguredDatasetSelectTableDTO;
 import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
@@ -48,8 +48,6 @@ public class DatasetConfigurationService {
         this.userRepository= userRepository;
         this.trainRepository = trainRepository;
         this.objectMapper = objectMapper;
-
-
     }
 
     //TODO APO BIG SPY EINAI AFTO
@@ -73,8 +71,8 @@ public class DatasetConfigurationService {
         return null;
     }
 
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadDatasetConfiguration(Integer datasetId, String username,
-                                                                                       String basicAttributesColumns, String targetClassColumn) {
+    public ResponseEntity<MyResponse<Map<String, Object>>> uploadDatasetConfiguration(Integer datasetId, String username,
+                                                                                      String basicAttributesColumns, String targetClassColumn) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
@@ -97,7 +95,7 @@ public class DatasetConfigurationService {
         } catch (DataAccessException e) {
             logger.error("Failed to save the Dataset Configuration for Dataset '{}' by user '{}'.", datasetId, username);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(null, "DB_SAVE_ERROR", "Failed to save dataset configuration", null));
+                    .body(new MyResponse<>(null, "DB_SAVE_ERROR", "Failed to save dataset configuration", null));
         }
 
         // Prepare response data
@@ -105,9 +103,9 @@ public class DatasetConfigurationService {
         responseData.put("id", datasetConfiguration.getId());
         responseData.put("timestamp", ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
-        return ResponseEntity.ok(new ApiResponse<>(responseData, "", "Your dataset configuration has been saved.", null));
+        return ResponseEntity.ok(new MyResponse<>(responseData, "", "Your dataset configuration has been saved.", null));
     }
-    public ResponseEntity<ApiResponse<?>> getDatasetConfigurations(String username){
+    public ResponseEntity<MyResponse<?>> getDatasetConfigurations(String username){
         Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatusEnum.CUSTOM);
 
         if(datasetConfigurationsOptional.isPresent()){
@@ -115,9 +113,9 @@ public class DatasetConfigurationService {
                     .stream()
                     .map(this::convertToConfiguredDatasetDTO)
                     .toList();
-            return new ResponseEntity<ApiResponse<?>>(new ApiResponse<List<ConfiguredDatasetSelectTableDTO>>(configuredDatasetSelectTableDTOs, null, null, new Metadata()), HttpStatus.OK);
+            return new ResponseEntity<MyResponse<?>>(new MyResponse<List<ConfiguredDatasetSelectTableDTO>>(configuredDatasetSelectTableDTOs, null, null, new Metadata()), HttpStatus.OK);
         }
-        return new ResponseEntity<ApiResponse<?>>(new ApiResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata()),HttpStatus.OK);
+        return new ResponseEntity<MyResponse<?>>(new MyResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata()),HttpStatus.OK);
 
     }
     private ConfiguredDatasetSelectTableDTO convertToConfiguredDatasetDTO(DatasetConfiguration datasetConfiguration){

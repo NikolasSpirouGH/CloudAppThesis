@@ -3,9 +3,7 @@ package com.cloud_ml_app_thesis.service;
 import com.cloud_ml_app_thesis.dto.dataset.DatasetSelectTableDTO;
 import com.cloud_ml_app_thesis.dto.request.dataset.DatasetCreateRequest;
 import com.cloud_ml_app_thesis.dto.request.dataset.DatasetSearchRequest;
-import com.cloud_ml_app_thesis.dto.request.dataset.DatasetUploadRequest;
-import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
@@ -25,10 +23,8 @@ import com.cloud_ml_app_thesis.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -130,7 +126,7 @@ public class DatasetService {
     }
 
     @Transactional
-    public ApiResponse<?> createDataset(DatasetCreateRequest request) {
+    public MyResponse<?> createDataset(DatasetCreateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -141,7 +137,7 @@ public class DatasetService {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename.isBlank()){
-            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+            return new MyResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
 
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename,ownerUser.getUsername());
@@ -172,7 +168,7 @@ public class DatasetService {
             throw e;
         }
 
-        return new ApiResponse<>(dataset.getId().toString(), null, null, new Metadata());
+        return new MyResponse<>(dataset.getId().toString(), null, null, new Metadata());
     }
 
     /*public MultipartFile getDatasetByTrainingId(Integer trainingId){
@@ -181,7 +177,7 @@ public class DatasetService {
         minioService.getFileInputStream(dataset.getOriginalFileName(), dataset.getFilePath());
     }*/
 
-    public ApiResponse<Dataset> uploadDataset(MultipartFile file, User user)  {
+    public MyResponse<Dataset> uploadDataset(MultipartFile file, User user)  {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename == null || originalFilename.isBlank()){
@@ -212,7 +208,7 @@ public class DatasetService {
 
         try {
             dataset = datasetRepository.save(dataset);
-            return new ApiResponse<>(dataset, null, "Dataset uploaded successfully", null);
+            return new MyResponse<>(dataset, null, "Dataset uploaded successfully", null);
 
         } catch (DataAccessException e){
             logger.error("Failed to save Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), user.getUsername() );
@@ -220,7 +216,7 @@ public class DatasetService {
         }
     }
 
-    public ApiResponse<?> uploadPredictionDataset(MultipartFile file) {
+    public MyResponse<?> uploadPredictionDataset(MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -229,7 +225,7 @@ public class DatasetService {
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || originalFilename.isBlank()) {
-            return new ApiResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+            return new MyResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
 
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
@@ -256,20 +252,20 @@ public class DatasetService {
         dataset.setAccessibility(privateAccessibility);
 
         dataset = datasetRepository.save(dataset);
-        return new ApiResponse<>(dataset, null, "Prediction dataset uploaded successfully", new Metadata());
+        return new MyResponse<>(dataset, null, "Prediction dataset uploaded successfully", new Metadata());
     }
 
 
     //*********************************************************************************************************************
-    public ApiResponse<?> getDatasets(String username){
+    public MyResponse<?> getDatasets(String username){
         Optional<List<Dataset>> datasetsOptional = datasetRepository.findAllByUserUsername(username);
         if(datasetsOptional.isPresent()){
             List<DatasetSelectTableDTO> datasetSelectTableDTOS = datasetsOptional.get().stream()
                     .map(this::convertToDTO)
                     .toList();
-            return new ApiResponse<List<DatasetSelectTableDTO>>(datasetSelectTableDTOS, null, null, new Metadata());
+            return new MyResponse<List<DatasetSelectTableDTO>>(datasetSelectTableDTOS, null, null, new Metadata());
         }
-        return new ApiResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata());
+        return new MyResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata());
     }
 
     private DatasetSelectTableDTO convertToDTO(Dataset dataset){
@@ -285,7 +281,7 @@ public class DatasetService {
     }
 //*********************************************************************************************************************
 
-    public ApiResponse<List<String>> getDatasetUrls(String email) {
+    public MyResponse<List<String>> getDatasetUrls(String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if(user.isEmpty()) {
             //TODO LOGGER AND EXCEPTION HANDLING
@@ -295,7 +291,7 @@ public class DatasetService {
                         .map(Dataset::getFilePath)
                         .collect(Collectors.toList()))
                         .orElse(Collections.emptyList());
-        return new ApiResponse<List<String>>(datasetUrls, null, null, new Metadata());
+        return new MyResponse<List<String>>(datasetUrls, null, null, new Metadata());
     }
 
     public DatasetConfiguration getDatasetConfiguration(Integer datasetConfId) throws Exception {

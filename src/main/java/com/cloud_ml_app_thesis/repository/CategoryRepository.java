@@ -14,4 +14,6 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
     @Query("SELECT c FROM Category c JOIN c.parentCategories p WHERE p.id = :parentId")
     Set<Category> findByParentCategoriesId(@Param("parentId") Integer parentId);
+
+    boolean existsByName(String name);
 }

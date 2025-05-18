@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cloud_ml_app_thesis.config.security.JwtTokenProvider;
 
+import java.util.Map;
 import java.util.Set;
 
 
@@ -122,7 +123,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String authenticateAccount(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateAccount(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -131,6 +132,8 @@ public class AuthController {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return tokenProvider.generateToken(authentication);
+        String token = tokenProvider.generateToken(authentication);
+
+        return ResponseEntity.ok().body(Map.of("token", token)); // ✅ JSON
     }
 }

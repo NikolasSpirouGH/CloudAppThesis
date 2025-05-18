@@ -2,7 +2,7 @@ package com.cloud_ml_app_thesis.controller;
 
 
 import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.service.DatasetConfigurationService;
 import jakarta.validation.Valid;
@@ -24,49 +24,49 @@ public class DatasetConfigurationController {
     private final DatasetConfigurationService datasetConfigurationService;
 
     @PostMapping("/upload-dataset-configuration")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadDatasetConfiguration(@RequestParam("datasetId") String datasetId,
-                                                                          @RequestParam("username") String username,
-                                                                          @RequestParam("basicAttributesColumns") String basicAttributesColumns,
-                                                                          @RequestParam("targetClassColumn") String targetClassColumn) {
+    public ResponseEntity<MyResponse<Map<String, Object>>> uploadDatasetConfiguration(@RequestParam("datasetId") String datasetId,
+                                                                                      @RequestParam("username") String username,
+                                                                                      @RequestParam("basicAttributesColumns") String basicAttributesColumns,
+                                                                                      @RequestParam("targetClassColumn") String targetClassColumn) {
         try {
             Integer datasetIdInteger = Integer.parseInt(datasetId);
-            ResponseEntity<ApiResponse<Map<String, Object>>> responseData = datasetConfigurationService.uploadDatasetConfiguration(
+            ResponseEntity<MyResponse<Map<String, Object>>> responseData = datasetConfigurationService.uploadDatasetConfiguration(
                     datasetIdInteger, username, basicAttributesColumns, targetClassColumn
             );
 
             return responseData ;
 
         } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "NumberFormat Error","Invalid dataset ID format", null));
+            return ResponseEntity.badRequest().body(new MyResponse<>(null, "NumberFormat Error","Invalid dataset ID format", null));
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(new ApiResponse<>(null, "Server Error","Unexpected Error, please contact support.",null));
+            return ResponseEntity.internalServerError().body(new MyResponse<>(null, "Server Error","Unexpected Error, please contact support.",null));
         }
     }
 
     @GetMapping("/configurations")
-    public ResponseEntity<ApiResponse<Object>> getDatasetConfigurations(@RequestParam String username) {
+    public ResponseEntity<MyResponse<Object>> getDatasetConfigurations(@RequestParam String username) {
         try {
             Object configurations = datasetConfigurationService.getDatasetConfigurations(username);
 
-            return ResponseEntity.ok(new ApiResponse<>(configurations, "", "Dataset configurations fetched successfully", null));
+            return ResponseEntity.ok(new MyResponse<>(configurations, "", "Dataset configurations fetched successfully", null));
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(new ApiResponse<>(null, "Server error" , "Unexpected error while fetching datasets", null));
+            return ResponseEntity.internalServerError().body(new MyResponse<>(null, "Server error" , "Unexpected error while fetching datasets", null));
         }
     }
 
     @PostMapping("/create-dataset-conf")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> datasetConfiguration(@Valid @RequestBody DatasetConfigurationCreateRequest request) {
+    public ResponseEntity<MyResponse<Map<String, Object>>> datasetConfiguration(@Valid @RequestBody DatasetConfigurationCreateRequest request) {
         try {
             Integer id = datasetConfigurationService.datasetConfiguration(request);
             if (id != null) {
-                return ResponseEntity.ok(new ApiResponse<>(Collections.singletonMap("id", id), "","Dataset configuration created", null));
+                return ResponseEntity.ok(new MyResponse<>(Collections.singletonMap("id", id), "","Dataset configuration created", null));
             } else {
-                return ResponseEntity.badRequest().body(new ApiResponse<>(Collections.singletonMap("id", null), "","Couldn't create the configured dataset", new Metadata()));
+                return ResponseEntity.badRequest().body(new MyResponse<>(Collections.singletonMap("id", null), "","Couldn't create the configured dataset", new Metadata()));
             }
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(new ApiResponse<>(null, "Server error", "Unexpected error occurred", new Metadata()));
+            return ResponseEntity.internalServerError().body(new MyResponse<>(null, "Server error", "Unexpected error occurred", new Metadata()));
         }
     }
 }

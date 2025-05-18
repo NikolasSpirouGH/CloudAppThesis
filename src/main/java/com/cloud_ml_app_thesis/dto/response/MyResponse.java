@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Setter
 @Getter
-public class ApiResponse<T> {
+public class MyResponse<T> {
     private T dataHeader;
     private String errorCode;
     private String message;

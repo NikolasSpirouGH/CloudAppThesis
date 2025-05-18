@@ -19,6 +19,7 @@ import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepo
 import com.cloud_ml_app_thesis.repository.status.ModelStatusRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
 import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -67,13 +68,22 @@ public class DataInitializer implements CommandLineRunner {
 
     }
 
-    private void initializeCategories(){
-        Category category = new Category();
-        category.setName("Uncategorized");
-        category.setDescription("Category for entities that have no parent category.");
-        category.setCreatedBy(userRepository.findByUsername("bigspy").orElseThrow());
-        categoryRepository.save(category);
+    private void initializeCategories() {
+        Optional<Category> existing = categoryRepository.findByName("Uncategorized");
+        if (existing.isEmpty()) {
+            User createdBy = userRepository.findByUsername("bigspy")
+                    .orElseThrow(() -> new RuntimeException("Admin user not found"));
 
+            Category category = new Category();
+            category.setName("Uncategorized");
+            category.setDescription("Category for entities that have no parent category.");
+            category.setCreatedBy(createdBy);
+            categoryRepository.save(category);
+
+            System.out.println("Default category 'Uncategorized' created.");
+        } else {
+            System.out.println("Default category 'Uncategorized' already exists.");
+        }
     }
 
     private void initializeUserRoles(){
@@ -121,28 +131,41 @@ public class DataInitializer implements CommandLineRunner {
             datasetAccessibilityRepository.saveAll(datasetAccessibilityList);
         }
     }
-    private void recreateAdmins() {
+    @Transactional
+    public void recreateAdmins() {
         UserStatus defaultStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Default status not found"));
         Role userRole = roleRepository.findByName(UserRoleEnum.USER)
                 .orElseThrow(() -> new RuntimeException("Role USER was not found"));
         Role adminRole = roleRepository.findByName(UserRoleEnum.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Role USER was not found"));
-        List<User> admins = List.of(
-                new User(null, "bigspy","nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",  Set.of(userRole),defaultStatus, null, null, null),
-                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece",Set.of(userRole), defaultStatus, null, null, null),
-                new User(null, "johnken","john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
-        );
-        modelExecutionRepository.deleteAll();
-        categoryRepository.deleteAll();
-        admins.forEach(admin -> {
-            userRepository.findByEmail(admin.getEmail())
-                    .ifPresent(userRepository::delete);
-            userRepository.save(admin);
-        });
+                .orElseThrow(() -> new RuntimeException("Role ADMIN was not found"));
 
-        System.out.println("Admins recreated.");
+        List<User> admins = List.of(
+                new User(null, "bigspy", "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(userRole), defaultStatus, null, null, null),
+                new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(userRole), defaultStatus, null, null, null),
+                new User(null, "johnken", "john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
+        );
+
+        for (User admin : admins) {
+            userRepository.findByEmail(admin.getEmail()).ifPresentOrElse(existingUser -> {
+                existingUser.setUsername(admin.getUsername());
+                existingUser.setFirstName(admin.getFirstName());
+                existingUser.setLastName(admin.getLastName());
+                existingUser.setPassword(admin.getPassword());
+                existingUser.setAge(admin.getAge());
+                existingUser.setProfession(admin.getProfession());
+                existingUser.setCountry(admin.getCountry());
+                existingUser.setRoles(admin.getRoles());
+                existingUser.setStatus(admin.getStatus());
+                userRepository.save(existingUser); // update
+            }, () -> {
+                userRepository.save(admin); // insert
+            });
+        }
+
+        System.out.println("Admins updated/inserted successfully.");
     }
+
 
     private void initializeAlgorithms() {
         Reflections reflections = new Reflections(new ConfigurationBuilder()

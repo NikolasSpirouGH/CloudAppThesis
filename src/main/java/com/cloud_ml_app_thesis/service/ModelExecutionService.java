@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis.dto.response.ApiResponse;
+
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.entity.ModelExecution;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.repository.ModelExecutionRepository;
@@ -23,8 +24,8 @@ import weka.core.Instances;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +44,16 @@ public class ModelExecutionService {
 
         List<String> predictions = predict(modelId, predictDataset);
 
-        ApiResponse<?> response = datasetService.uploadPredictionDataset(predictDataset);
+        MyResponse<?> response = datasetService.uploadPredictionDataset(predictDataset);
         Dataset dataset = (Dataset) response.getDataHeader();
+
+        Instances predictInstances = datasetService.wekaFileToInstances(predictDataset);
+        predictInstances.setClassIndex(predictInstances.numAttributes() - 1);
+
+        for (int i = 0; i < predictInstances.numInstances(); i++) {
+            Instance instance = predictInstances.instance(i);
+            instance.setClassValue(predictions.get(i));
+        }
 
         // Save execution in DB
         ModelExecution execution = new ModelExecution();
@@ -54,22 +63,18 @@ public class ModelExecutionService {
         execution.setDataset(dataset);
         execution.setSuccess(true);
         modelExecutionRepository.save(execution);
+
         logger.info("Model execution completed successfully with predictions: {}", predictions);
-        Instances predictInstances = datasetService.wekaFileToInstances(predictDataset);
-        return new ByteArrayResource(replaceQuestionMarksWithPredictionResults(predictInstances, predictions));
+
+        // Convert Instances to ARFF format string
+        String updatedArffString = predictInstances.toString();
+        byte[] fileBytes = updatedArffString.getBytes(StandardCharsets.UTF_8);
+
+        return new ByteArrayResource(fileBytes);
     }
 
-    public Resource getPredictionResults(Integer modelExecutionId) throws Exception {
-        ModelExecution execution = modelExecutionRepository
-                .findById(modelExecutionId).orElseThrow(()-> new EntityNotFoundException("Model execution " + modelExecutionId + " not found"));
 
-         // Already saved during initial prediction
-        Instances predictInstances =  datasetService.loadPredictionDataset(execution.getDataset());
-
-        return new ByteArrayResource(replaceQuestionMarksWithPredictionResults(predictInstances,  Arrays.asList(execution.getPredictionResult().split(","))));
-    }
-
-    public List<String> predict(Integer modelId, MultipartFile dataset) throws Exception {
+    private List<String> predict(Integer modelId, MultipartFile dataset) throws Exception {
         Object model = modelService.loadModel(modelId);
         logger.info("Model loaded: {}", model.getClass().getName());
 
@@ -127,16 +132,16 @@ public class ModelExecutionService {
         return predictions;
     }
 
-    private byte[] replaceQuestionMarksWithPredictionResults(Instances predictInstances, List<String> predictions) throws Exception {
-        predictInstances.setClassIndex(predictInstances.numAttributes() - 1);
 
-        for (int i = 0; i < predictInstances.numInstances(); i++) {
-            Instance instance = predictInstances.instance(i);
-            instance.setClassValue(predictions.get(i));
+    public String getPredictionResults(Integer modelId, Integer datasetId) {
+        Optional<ModelExecution> executionOpt = modelExecutionRepository
+                .findByModelIdAndDatasetId(modelId, datasetId);
+
+        if (executionOpt.isEmpty()) {
+            throw new EntityNotFoundException("No execution found for given model and dataset");
         }
-        // Convert Instances to ARFF format string
-        String updatedArffString = predictInstances.toString();
-        return updatedArffString.getBytes(StandardCharsets.UTF_8);
-    }
 
+        ModelExecution execution = executionOpt.get();
+        return execution.getPredictionResult(); // Already saved during initial prediction
+    }
 }

@@ -60,13 +60,6 @@ public class CategoryRequest {
     private Set<Category> parentCategories; // Requested parent categories
 
 
-/*
-    @PrePersist
-    protected void onCreate() {
-        this.requestedAt = LocalDateTime.now();
-    }
-*/
-
     public void setRequestedAt(LocalDateTime requestedAt) {
         this.requestedAt = Objects.requireNonNullElseGet(requestedAt, LocalDateTime::now);
     }
