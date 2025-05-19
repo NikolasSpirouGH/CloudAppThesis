@@ -12,6 +12,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Table(name= "CONST_CATEGORY_REQUEST_STATUSES")
 public class CategoryRequestStatus {
     @Id
