@@ -5,7 +5,6 @@ import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
 import com.cloud_ml_app_thesis.dto.category.CategoryRequestDTO;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
 import com.cloud_ml_app_thesis.entity.*;
-import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.status.CategoryRequestStatus;
 import com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum;
 import com.cloud_ml_app_thesis.repository.*;
@@ -15,21 +14,16 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum.PENDING;
 import static com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum.REJECTED;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 
@@ -42,7 +36,6 @@ class CategoryServiceTest {
     @Mock private CategoryHistoryRepository categoryHistoryRepository;
     @Mock ModelMapper modelMapper;
 
-    @Spy
     @InjectMocks private CategoryService categoryService;
 
     private User user;
@@ -236,6 +229,10 @@ class CategoryServiceTest {
         when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
 
+        CategoryDTO dummyDto = new CategoryDTO();
+        when(modelMapper.map(any(Category.class), eq(CategoryDTO.class))).thenReturn(dummyDto);
+
+
         assertThatThrownBy(() -> categoryService.updateCategory("john", 1, req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No matching parent categories");
@@ -243,21 +240,25 @@ class CategoryServiceTest {
 
     @Test
     void shouldThrowException_WhenNoUpdateFieldsProvided() {
-        CategoryUpdateRequest req = new CategoryUpdateRequest(); // empty
+        CategoryUpdateRequest req = new CategoryUpdateRequest(); // all nulls
 
         Category category = new Category();
         category.setId(1);
         category.setCreatedBy(user);
         category.setParentCategories(new HashSet<>());
 
+        // Mocks
         when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
+
+        // Prevent NPE if service still tries mapping
+        CategoryDTO dummyDto = new CategoryDTO();
+        when(modelMapper.map(any(Category.class), eq(CategoryDTO.class))).thenReturn(dummyDto);
 
         assertThatThrownBy(() -> categoryService.updateCategory("john", 1, req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("At least one field must be provided");
     }
-
     // Reject Category by Admin test cases
 
     @Test
@@ -306,78 +307,113 @@ class CategoryServiceTest {
     //Test cases to check delete category
 
     @Test
-    void deleteCategory_shouldDeleteSuccessfullyWhenSafe() {
-        // Given
-        String username = "bigspy";
-        Integer categoryId = 5;
-
-        // Create user
-        User user = new User();
-        user.setUsername(username);
-
-        // Create category to delete
+    void shouldDeleteCategorySuccessfully() {
         Category category = new Category();
-        category.setId(categoryId);
-        category.setName("Deletable");
+        category.setId(1);
+        category.setName("ML");
+        category.setModels(new HashSet<>());
+        category.setDatasets(new HashSet<>());
+        category.setParentCategories(new HashSet<>());
+        category.setChildCategories(new HashSet<>());
 
-        // Parent category
-        Category parentCategory = new Category();
-        parentCategory.setId(88);
-        parentCategory.setChildCategories(new HashSet<>(Set.of(category)));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
 
-        category.setParentCategories(new HashSet<>(Set.of(parentCategory)));
+        MyResponse<Void> response = categoryService.deleteCategory("admin", 1);
 
-        // Child category
-        Category childCategory = new Category();
-        childCategory.setId(777);
-        childCategory.setParentCategories(new HashSet<>(Set.of(category)));
-        category.setChildCategories(new HashSet<>(Set.of(childCategory)));
-
-        // Dataset
-        Dataset dataset = new Dataset();
-        dataset.setId(101);
-        dataset.setCategories(new HashSet<>(Set.of(category)));
-        category.setDatasets(new HashSet<>(Set.of(dataset)));
-
-        // Model assigned to multiple categories
-        Model sharedModel = new Model();
-        sharedModel.setId(22);
-        sharedModel.setCategories(new HashSet<>());
-
-        Category otherCategory = new Category();
-        otherCategory.setId(999);
-
-        sharedModel.getCategories().add(category);
-        sharedModel.getCategories().add(otherCategory);
-        category.setModels(new HashSet<>(Set.of(sharedModel)));
-
-        // Mock dependencies
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        doReturn(parentCategory).when(categoryService).findClosestParent(category);
-
-        // When
-        MyResponse<Void> response = categoryService.deleteCategory(username, categoryId);
-
-        // Then
-        assertThat(response.getMessage()).isEqualTo("Category deleted successfully");
-
-        // Verify deletion logic
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("deleted");
         verify(categoryRepository).save(category);
-
-        // Assert child category was moved
-        assertThat(childCategory.getParentCategories()).contains(parentCategory);
-
-        // Assert dataset was moved
-        assertThat(dataset.getCategories()).contains(parentCategory);
-
-        // Assert model categories are updated
-        assertThat(sharedModel.getCategories()
-                .stream()
-                .map(Category::getId)
-                .collect(Collectors.toSet()))
-                .doesNotContain(category.getId());
+        assertThat(category.isDeleted()).isTrue();
     }
+
+    @Test
+    void shouldThrowExceptionWhenUserNotFound() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> categoryService.deleteCategory("ghost", 1))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCategoryNotFound() {
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> categoryService.deleteCategory("admin", 999))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Category not found");
+    }
+
+    @Test
+    void shouldReassignModelToParentBeforeDelete() {
+        // Prepare parent category
+        Category parent = new Category();
+        parent.setId(2);
+        parent.setName("Parent");
+        parent.setParentCategories(new HashSet<>());
+        parent.setChildCategories(new HashSet<>());
+
+        // Prepare child category with parent
+        Category category = new Category();
+        category.setId(1);
+        category.setName("Child");
+        category.setParentCategories(new HashSet<>(Set.of(parent)));
+        category.setChildCategories(new HashSet<>());
+        category.setDatasets(new HashSet<>());
+        category.setModels(new HashSet<>());
+        category.setDeleted(false);
+
+        // Link child back to parent
+        parent.getChildCategories().add(category);
+
+        // Create a model assigned only to the category to be deleted
+        Model model = new Model();
+        model.setId(5);
+        model.setCategories(new HashSet<>(Set.of(category)));
+
+        // Assign model to category
+        category.setModels(Set.of(model));
+
+        // Mock user and repository responses
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
+        when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        MyResponse<Void> response = categoryService.deleteCategory("admin", 1);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(model.getCategories()).contains(parent);          // Reassigned model
+        assertThat(model.getCategories()).doesNotContain(category);  // Old category removed
+        assertThat(category.isDeleted()).isTrue();                   // Soft delete flag set
+        verify(categoryRepository).save(category);                   // Save was called
+    }
+
+    @Test
+    void shouldThrowIfNoValidParentForReassignment() {
+        Category category = new Category();
+        category.setId(1);
+        category.setName("Orphan");
+        category.setParentCategories(new HashSet<>()); // No parent
+        category.setChildCategories(new HashSet<>());
+
+        Model model = new Model();
+        model.setId(99);
+        model.setCategories(new HashSet<>(List.of(category)));
+
+        category.setModels(Set.of(model));
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> categoryService.deleteCategory("admin", 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No valid parent category found");
+    }
+
 
 
 }
