@@ -1,12 +1,13 @@
 Step	Concern
-1️⃣	DTO creation & validation
-2️⃣	Controller mapping
-3️⃣	Role-based access
-4️⃣	Input validation
-5️⃣	Service logic
-6️⃣	Central error handling
-7️⃣	Swagger annotations
-8️⃣	Postman testing
-9️⃣	Unit + integration tests
-🔟	Logging
-	Check if model is private or public
+1	DTO creation & validation
+2	Controller mapping
+3	Role-based access
+4	Input validation
+5	Service logic
+6	Central error handling
+7	Swagger annotations
+8	Postman testing + example test cases
+9	Unit + integration tests
+10	Logging
+11	Check if private or public
+	

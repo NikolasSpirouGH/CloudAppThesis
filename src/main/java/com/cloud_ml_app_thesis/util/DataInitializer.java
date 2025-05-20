@@ -141,7 +141,7 @@ public class DataInitializer implements CommandLineRunner {
                 .orElseThrow(() -> new RuntimeException("Role ADMIN was not found"));
 
         List<User> admins = List.of(
-                new User(null, "bigspy", "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(userRole), defaultStatus, null, null, null),
+                new User(null, "bigspy", "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null),
                 new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(userRole), defaultStatus, null, null, null),
                 new User(null, "johnken", "john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
         );

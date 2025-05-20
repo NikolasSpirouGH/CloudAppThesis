@@ -12,9 +12,6 @@ import java.util.Set;
 @Getter
 public class CategoryUpdateRequest {
 
-    @Positive(message = "Negative id cannot exist")
-    private Integer newId;
-
     @Size(max = 255, message = "Name must be at most 100 characters")
     private String name;
 

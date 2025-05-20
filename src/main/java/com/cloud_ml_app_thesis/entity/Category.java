@@ -47,4 +47,8 @@ public class Category {
     // Link categories to Datasets
     @ManyToMany(mappedBy = "categories")
     private Set<Dataset> datasets;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
+
 }

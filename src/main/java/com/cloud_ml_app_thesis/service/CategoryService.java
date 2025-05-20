@@ -1,7 +1,9 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.dto.category.CategoryDTO;
 import com.cloud_ml_app_thesis.dto.category.CategoryRequestDTO;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
+import com.cloud_ml_app_thesis.dto.request.category.CategoryDeleteRequest;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.dto.response.MyResponse;
@@ -15,8 +17,10 @@ import com.cloud_ml_app_thesis.repository.CategoryRequestRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.repository.status.CategoryRequestStatusRepository;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -42,47 +46,6 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-
-
-    @Transactional
-    public void deleteCategory(String username, Integer categoryId) {
-
-        //TODO add user also for logging the deletion. Maybe the deletion if is being by a ROLE_USER, then add it as CategoryDeletionRequest
-        Category categoryToDelete = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-
-        // 1. Find the immediate parent category (closest parent)
-        Category closestParent = findClosestParent(categoryToDelete);
-
-        if (closestParent == null) {
-            throw new IllegalStateException("Cannot delete category: No valid parent category found.");
-        }
-
-        // 2. Move all child categories to the closest parent category
-        for (Category childCategory : new HashSet<>(categoryToDelete.getChildCategories())) {
-            childCategory.getParentCategories().remove(categoryToDelete);
-            childCategory.getParentCategories().add(closestParent);
-        }
-
-        // 3. Reassign models and datasets to the closest parent
-        for (Model model : categoryToDelete.getModels()) {
-            model.getCategories().remove(categoryToDelete);
-            model.getCategories().add(closestParent);
-        }
-
-        for (Dataset dataset : categoryToDelete.getDatasets()) {
-            dataset.getCategories().remove(categoryToDelete);
-            dataset.getCategories().add(closestParent);
-        }
-
-        // 4. Remove category from all parent references before deletion
-        for (Category parent : categoryToDelete.getParentCategories()) {
-            parent.getChildCategories().remove(categoryToDelete);
-        }
-
-        // 5. Delete the category
-        categoryRepository.delete(categoryToDelete);
-    }
 
     @Transactional
     public MyResponse<CategoryRequestDTO> createCategory(String username, CategoryCreateRequest request) {
@@ -145,7 +108,7 @@ public class CategoryService {
 
         categoryRequestRepository.save(categoryRequest);
 
-        CategoryRequestDTO dto = mapToDto(categoryRequest);
+        CategoryRequestDTO dto = mapCategoryRequestToDto(categoryRequest);
 
         log.info("Category request for '{}' submitted successfully by user '{}'.", request.getName(), username);
         return new MyResponse<>(dto, null, "Category created successfully.", new Metadata());
@@ -207,18 +170,183 @@ public class CategoryService {
         // Save updated CategoryRequest
         categoryRequestRepository.save(request);
 
-        CategoryRequestDTO dto = mapToDto(request);
+        CategoryRequestDTO dto = mapCategoryRequestToDto(request);
         log.info("Successfully approved category request ID {}. Category '{}' created.", requestId, category.getName());
 
         return new MyResponse<>(dto, null, "Category approved successfully.", new Metadata());
     }
 
-    private CategoryRequestDTO mapToDto(CategoryRequest request) {
+    @Transactional
+    public MyResponse<CategoryRequestDTO> rejectCategoryRequest(String username, Integer requestId, String rejectionReason) {
+        log.info("User '{}' is rejecting category request with ID {}. Reason: {}", username, requestId, rejectionReason);
+
+        CategoryRequest request = categoryRequestRepository.findById(requestId)
+                .orElseThrow(() -> {
+                    log.error("Category request ID '{}' not found", requestId);
+                    return new EntityNotFoundException("Category request not found with ID: " + requestId);
+                });
+
+        if (!request.getStatus().getName().equals(CategoryRequestStatusEnum.PENDING)) {
+            log.warn("Attempt to reject a non-pending request ID '{}'. Current status: {}", requestId, request.getStatus().getName());
+            throw new IllegalArgumentException("Only pending requests can be rejected.");
+        }
+
+        User admin = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User '" + username + "' not found"));
+
+        CategoryRequestStatus rejectedStatus = categoryRequestStatusRepository.findByName(CategoryRequestStatusEnum.REJECTED)
+                .orElseThrow(() -> new EntityNotFoundException("Status 'REJECTED' not found"));
+
+        request.setStatus(rejectedStatus);
+        request.setRejectionReason(rejectionReason);
+        request.setProcessedBy(admin);
+        request.setProcessedAt(LocalDateTime.now());
+
+        categoryRequestRepository.save(request);
+
+        CategoryRequestDTO dto = mapCategoryRequestToDto(request);
+        log.info("Category request ID {} successfully rejected by '{}'.", requestId, username);
+
+        return new MyResponse<>(dto, null, "Category request rejected successfully.", new Metadata());
+    }
+
+    @Transactional
+    public MyResponse<CategoryDTO> updateCategory(String username, Integer categoryId, CategoryUpdateRequest request) {
+        log.info("User '{}' is attempting to update category with ID {}", username, categoryId);
+
+        User editor = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        boolean dataModified = false;
+        String oldValues = convertCategoryToJson(category);
+
+        if (ValidationUtil.stringExists(request.getName())) {
+            log.info("Updating name to '{}'", request.getName());
+            category.setName(request.getName());
+            dataModified = true;
+        }
+
+        if (ValidationUtil.stringExists(request.getDescription())) {
+            log.info("Updating description");
+            category.setDescription(request.getDescription());
+            dataModified = true;
+        }
+
+        if (request.getNewParentCategoryIds() != null && !request.getNewParentCategoryIds().isEmpty()) {
+            List<Category> newParents = findCategoriesByIdsStrict(request.getNewParentCategoryIds());
+            for (Category newParent : newParents) {
+                if (!category.getParentCategories().contains(newParent)) {
+                    category.getParentCategories().add(newParent);
+                    newParent.getChildCategories().add(category);
+                    categoryRepository.save(newParent); // bidirectional
+                }
+            }
+            dataModified = true;
+            log.info("Added new parent categories");
+        }
+
+        if (request.getParentCategoryIdsToRemove() != null && !request.getParentCategoryIdsToRemove().isEmpty()) {
+            category = removeParentCategoriesStrict(category, request.getParentCategoryIdsToRemove());
+            dataModified = true;
+            log.info("Removed specified parent categories");
+        }
+
+        if (!dataModified) {
+            throw new IllegalArgumentException("At least one field must be provided for update.");
+        }
+
+        Category updated = categoryRepository.save(category);
+        String newValues = convertCategoryToJson(updated);
+
+        categoryHistoryRepository.save(CategoryHistory.builder()
+                .category(updated)
+                .editedBy(editor)
+                .editedAt(LocalDateTime.now())
+                .oldValues(oldValues)
+                .newValues(newValues)
+                .build());
+
+
+        CategoryDTO dto = mapCategoryToDto(updated);
+
+        log.info("Category with ID {} successfully updated.", updated.getId());
+
+        return new MyResponse<>(dto, null, "Category updated successfully.", new Metadata());
+    }
+
+
+    @Transactional
+    public MyResponse<Void> deleteCategory(String username, Integer categoryId) {
+        log.info("User '{}' is attempting to delete category with ID {}", username, categoryId);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Category categoryToDelete = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + categoryId));
+
+        categoryToDelete.setDeleted(true);
+        if (categoryToDelete.getModels().stream()
+                .anyMatch(model -> model.getCategories().size() == 1)) {
+
+            Category closestParent = findClosestParent(categoryToDelete);
+            if (closestParent == null) {
+                log.warn("Deletion denied: No valid parent found to reassign models.");
+                throw new IllegalStateException("Cannot delete category: No valid parent category found.");
+            }
+
+            for (Model model : new HashSet<>(categoryToDelete.getModels())) {
+                if (model.getCategories().size() == 1) {
+                    log.info("Reassigning model '{}' from category ID {} to parent ID {}", model.getId(), categoryId, closestParent.getId());
+                    model.getCategories().add(closestParent);
+                }
+                model.getCategories().remove(categoryToDelete);
+            }
+        } else {
+            log.info("No exclusive models found. Proceeding with direct deletion.");
+        }
+
+        // Move child categories
+        for (Category child : new HashSet<>(categoryToDelete.getChildCategories())) {
+            child.getParentCategories().remove(categoryToDelete);
+            child.getParentCategories().add(findClosestParent(categoryToDelete));
+        }
+
+        // Move datasets
+        for (Dataset dataset : categoryToDelete.getDatasets()) {
+            dataset.getCategories().remove(categoryToDelete);
+            dataset.getCategories().add(findClosestParent(categoryToDelete));
+        }
+
+        for (Category parent : categoryToDelete.getParentCategories()) {
+            parent.getChildCategories().remove(categoryToDelete);
+        }
+
+        log.info("Deleting category '{}'", categoryToDelete.getName());
+        categoryRepository.save(categoryToDelete);
+
+        return new MyResponse<>(null, null, "Category deleted successfully", new Metadata());
+    }
+
+
+    private CategoryDTO mapCategoryToDto(Category category) {
+        CategoryDTO dto = modelMapper.map(category, CategoryDTO.class);
+        dto.setCreatedByUsername(category.getCreatedBy().getUsername());
+        dto.setParentCategoryIds(
+                category.getParentCategories() != null
+                        ? category.getParentCategories().stream().map(Category::getId).collect(Collectors.toSet())
+                        : Set.of()
+        );
+        return dto;
+    }
+
+    private CategoryRequestDTO mapCategoryRequestToDto(CategoryRequest request) {
         CategoryRequestDTO dto = modelMapper.map(request, CategoryRequestDTO.class);
         dto.setRequestedByUsername(request.getRequestedBy().getUsername());
-        dto.setProcessedByUsername(
-                request.getProcessedBy() != null ? request.getProcessedBy().getUsername() : null
-        );
+        dto.setProcessedByUsername(request.getProcessedBy() != null ? request.getProcessedBy().getUsername() : null);
         dto.setStatus(request.getStatus().getName().name());
         dto.setParentCategoryIds(
                 request.getParentCategories() != null
@@ -226,137 +354,6 @@ public class CategoryService {
                         : Set.of()
         );
         return dto;
-    }
-
-    @Transactional
-    public Category rejectCategoryRequest(String username, Integer requestId, String rejectionReason) {
-        return processCategoryRequest(username, requestId,  CategoryRequestStatusEnum.REJECTED, rejectionReason);
-    }
-
-    @Transactional
-    public Category updateCategory(String username, Integer categoryId,CategoryUpdateRequest request){
-        User editor = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-
-        String oldValues = convertCategoryToJson(category);
-        boolean dataExist = false;
-        Integer newId = request.getNewId();
-        if(newId != null){
-            dataExist = true;
-            Optional<Category> tempCategory = categoryRepository.findById(newId);
-            if(tempCategory.isPresent()){
-                //TODO I can return the found category
-                throw new RuntimeException("Category with id: " + newId + " already exist. Category name: "+ tempCategory.get().getName()+".");
-            }
-            category.setId(newId);
-        }
-
-        if(ValidationUtil.stringExists(request.getName())){
-            dataExist = true;
-            category.setName(request.getName());
-        }
-
-        if(ValidationUtil.stringExists(request.getDescription())){
-            dataExist = true;
-            category.setDescription(request.getDescription());
-        }
-
-        Set<Integer> newParentIds = request.getNewParentCategoryIds();
-        if(newParentIds != null && !newParentIds.isEmpty()){
-            dataExist = true;
-            List<Category> newParentCategories =  findCategoriesByIdsStrict(request.getNewParentCategoryIds());
-            category.setParentCategories(new HashSet<>(newParentCategories));
-        }
-
-        Set<Integer> parentIdsToRemove = request.getParentCategoryIdsToRemove();
-        if(parentIdsToRemove != null && !parentIdsToRemove.isEmpty()){
-            dataExist = true;
-            category = removeParentCategoriesStrict(category, parentIdsToRemove);
-        }
-
-        if(!dataExist){
-            throw new IllegalArgumentException("At least one field must be provided for update.");
-        }
-
-        category =  categoryRepository.save(category);
-        String newValues = convertCategoryToJson(category);
-
-        CategoryHistory history = CategoryHistory.builder()
-                .category(category)
-                .editedBy(editor)
-                .editedAt(LocalDateTime.now())
-                .oldValues(oldValues)
-                .newValues(newValues)
-                .build();
-
-        categoryHistoryRepository.save(history);
-
-        return category;
-    }
-
-    private Category processCategoryRequest(String username, Integer requestId, CategoryRequestStatusEnum categoryRequestStatusEnum, String rejectionReason){
-        CategoryRequest request = categoryRequestRepository.findById(requestId)
-                .orElseThrow(() -> new EntityNotFoundException("Category request not found"));
-
-        if (!request.getStatus().getName().equals(CategoryRequestStatusEnum.PENDING)) {
-            throw new IllegalArgumentException("This request has already been processed.");
-        }
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        CategoryRequestStatus status = null;
-        Category category = null;
-        final LocalDateTime localDateTimeNow = LocalDateTime.now();
-
-        if(categoryRequestStatusEnum == CategoryRequestStatusEnum.APPROVED) {
-            status = categoryRequestStatusRepository.findByName(categoryRequestStatusEnum)
-                    .orElseThrow(() -> new EntityNotFoundException("Status APPROVED could not be found"));
-
-            // Create the new category and assign parent categories
-            category = new Category();
-            category.setName(request.getName());
-            category.setDescription(request.getDescription());
-            category.setCreatedBy(request.getRequestedBy());
-
-            // Assign parent categories
-            if (request.getParentCategories() != null && !request.getParentCategories().isEmpty()) {
-                category.setParentCategories(request.getParentCategories());
-            }
-            category = categoryRepository.save(category);
-
-            CategoryHistory history = CategoryHistory.builder()
-                    .category(category)
-                    .editedBy(user)
-                    .editedAt(localDateTimeNow)
-                    .oldValues(null)
-                    .newValues(convertCategoryToJson(category))
-                    .comments("Approved by user: " + username)
-                    .initial(true)
-                    .build();
-
-            categoryHistoryRepository.save(history);
-
-            request.setApprovedCategory(category);
-
-        } else {
-            status = categoryRequestStatusRepository.findByName(categoryRequestStatusEnum)
-                    .orElseThrow(() -> new EntityNotFoundException("Status APPROVED could not be found"));
-            request.setRejectionReason(rejectionReason);
-        }
-
-        // Update request status and store the approved category
-
-        request.setStatus(status);
-        request.setProcessedBy(user);
-        request.setProcessedAt(localDateTimeNow);
-
-        categoryRequestRepository.save(request);
-
-        return category;
     }
 
     public Set<Integer> getChildCategoryIds(Integer categoryId, boolean deepSearch) {
@@ -394,7 +391,7 @@ public class CategoryService {
         return level;
     }
 
-    private Category findClosestParent(Category category) {
+    public Category findClosestParent(Category category) {
         Set<Category> parentCategories = category.getParentCategories();
 
         if (parentCategories.isEmpty()) {
@@ -469,11 +466,14 @@ public class CategoryService {
     }
 
     private String convertCategoryToJson(Category category) {
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.writeValueAsString(category);
+            CategoryDTO dto = mapCategoryToDto(category); // Your own mapper method
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            return objectMapper.writeValueAsString(dto);
         } catch (JsonProcessingException e) {
-            return "{}"; // Default empty JSON
+            log.error("Failed to serialize category to JSON", e);
+            return "{}";
         }
     }
 }

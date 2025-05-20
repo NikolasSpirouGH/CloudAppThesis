@@ -112,12 +112,6 @@ public class AuthController {
         user.setCountry(registerRequest.getCountry());
         user.setProfession(registerRequest.getProfession());
 
-//        Account account = new Account();
-//        account.setEmail(registerRequest.email());
-//        account.setPassword(passwordEncoder.encode(registerRequest.password()));
-//        account.setRole(role);
-//        account.setStatus(status);
-
         userRepository.save(user);
         return new ResponseEntity<>("Account registered successfully", HttpStatus.OK);
     }
@@ -130,7 +124,6 @@ public class AuthController {
                         loginRequest.getPassword()
                 )
         );
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = tokenProvider.generateToken(authentication);
 
