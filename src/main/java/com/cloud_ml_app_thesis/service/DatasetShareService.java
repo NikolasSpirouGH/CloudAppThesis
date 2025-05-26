@@ -32,7 +32,7 @@ import static com.cloud_ml_app_thesis.util.SecurityUtils.hasAnyRole;
 
 @Service
 @RequiredArgsConstructor
-public class DatasetSharingService {
+public class DatasetShareService {
 
     private final DatasetRepository datasetRepository;
     private final UserRepository userRepository;
@@ -132,7 +132,6 @@ public class DatasetSharingService {
             deletedUserUsernames = usernames;
         }
 
-
         for (DatasetShare ds : datasetShares) {
             datasetShareHistories.add(new DatasetShareHistory(null, dataset, ds.getSharedWithUser(), sharedByUser, actionAt, removeAction, comments));
             if (deleteAllUsers) {
@@ -155,7 +154,7 @@ public class DatasetSharingService {
 
 
         // Determine target user
-        User targetUser;
+        User targetUser = null;
         //copy a dataset that is shared with him case
         if(targetUsername == null || targetUsername.equals(currentUser.getUsername())){
             targetUser= currentUser;
@@ -188,7 +187,7 @@ public class DatasetSharingService {
         copy.setContentType(originalDataset.getContentType());
         copy.setUploadDate(ZonedDateTime.now());
         copy.setAccessibility(originalDataset.getAccessibility());
-        copy.setCategories(originalDataset.getCategories());
+        copy.setCategory(originalDataset.getCategory());
         copy.setDescription("Copy of dataset ID " + originalDataset.getId());
 
         Dataset savedCopy = datasetRepository.save(copy);

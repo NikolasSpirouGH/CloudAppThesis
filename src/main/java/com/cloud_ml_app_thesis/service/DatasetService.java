@@ -1,14 +1,17 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.config.BucketResolver;
 import com.cloud_ml_app_thesis.dto.dataset.DatasetSelectTableDTO;
 import com.cloud_ml_app_thesis.dto.request.dataset.DatasetCreateRequest;
 import com.cloud_ml_app_thesis.dto.request.dataset.DatasetSearchRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
+import com.cloud_ml_app_thesis.enumeration.BucketTypeEnum;
+import com.cloud_ml_app_thesis.enumeration.DatasetFunctionalTypeEnum;
 import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
@@ -16,7 +19,7 @@ import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.accessibility.DatasetAccessibilityRepository;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
-import com.cloud_ml_app_thesis.repository.TrainRepository;
+import com.cloud_ml_app_thesis.repository.TrainingRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.specification.DatasetSpecification;
 import com.cloud_ml_app_thesis.util.FileUtil;
@@ -26,13 +29,13 @@ import io.minio.MinioClient;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,27 +67,18 @@ import com.cloud_ml_app_thesis.exception.FileProcessingException;
 public class DatasetService {
 
     private final MinioService minioService;
+    private final BucketResolver bucketResolver;
     private final CategoryService categoryService;
 
     private final DatasetRepository datasetRepository;
     private final DatasetConfigurationRepository datasetConfigurationRepository;
-    private final TrainRepository trainRepository;
+    private final TrainingRepository trainingRepository;
     private final UserRepository userRepository;
     private final DatasetAccessibilityRepository datasetAccessibilityRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(DatasetService.class);
-
-
     private final MinioClient minioClient;
     private final ObjectMapper objectMapper;
-
-    @Value("ml-datasets")
-    private String bucketName;
-
-    @Value("http://127.0.0.1:9000")
-    private String minioUrl;
-
-
+    private static final Logger logger = LoggerFactory.getLogger(DatasetService.class);
 
     public Page<Dataset> searchDatasets(DatasetSearchRequest request, int page, int size, String sortBy, String sortDirection) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -126,9 +120,8 @@ public class DatasetService {
     }
 
     @Transactional
-    public MyResponse<?> createDataset(DatasetCreateRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public GenericResponse<?> createDataset(UserDetails userDetails, DatasetCreateRequest request) {
+        String username = userDetails.getUsername();
 
         User userRequested = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User requested the creation could not be found"));
         User ownerUser = userRepository.findByUsername(request.getOwnerUsername()).orElseThrow(() -> new EntityNotFoundException("User requested the creation could not be found"));
@@ -137,18 +130,25 @@ public class DatasetService {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename.isBlank()){
-            return new MyResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+            return new GenericResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
 
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename,ownerUser.getUsername());
 
         Optional<Dataset> datasetTemp = datasetRepository.findByFileName(request.getFileName());
 
+        DatasetFunctionalTypeEnum datasetFunctionalTypeEnum = request.getFunctionalType();
+        String bucketName = null;
+        if(datasetFunctionalTypeEnum == DatasetFunctionalTypeEnum.TRAIN){
+            bucketName = bucketResolver.resolve(BucketTypeEnum.TRAIN_DATASET);
+        } else if(datasetFunctionalTypeEnum == DatasetFunctionalTypeEnum.PREDICT) {
+            bucketName = bucketResolver.resolve(BucketTypeEnum.PREDICT_DATASET);
+        }
+
         try {
-            minioService.uploadFile(file, uniqueFilename);
-        } catch (MinioFileUploadException e) {
-            throw new RuntimeException(e);
-        } catch (RuntimeException e) {
+            minioService.uploadObjectToBucket(file, bucketName, uniqueFilename);
+        } catch (RuntimeException | IOException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
         Dataset dataset = new Dataset();
@@ -168,7 +168,7 @@ public class DatasetService {
             throw e;
         }
 
-        return new MyResponse<>(dataset.getId().toString(), null, null, new Metadata());
+        return new GenericResponse<>(dataset.getId().toString(), null, null, new Metadata());
     }
 
     /*public MultipartFile getDatasetByTrainingId(Integer trainingId){
@@ -177,7 +177,7 @@ public class DatasetService {
         minioService.getFileInputStream(dataset.getOriginalFileName(), dataset.getFilePath());
     }*/
 
-    public MyResponse<Dataset> uploadDataset(MultipartFile file, User user)  {
+    public GenericResponse<Dataset> uploadDataset(MultipartFile file, User user, DatasetFunctionalTypeEnum datasetFunctionalTypeEnum)  {
 
         String originalFilename = file.getOriginalFilename();
         if(originalFilename == null || originalFilename.isBlank()){
@@ -187,11 +187,20 @@ public class DatasetService {
         String objectName = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
         //TODO
         try {
-            minioService.uploadFile(file, objectName);
-        } catch (MinioFileUploadException e) {
-            throw e;
+            String bucketName = null;
+            if(datasetFunctionalTypeEnum == DatasetFunctionalTypeEnum.TRAIN){
+                bucketName = bucketResolver.resolve(BucketTypeEnum.TRAIN_DATASET);
+            } else if(datasetFunctionalTypeEnum == DatasetFunctionalTypeEnum.PREDICT) {
+                bucketName = bucketResolver.resolve(BucketTypeEnum.PREDICT_DATASET);
+            }
+            minioService.uploadObjectToBucket(file, bucketName, objectName);
+
         } catch (RuntimeException e){
+            e.printStackTrace();
             throw e;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         Dataset dataset = new Dataset();
         dataset.setUser(user);
@@ -208,7 +217,7 @@ public class DatasetService {
 
         try {
             dataset = datasetRepository.save(dataset);
-            return new MyResponse<>(dataset, null, "Dataset uploaded successfully", null);
+            return new GenericResponse<>(dataset, null, "Dataset uploaded successfully", null);
 
         } catch (DataAccessException e){
             logger.error("Failed to save Dataset '{}' for user '{}'.", dataset.getOriginalFileName(), user.getUsername() );
@@ -216,7 +225,7 @@ public class DatasetService {
         }
     }
 
-    public MyResponse<?> uploadPredictionDataset(MultipartFile file) {
+    public GenericResponse<?> uploadPredictionDataset(MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -225,16 +234,18 @@ public class DatasetService {
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || originalFilename.isBlank()) {
-            return new MyResponse<>(null, "1", "Filename cannot be empty", new Metadata());
+            return new GenericResponse<>(null, "1", "Filename cannot be empty", new Metadata());
         }
 
         String uniqueFilename = FileUtil.generateUniqueFilename(originalFilename, user.getUsername());
 
         try {
             // ✅ Use the prediction-specific bucket logic
-            minioService.uploadFileToPredictionBucket(file, uniqueFilename);
+            minioService.uploadObjectToBucket(file, bucketResolver.resolve(BucketTypeEnum.PREDICT_DATASET) ,uniqueFilename);
         } catch (MinioFileUploadException e) {
             throw new RuntimeException("Failed to upload prediction dataset to MinIO", e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         Dataset dataset = new Dataset();
@@ -252,36 +263,36 @@ public class DatasetService {
         dataset.setAccessibility(privateAccessibility);
 
         dataset = datasetRepository.save(dataset);
-        return new MyResponse<>(dataset, null, "Prediction dataset uploaded successfully", new Metadata());
+        return new GenericResponse<>(dataset, null, "Prediction dataset uploaded successfully", new Metadata());
     }
 
 
     //*********************************************************************************************************************
-    public MyResponse<?> getDatasets(String username){
+    public GenericResponse<?> getDatasets(String username){
         Optional<List<Dataset>> datasetsOptional = datasetRepository.findAllByUserUsername(username);
         if(datasetsOptional.isPresent()){
             List<DatasetSelectTableDTO> datasetSelectTableDTOS = datasetsOptional.get().stream()
                     .map(this::convertToDTO)
                     .toList();
-            return new MyResponse<List<DatasetSelectTableDTO>>(datasetSelectTableDTOS, null, null, new Metadata());
+            return new GenericResponse<List<DatasetSelectTableDTO>>(datasetSelectTableDTOS, null, null, new Metadata());
         }
-        return new MyResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata());
+        return new GenericResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata());
     }
 
     private DatasetSelectTableDTO convertToDTO(Dataset dataset){
         DatasetSelectTableDTO dto = objectMapper.convertValue(dataset, DatasetSelectTableDTO.class);
 
-        long completeCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
+        long completeCount = trainingRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
         dto.setCompleteTrainingCount(completeCount);
 
-        long failedCount = trainRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
+        long failedCount = trainingRepository.countByDatasetConfigurationDatasetIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
         dto.setFailedTrainingCount(failedCount);
 
         return dto;
     }
 //*********************************************************************************************************************
 
-    public MyResponse<List<String>> getDatasetUrls(String email) {
+    public GenericResponse<List<String>> getDatasetUrls(String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if(user.isEmpty()) {
             //TODO LOGGER AND EXCEPTION HANDLING
@@ -291,7 +302,7 @@ public class DatasetService {
                         .map(Dataset::getFilePath)
                         .collect(Collectors.toList()))
                         .orElse(Collections.emptyList());
-        return new MyResponse<List<String>>(datasetUrls, null, null, new Metadata());
+        return new GenericResponse<List<String>>(datasetUrls, null, null, new Metadata());
     }
 
     public DatasetConfiguration getDatasetConfiguration(Integer datasetConfId) throws Exception {

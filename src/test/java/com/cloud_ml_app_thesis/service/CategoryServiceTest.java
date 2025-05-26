@@ -5,11 +5,12 @@ import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
 import com.cloud_ml_app_thesis.dto.category.CategoryRequestDTO;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
 import com.cloud_ml_app_thesis.entity.*;
+import com.cloud_ml_app_thesis.entity.model.Model;
 import com.cloud_ml_app_thesis.entity.status.CategoryRequestStatus;
 import com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum;
 import com.cloud_ml_app_thesis.repository.*;
 import com.cloud_ml_app_thesis.repository.status.CategoryRequestStatusRepository;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +70,7 @@ class CategoryServiceTest {
         when(modelMapper.map(any(CategoryRequest.class), eq(CategoryRequestDTO.class))).thenReturn(mockDto);
 
         // Act
-        MyResponse<CategoryRequestDTO> response = categoryService.createCategory("john", req);
+        GenericResponse<CategoryRequestDTO> response = categoryService.createCategory("john", req);
 
         // Assert
         assertThat(response).isNotNull();
@@ -126,7 +127,7 @@ class CategoryServiceTest {
 
         when(modelMapper.map(any(CategoryRequest.class), eq(CategoryRequestDTO.class))).thenReturn(mockDto);
 
-        MyResponse<CategoryRequestDTO> response = categoryService.createCategory("john", req);
+        GenericResponse<CategoryRequestDTO> response = categoryService.createCategory("john", req);
 
         assertThat(response).isNotNull();
         assertThat(response.getDataHeader().getName()).isEqualTo("AI");
@@ -157,7 +158,7 @@ class CategoryServiceTest {
         when(modelMapper.map(any(Category.class), eq(CategoryDTO.class))).thenReturn(new CategoryDTO());
         when(categoryHistoryRepository.save(any())).thenReturn(null);
         // Act
-        MyResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
+        GenericResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
 
         // Assert
         assertThat(response).isNotNull();
@@ -184,7 +185,7 @@ class CategoryServiceTest {
         when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(modelMapper.map(any(Category.class), eq(CategoryDTO.class))).thenReturn(new CategoryDTO());
 
-        MyResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
+        GenericResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
 
         assertThat(response).isNotNull();
         assertThat(category.getParentCategories()).contains(parent);
@@ -210,7 +211,7 @@ class CategoryServiceTest {
         when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(modelMapper.map(any(Category.class), eq(CategoryDTO.class))).thenReturn(new CategoryDTO());
 
-        MyResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
+        GenericResponse<CategoryDTO> response = categoryService.updateCategory("john", 1, req);
 
         assertThat(response).isNotNull();
         assertThat(category.getParentCategories()).doesNotContain(parent);
@@ -277,7 +278,7 @@ class CategoryServiceTest {
         when(categoryRequestStatusRepository.findByName(REJECTED)).thenReturn(Optional.of(rejectedStatus));
         when(modelMapper.map(any(), eq(CategoryRequestDTO.class))).thenReturn(new CategoryRequestDTO());
 
-        MyResponse<CategoryRequestDTO> response = categoryService.rejectCategoryRequest("admin", 1, "Duplicate request");
+        GenericResponse<CategoryRequestDTO> response = categoryService.rejectCategoryRequest("admin", 1, "Duplicate request");
 
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).contains("rejected");
@@ -319,7 +320,7 @@ class CategoryServiceTest {
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
 
-        MyResponse<Void> response = categoryService.deleteCategory("admin", 1);
+        GenericResponse<Void> response = categoryService.deleteCategory("admin", 1);
 
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).contains("deleted");
@@ -371,7 +372,7 @@ class CategoryServiceTest {
         // Create a model assigned only to the category to be deleted
         Model model = new Model();
         model.setId(5);
-        model.setCategories(new HashSet<>(Set.of(category)));
+        model.setCategory(category);
 
         // Assign model to category
         category.setModels(Set.of(model));
@@ -382,12 +383,12 @@ class CategoryServiceTest {
         when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Act
-        MyResponse<Void> response = categoryService.deleteCategory("admin", 1);
+        GenericResponse<Void> response = categoryService.deleteCategory("admin", 1);
 
         // Assert
         assertThat(response).isNotNull();
-        assertThat(model.getCategories()).contains(parent);          // Reassigned model
-        assertThat(model.getCategories()).doesNotContain(category);  // Old category removed
+        assertThat(model.getCategory()).isEqualTo(parent);          // Reassigned model
+        assertThat(model.getCategory()).isNotEqualTo(category);  // Old category removed
         assertThat(category.isDeleted()).isTrue();                   // Soft delete flag set
         verify(categoryRepository).save(category);                   // Save was called
     }
@@ -402,7 +403,7 @@ class CategoryServiceTest {
 
         Model model = new Model();
         model.setId(99);
-        model.setCategories(new HashSet<>(List.of(category)));
+        model.setCategory(category);
 
         category.setModels(Set.of(model));
 

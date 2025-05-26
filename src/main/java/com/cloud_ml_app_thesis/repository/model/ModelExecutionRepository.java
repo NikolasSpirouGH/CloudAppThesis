@@ -1,6 +1,6 @@
-package com.cloud_ml_app_thesis.repository;
+package com.cloud_ml_app_thesis.repository.model;
 
-import com.cloud_ml_app_thesis.entity.ModelExecution;
+import com.cloud_ml_app_thesis.entity.model.ModelExecution;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

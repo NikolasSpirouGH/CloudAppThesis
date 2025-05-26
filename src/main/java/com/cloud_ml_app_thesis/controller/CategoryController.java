@@ -26,7 +26,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 
 import java.util.List;
 
@@ -64,11 +64,11 @@ public class CategoryController {
     
     @PostMapping("/addCategory")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MyResponse<?>> createCategory(
+    public ResponseEntity<GenericResponse<?>> createCategory(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CategoryCreateRequest request) {
         String username = userDetails.getUsername();
-       MyResponse<?> createCategoryRequest = categoryService.createCategory(username, request);
+       GenericResponse<?> createCategoryRequest = categoryService.createCategory(username, request);
         return ResponseEntity.ok().body(createCategoryRequest);
     }
 
@@ -79,11 +79,11 @@ public class CategoryController {
     })
     @PostMapping("{requestId}/approve")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<MyResponse<?>> approveCategoryRequest(
+    public ResponseEntity<GenericResponse<?>> approveCategoryRequest(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "Request ID to approve") @PathVariable @Positive Integer requestId) {
         String username = userDetails.getUsername();
-        MyResponse<?> approvedRequest = categoryService.approveCategoryRequest(username, requestId);
+        GenericResponse<?> approvedRequest = categoryService.approveCategoryRequest(username, requestId);
         return ResponseEntity.ok().body(approvedRequest);
     }
 
@@ -94,12 +94,12 @@ public class CategoryController {
     })
     @PatchMapping("{requestId}/reject")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<MyResponse<?>> rejectCategoryRequest(
+    public ResponseEntity<GenericResponse<?>> rejectCategoryRequest(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "Request ID to reject") @PathVariable @Positive Integer requestId,
             @RequestBody CategoryRejectRequest request) {
         String username = userDetails.getUsername();
-        MyResponse<CategoryRequestDTO> response = categoryService.rejectCategoryRequest(username, requestId, request.getRejectionReason());
+        GenericResponse<CategoryRequestDTO> response = categoryService.rejectCategoryRequest(username, requestId, request.getRejectionReason());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -111,7 +111,7 @@ public class CategoryController {
     })
     @PatchMapping("/{id}/update")
     @PreAuthorize("hasAnyRole('ADMIN', 'CATEGORY_MANAGER')")
-    public ResponseEntity<MyResponse<CategoryDTO>> updateCategory(
+    public ResponseEntity<GenericResponse<CategoryDTO>> updateCategory(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "ID of the category to update") @PathVariable @Positive Integer id,
             @Valid @RequestBody CategoryUpdateRequest request) {
@@ -121,7 +121,7 @@ public class CategoryController {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        MyResponse<CategoryDTO> response = categoryService.updateCategory(username, id, request);
+        GenericResponse<CategoryDTO> response = categoryService.updateCategory(username, id, request);
         return ResponseEntity.ok(response);
     }
 }

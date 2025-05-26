@@ -1,14 +1,15 @@
 package com.cloud_ml_app_thesis.controller;
 
 import com.cloud_ml_app_thesis.dto.request.dataset.*;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.enumeration.DatasetFunctionalTypeEnum;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.cloud_ml_app_thesis.service.DatasetService;
-import com.cloud_ml_app_thesis.service.DatasetSharingService;
+import com.cloud_ml_app_thesis.service.DatasetShareService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ import java.util.List;
 public class DatasetController {
 
     private final DatasetService datasetService;
-    private final DatasetSharingService datasetSharingService;
+    private final DatasetShareService datasetShareService;
     private final UserRepository userRepository;
 
     @PostMapping("/search")
@@ -48,12 +49,13 @@ public class DatasetController {
 
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MyResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
+    public ResponseEntity<GenericResponse<?>> uploadDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUploadRequest request) {
         String username = userDetails.getUsername();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        MyResponse<?> datasetResponse = datasetService.uploadDataset(request.getFile(), user);
+        //TODO resolve the info the user may have provided or make another endpoint
+        GenericResponse<?> datasetResponse = datasetService.uploadDataset(request.getFile(), user, request.getFunctionalType());
         if (datasetResponse.getErrorCode() != null && !datasetResponse.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(datasetResponse);
         }
@@ -62,9 +64,9 @@ public class DatasetController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATASET_MANAGER')")
-    public ResponseEntity<MyResponse<?>> createDataset(@ModelAttribute DatasetCreateRequest request) {
+    public ResponseEntity<GenericResponse<?>> createDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetCreateRequest request) {
 
-        MyResponse<?> response = datasetService.createDataset(request);
+        GenericResponse<?> response = datasetService.createDataset(userDetails, request);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -73,12 +75,13 @@ public class DatasetController {
 
     @PatchMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MyResponse<?>> updateDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUpdateRequest request) {
+    public ResponseEntity<GenericResponse<?>> updateDataset(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute DatasetUpdateRequest request) {
+        //TODO why is DatasetUpdateRequest request haivng only the file? should igve id of the update dataset and more.
         String username = userDetails.getUsername();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
-
-        MyResponse<?> response = datasetService.uploadDataset(request.getFile(), user);
+        //TODO change 3rd argument here
+        GenericResponse<?> response = datasetService.uploadDataset(request.getFile(), user, DatasetFunctionalTypeEnum.TRAIN);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -86,7 +89,7 @@ public class DatasetController {
     }
 
     @GetMapping
-    public ResponseEntity<MyResponse<?>> getDatasets(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<GenericResponse<?>> getDatasets(@AuthenticationPrincipal UserDetails userDetails) {
         String username = null;
         if(userDetails != null){
             List<String> roles = userDetails.getAuthorities().stream()
@@ -97,7 +100,7 @@ public class DatasetController {
 
             }
         }
-        MyResponse<?> response = datasetService.getDatasets(username);
+        GenericResponse<?> response = datasetService.getDatasets(username);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -105,7 +108,7 @@ public class DatasetController {
     }
 
     @GetMapping("/infos/{id}")
-    public ResponseEntity<MyResponse<?>> getDatasetsInfo(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<GenericResponse<?>> getDatasetsInfo(@AuthenticationPrincipal UserDetails userDetails) {
         String username = null;
         if(userDetails != null){
             List<String> roles = userDetails.getAuthorities().stream()
@@ -116,7 +119,7 @@ public class DatasetController {
 
             }
         }
-        MyResponse<?> response = datasetService.getDatasets(username);
+        GenericResponse<?> response = datasetService.getDatasets(username);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -124,18 +127,18 @@ public class DatasetController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MyResponse<?>> getDataset(@PathVariable String id) {
+    public ResponseEntity<GenericResponse<?>> getDataset(@PathVariable String id) {
 
-        MyResponse<?> response = null;
+        GenericResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
         return ResponseEntity.ok().body(response);
     }
     @GetMapping("/info/{id}")
-    public ResponseEntity<MyResponse<?>> getDatasetInfo(@PathVariable String id) {
+    public ResponseEntity<GenericResponse<?>> getDatasetInfo(@PathVariable String id) {
 
-        MyResponse<?> response = null;
+        GenericResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
@@ -143,17 +146,17 @@ public class DatasetController {
     }
 
     @GetMapping("/download/{id}")
-    public ResponseEntity<MyResponse<?>> downloadDataset(@PathVariable String id) {
+    public ResponseEntity<GenericResponse<?>> downloadDataset(@PathVariable String id) {
 
-        MyResponse<?> response = null;
+        GenericResponse<?> response = null;
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }
         return ResponseEntity.ok().body(response);
     }
     @GetMapping("/{id}/category")
-    public ResponseEntity<MyResponse<?>> getDatasetsUrls(@RequestParam String email){
-        MyResponse<?> response = datasetService.getDatasetUrls(email);
+    public ResponseEntity<GenericResponse<?>> getDatasetsUrls(@RequestParam String email){
+        GenericResponse<?> response = datasetService.getDatasetUrls(email);
         if (response.getErrorCode() != null && !response.getErrorCode().isBlank()) {
             return ResponseEntity.internalServerError().body(response);
         }

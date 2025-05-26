@@ -10,11 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Setter
 @Getter
-public class MyResponse<T> {
+public class GenericResponse<T> {
+
     private T dataHeader;
     private String errorCode;
     private String message;
     private Metadata metadata;
-
-
 }

@@ -15,6 +15,14 @@ public class AuthorizationHelper {
         return hasRole(UserDetails, "ROLE_DATASET_MANAGER");
     }
 
+    public boolean isAlgorithmManager(UserDetails UserDetails) {
+        return hasRole(UserDetails, "ROLE_ALGORITHM_MANAGER");
+    }
+
+    public boolean isModelManager(UserDetails UserDetails) {
+        return hasRole(UserDetails, "ROLE_MODEL_MANAGER");
+    }
+
     public boolean isUser(UserDetails UserDetails) {
         return hasRole(UserDetails, "ROLE_USER");
     }
@@ -24,7 +32,10 @@ public class AuthorizationHelper {
     }
 
     public boolean isSuperAlgorithmUser(UserDetails UserDetails) {
-        return isAdmin(UserDetails) || isDatasetManager(UserDetails);
+        return isAdmin(UserDetails) || isAlgorithmManager(UserDetails);
+    }
+    public boolean isSuperModelUser(UserDetails UserDetails) {
+        return isAdmin(UserDetails) || isModelManager(UserDetails);
     }
 
 //    public boolean isDatasetOwner(String datasetOwnerUsername, UserDetails UserDetails) {

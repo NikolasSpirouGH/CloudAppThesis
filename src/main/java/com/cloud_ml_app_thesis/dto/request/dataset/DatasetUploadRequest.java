@@ -1,5 +1,6 @@
 package com.cloud_ml_app_thesis.dto.request.dataset;
 
+import com.cloud_ml_app_thesis.enumeration.DatasetFunctionalTypeEnum;
 import com.cloud_ml_app_thesis.enumeration.accessibility.DatasetAccessibilityEnum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,4 +39,6 @@ public class DatasetUploadRequest {
 
     @Positive(message = "Id cannot be negative")
     private Integer categoryId;
+
+    private DatasetFunctionalTypeEnum functionalType = DatasetFunctionalTypeEnum.TRAIN;
 }

@@ -1,8 +1,11 @@
 package com.cloud_ml_app_thesis.entity;
 
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.entity.model.Model;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -40,13 +43,11 @@ public class Category {
     @ManyToMany(mappedBy = "parentCategories")
     private Set<Category> childCategories;
 
-    // Link categories to ML Models
-    @ManyToMany(mappedBy = "categories")
-    private Set<Model> models;
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Dataset> datasets = new HashSet<>();
 
-    // Link categories to Datasets
-    @ManyToMany(mappedBy = "categories")
-    private Set<Dataset> datasets;
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Model> models = new HashSet<>();
 
     @Column(nullable = false)
     private boolean deleted = false;

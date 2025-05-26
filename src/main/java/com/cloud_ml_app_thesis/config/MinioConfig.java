@@ -4,6 +4,8 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.errors.MinioException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,23 +17,25 @@ import java.security.NoSuchAlgorithmException;
 @Configuration
 public class MinioConfig {
 
-    @Value("http://127.0.0.1:9000")
+    @Value("${minio.url}")
     private String url;
 
-    @Value("minioadmin")
+    @Value("${minio.access.name}")
     private String accessKey;
 
-    @Value("minioadmin")
+    @Value("${minio.access.secret}")
     private String secretKey;
 
-    @Value("ml-datasets")
+    @Value("${minio.bucket.datasets}")
     private String datasetsBucketName;
 
-    @Value("ml-models")
+    @Value("${minio.bucket.models}")
     private String modelsBucketName;
 
-    @Value("ml-predictions")
-    private String predictionResultsBucketName;
+    @Value("${minio.bucket.predictions}")
+    private String predictionDatasetBucketName;
+
+    private static final Logger log = LoggerFactory.getLogger(MinioConfig.class);
 
     @Bean
     public MinioClient minioClient() {
@@ -41,13 +45,11 @@ public class MinioConfig {
                     .credentials(accessKey, secretKey)
                     .build();
 
-            // Check if datasets bucket exists, if not create one
             ensureBucketExists(minioClient, datasetsBucketName);
 
-            // Check if models bucket exists, if not create one
             ensureBucketExists(minioClient, modelsBucketName);
 
-            ensureBucketExists(minioClient, predictionResultsBucketName);
+            ensureBucketExists(minioClient, predictionDatasetBucketName);
 
             return minioClient;
         } catch (MinioException e) {
@@ -61,9 +63,9 @@ public class MinioConfig {
         boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         if (!found) {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            System.out.println("Bucket '" + bucketName + "' created successfully.");
+            log.info("Bucket '{}' created successfully.", bucketName);
         } else {
-            System.out.println("Bucket '" + bucketName + "' already exists.");
+            log.info("Bucket '{}' already exists.", bucketName);
         }
     }
 }

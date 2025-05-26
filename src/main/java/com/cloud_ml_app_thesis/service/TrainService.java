@@ -1,19 +1,21 @@
 package com.cloud_ml_app_thesis.service;
 
+import com.cloud_ml_app_thesis.config.BucketResolver;
 import com.cloud_ml_app_thesis.dto.train.MyTrainingDTO;
 import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.enumeration.BucketTypeEnum;
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.dto.request.training.*;
 import com.cloud_ml_app_thesis.dto.response.*;
 import com.cloud_ml_app_thesis.repository.*;
-
+import com.cloud_ml_app_thesis.entity.status.TrainingStatus;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.model.ModelRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
 import com.cloud_ml_app_thesis.util.AlgorithmUtil;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.minio.errors.MinioException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +25,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import weka.core.Instances;
@@ -38,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 public class TrainService {
 
     private final TrainingRequestHelperService trainingRequestHelperService;
-    private final TrainRepository trainRepository;
+    private final TrainingRepository trainingRepository;
 
     private final UserRepository userRepository;
 
@@ -53,6 +57,10 @@ public class TrainService {
     private final DatasetConfigurationRepository datasetConfigurationRepository;
 
     private final ModelService modelService;
+
+    private final MinioService minioService;
+
+    private final BucketResolver bucketResolver;
 
     private final DatasetService datasetService;
 
@@ -82,79 +90,113 @@ public class TrainService {
 
 
     //TODO Check if the Status is being correctly set at the correct time
-    public MyResponse<?> startTraining(TrainingStartRequest request, User user) throws Exception {
+    public GenericResponse<?> startTraining(TrainingStartRequest request, User user) throws Exception {
 
 
         TrainingDataInput trainingDataInput =  trainingRequestHelperService.configureTrainingDataInputByTrainCase(request, user);
+        Training training = trainingDataInput.getTraining();
+        TrainingStatus requestedStatus = trainingStatusRepository.findByName(TrainingStatusEnum.REQUESTED)
+                .orElseThrow(()-> new EntityNotFoundException("Training REQUESTED status not found"));
+        //TODO SAVE TRAINING WITH STATUS RUNNING WE SHOULD HAVE ALREADY SAVE IT WITH STATUS REQUESTED AND FAIL IN EVERY EXCEPTION
+        training.setStartedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
+        training.setStatus(requestedStatus);
+        training = trainingRepository.save(training);
+        train(training, trainingDataInput.getDataset(), trainingDataInput.getFilename(),trainingDataInput.getDatasetConfiguration(), trainingDataInput.getAlgorithmConfiguration(), user);
 
-        train(trainingDataInput.getTraining(),trainingDataInput.getDataset(), trainingDataInput.getFilename(),trainingDataInput.getDatasetConfiguration(), trainingDataInput.getAlgorithmConfiguration() );
-
-        return new MyResponse("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",null, null,new Metadata());
+        return new GenericResponse<String>("Your model with id '"+trainingDataInput.getTraining().getId() +"' is being training!",null, null,new Metadata());
 
     }
 
     @Async
-    public CompletableFuture<Void> train(Training training, Instances data, String filename, DatasetConfiguration datasetConfiguration, AlgorithmConfiguration algorithmConfiguration) {
+    public CompletableFuture<Void> train(Training training, Instances data, String filename, DatasetConfiguration datasetConfiguration, AlgorithmConfiguration algorithmConfiguration, User user) {
         return CompletableFuture.runAsync(() -> {
 
-            try {
+
+                TrainingStatus runningStatus = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
+                        .orElseThrow(()-> new EntityNotFoundException("Training REQUESTED status not found"));
+                training.setStatus(runningStatus);
+                trainingRepository.save(training);
 
 //                Instances data = DatasetUtil.prepareDataset(dataset, filename, datasetConfiguration);
                 //data = datasetService.selectColumns(data, datasetConfiguration.getBasicAttributesColumns(), datasetConfiguration.getTargetColumn());
                 String algorithmClassName = algorithmConfiguration.getAlgorithm().getClassName();
+
                 boolean isClassifier = AlgorithmUtil.isClassifier(algorithmClassName);
                 boolean isClusterer = AlgorithmUtil.isClusterer(algorithmClassName);
 
-
                 //TODO see the save for finished date to not be that many saves
                 if (isClassifier) {
-                    com.cloud_ml_app_thesis.entity.status.TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
+                    TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
                             .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
                     training.setStatus(statusRunning);
-                    trainRepository.save(training);
+                    trainingRepository.save(training);
 
-                    Classifier cls = trainClassifier(training, algorithmClassName, algorithmConfiguration, data);
+                    Classifier cls = null;
+                    try {
+                        cls = trainClassifier(training, algorithmClassName, algorithmConfiguration, data);
+                    } catch (Exception e) {
+                        handleTrainingFailure(training, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
 
-                    com.cloud_ml_app_thesis.entity.status.TrainingStatus statusComplete = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
+                    TrainingStatus statusComplete = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
                             .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
 
                     training.setStatus(statusComplete);
                     training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-                    trainRepository.save(training);
+                    trainingRepository.save(training);
 
-                    evaluateAndSaveClassifier(training, cls, data);
+                    try {
+                        evaluateAndSaveClassifier(training, cls, data, user);
+                    } catch (Exception e) {
+                        handleTrainingFailure(training, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
                 } else if (isClusterer) {
-                    com.cloud_ml_app_thesis.entity.status.TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
+                   TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
                             .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
                     training.setStatus(statusRunning);
-                    trainRepository.save(training);
-                    Clusterer clus = trainClusterer(training, algorithmClassName, algorithmConfiguration, data);
-                    com.cloud_ml_app_thesis.entity.status.TrainingStatus statusCompleted = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
+                    trainingRepository.save(training);
+                    Clusterer clus = null;
+                    try {
+                        clus = trainClusterer(training, algorithmClassName, algorithmConfiguration, data);
+                    } catch (Exception e) {
+                        handleTrainingFailure(training, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
+                    TrainingStatus statusCompleted = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
                             .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
                     training.setStatus(statusCompleted);
-                    training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-                    trainRepository.save(training);
-                    evaluateAndSaveClusterer(training, clus, data);
+                    ZonedDateTime finishedDate = ZonedDateTime.now(ZoneId.of("Europe/Athens"));
+                    training.setFinishedDate(finishedDate);
+                    trainingRepository.save(training);
+                    try {
+                        evaluateAndSaveClusterer(training, clus, data, user);
+                    } catch (Exception e) {
+                        handleTrainingFailure(training, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     logger.error("Unsupported algorithm type for algorithmClassName: {}", algorithmClassName);
-                    Clusterer clus = trainClusterer(training, algorithmClassName, algorithmConfiguration, data);
-                    com.cloud_ml_app_thesis.entity.status.TrainingStatus statusComplete = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
+                    try {
+                        Clusterer clus = trainClusterer(training, algorithmClassName, algorithmConfiguration, data);
+                    } catch (Exception e) {
+                        handleTrainingFailure(training, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
+                    TrainingStatus statusComplete = trainingStatusRepository.findByName(TrainingStatusEnum.COMPLETED)
                             .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
                     training.setStatus(statusComplete);
                     training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-                    trainRepository.save(training);
+                    trainingRepository.save(training);
                 }
 
-            } catch (MinioException e) {
-                handleTrainingFailure(training, e.getMessage());
-            } catch (Exception e) {
-                handleTrainingFailure(training, e);
-            }
         });
     }
 
+
     @NotNull
-    private static DatasetConfiguration getDatasetConfiguration(TrainingStartRequest request, Dataset dataset) {
+    private DatasetConfiguration getDatasetConfiguration(TrainingStartRequest request, Dataset dataset) {
         DatasetConfiguration datasetConfiguration = new DatasetConfiguration();
         if(request.getBasicCharacteristicsColumns() != null){
             if(!request.getBasicCharacteristicsColumns().isBlank()){
@@ -173,28 +215,28 @@ public class TrainService {
 
 
     private Training initializeTraining(Integer trainingId) {
-        Optional<Training> trainingOpt = trainRepository.findById(trainingId);
+        Optional<Training> trainingOpt = trainingRepository.findById(trainingId);
         if (trainingOpt.isEmpty()) {
             logger.error("Training ID {} not found.", trainingId);
             return null;
         }
         Training training = trainingOpt.get();
-        com.cloud_ml_app_thesis.entity.status.TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
+        TrainingStatus statusRunning = trainingStatusRepository.findByName(TrainingStatusEnum.RUNNING)
                 .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
         training.setStatus(statusRunning);
         training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-        Training t = trainRepository.save(training);
+        Training t = trainingRepository.save(training);
         return t;
     }
 
     private boolean validateDatasetConfiguration(Training training, DatasetConfiguration datasetConfiguration) {
         if (datasetConfiguration.getDataset() == null) {
             logger.error("Dataset is null for Dataset Configuration ID: {}", datasetConfiguration.getId());
-            com.cloud_ml_app_thesis.entity.status.TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
+            TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
                     .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
             training.setStatus(statusFailed);
             training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-            trainRepository.save(training);            trainRepository.save(training);
+            trainingRepository.save(training);            trainingRepository.save(training);
             return false;
         }
         logger.info("Dataset File URL: {}", datasetConfiguration.getDataset().getFilePath());
@@ -231,7 +273,7 @@ public class TrainService {
         return clus;
     }
 
-    private void evaluateAndSaveClassifier(Training training, Classifier cls, Instances data) throws Exception {
+    private void evaluateAndSaveClassifier(Training training, Classifier cls, Instances data, User user) throws Exception {
         data.randomize(new Random(1));
         int trainSize = (int) Math.round(data.numInstances() * 0.6);
         int testSize = data.numInstances() - trainSize;
@@ -239,112 +281,125 @@ public class TrainService {
 
         test.setClassIndex(test.numAttributes() - 1);
         String results = modelService.evaluateClassifier(cls, test, test);
-        byte[] modelData = modelService.serializeModel(cls);
+        byte[] modelObject = modelService.serializeModel(cls);
 
-        String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);
+        String timestamp = DateTimeFormatter.ofPattern("ddMMyyyyHHmmss").format(LocalDateTime.now());
+        String modelName = "model_".concat(training.getId().toString()).concat(user.getUsername()).concat("_").concat(timestamp);
+        String bucket = bucketResolver.resolve(BucketTypeEnum.MODEL);
+        String modelUrl = bucket.concat(modelName);
+
+        minioService.uploadObjectToBucket(modelObject ,bucket, modelName);
+
         String modelType = "classifier";
-        modelService.saveModel(training.getId(), modelUrl, results, modelType);
+
+        modelService.saveModel(training, modelUrl, results, modelType, user, false);
 
         training.setResults(results);
-        trainRepository.save(training);
+        trainingRepository.save(training);
     }
 
-    private void evaluateAndSaveClusterer(Training training, Clusterer clus, Instances data) throws Exception {
+    private void evaluateAndSaveClusterer(Training training, Clusterer clus, Instances data, User user) throws Exception {
         String results = modelService.evaluateClusterer(clus, data);
-        byte[] modelData = modelService.serializeModel(clus);
+        byte[] modelObject = modelService.serializeModel(clus);
 
-        String modelUrl = modelService.saveModelToMinio("ml-models", "model-" + training.getId(), modelData);
+        String timestamp = DateTimeFormatter.ofPattern("ddMMyyyyHHmmss").format(LocalDateTime.now());
+        String modelName = "model_".concat(training.getId().toString()).concat(user.getUsername()).concat("_").concat(timestamp);
+        String bucket = bucketResolver.resolve(BucketTypeEnum.MODEL);
+        String modelUrl = bucket.concat(modelName);
+
+        minioService.uploadObjectToBucket(modelObject ,bucket, modelName);
+
         String modelType = "clusterer";
-
-        modelService.saveModel(training.getId(), modelUrl, results, modelType);
+        modelService.saveModel(training, modelUrl, results, modelType, user, false);
 
         training.setResults(results);
-        trainRepository.save(training);
+        trainingRepository.save(training);
     }
 
     private void handleTrainingFailure(Training training, String errorMessage) {
         logger.error("Training failed: {}", errorMessage);
         if (training != null) {
 
-            com.cloud_ml_app_thesis.entity.status.TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
+            TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
                     .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
             training.setStatus(statusFailed);
             training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
-            trainRepository.save(training);
+            trainingRepository.save(training);
         }
     }
 
     private void handleTrainingFailure(Training training, Exception exception) {
         logger.error("Training failed: {}", exception.getMessage(), exception);
         if (training != null) {
-            com.cloud_ml_app_thesis.entity.status.TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
+            TrainingStatus statusFailed = trainingStatusRepository.findByName(TrainingStatusEnum.FAILED)
                     .orElseThrow(() ->  new EntityNotFoundException("Training status could not be found. Please try later."));
             training.setStatus(statusFailed);
             training.setFinishedDate(ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
-            trainRepository.save(training);
+            trainingRepository.save(training);
         }
     }
 
+    //TODO completely change fetch StatusEnum by TrainingId. One more same method for StatusEntity
     public Training checkTraining(Integer trainingId) {
-        return trainRepository.findById(trainingId).orElse(null);
+        return trainingRepository.findById(trainingId).orElse(null);
     }
 
-    public MyResponse<?> getTrainings() {
+    public GenericResponse<?> getTrainings() {
 
         try {
-            Optional<List<Training>> trainings = trainRepository.findAllByOrderByStatusAsc();
+            Optional<List<Training>> trainings = trainingRepository.findAllByOrderByStatusAsc();
             if(trainings.isEmpty()){
-                return new MyResponse<>(null, "Failed to retrieve the Trainings.",null,new Metadata());
+                return new GenericResponse<>(null, "Failed to retrieve the Trainings.",null,new Metadata());
             }
-            return new MyResponse<>(null, null, null, null);
+            return new GenericResponse<>(null, null, null, null);
         } catch (DataAccessException e){
             logger.error("Failed to retrieve the Trainings.",e);
-            return new MyResponse<>(null, null, null, null);
+            return new GenericResponse<>(null, null, null, null);
         }
     }
-    public MyResponse<?> getTrainings(String username, TrainingStatusEnum status) {
+    public GenericResponse<?> getTrainings(String username, TrainingStatusEnum status) {
 
         try {
-            Optional<List<Training>> trainings = trainRepository.findAllByUserUsernameAndStatus(username, status);
+            Optional<List<Training>> trainings = trainingRepository.findAllByUserUsernameAndStatus(username, status);
             if(trainings == null || trainings.isEmpty()){
-                return new MyResponse("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
+                return new GenericResponse("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
             }
-            return new MyResponse(trainings, null, "Trainings found.", new Metadata());
+            return new GenericResponse(trainings, null, "Trainings found.", new Metadata());
         } catch (DataAccessException e){
             logger.error("Failed to retrieve Trainings of user '"+username+"'.",e);
-            return new MyResponse(null,"An error occurred while tried to retrieve the Trainings of user '"+username+"'.",null,new Metadata());
+            return new GenericResponse(null,"An error occurred while tried to retrieve the Trainings of user '"+username+"'.",null,new Metadata());
         }
     }
 
-    public MyResponse<?> getTrainings(String username) {
+    public GenericResponse<?> getTrainings(String username) {
 
         try {
-            Optional<List<Training>> trainings = trainRepository.findAllByUserUsernameOrderByFinishedDateDesc(username);
+            Optional<List<Training>> trainings = trainingRepository.findAllByUserUsernameOrderByFinishedDateDesc(username);
             if(trainings.isPresent()){
                 List<MyTrainingDTO> myTrainingDTO = trainings.get()
                         .stream()
                         .map(this::convertToMyTrainingDTO)
                         .toList();
-                return new MyResponse<>(myTrainingDTO, null, null, new Metadata());
+                return new GenericResponse<>(myTrainingDTO, null, null, new Metadata());
             }
-            return new MyResponse<>("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
+            return new GenericResponse<>("Trainings for user '" + username + "' could not be found.", null, null, new Metadata());
 
         } catch (DataAccessException e){
             logger.error("Failed to retrieve Trainings of user '"+username+"'.",e);
-            return new MyResponse(null, null, "An error occurred while tried to retrieve the Trainings of user '"+username+"'.",  new Metadata());
+            return new GenericResponse(null, null, "An error occurred while tried to retrieve the Trainings of user '"+username+"'.",  new Metadata());
         }
     }
-    public MyResponse<?> getTraining(int id){
+    public GenericResponse<?> getTraining(int id){
       try {
-          Optional<Training> trainingOptional = trainRepository.findById(id);
+          Optional<Training> trainingOptional = trainingRepository.findById(id);
           if(trainingOptional.isPresent()){
-              return new MyResponse(trainingOptional.get(), null, "Training found.", new Metadata());
+              return new GenericResponse(trainingOptional.get(), null, "Training found.", new Metadata());
           }
-          return new MyResponse<>(null, null, "Training with id '" + id + "' could not be found.", new Metadata());
+          return new GenericResponse<>(null, null, "Training with id '" + id + "' could not be found.", new Metadata());
       } catch (DataAccessException e){
           logger.error("Failed to retrieve Training with id '"+id+"'.",e);
-          return new MyResponse("An error occurred while tried to retrieve data for training with id '"+id+"'.", null, "Failed to retrieve Training with id '", new Metadata());
+          return new GenericResponse("An error occurred while tried to retrieve data for training with id '"+id+"'.", null, "Failed to retrieve Training with id '", new Metadata());
       }
     }
 

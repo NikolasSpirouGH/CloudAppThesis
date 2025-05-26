@@ -1,6 +1,6 @@
 package com.cloud_ml_app_thesis.exception;
 
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,28 +16,28 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(value = {Exception.class})
-    public ResponseEntity<MyResponse<?>> handleGenericException(Exception ex) {
-        MyResponse<?> errorResponse = new MyResponse<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.toString(), "Internal Server Error",new Metadata());
+    public ResponseEntity<GenericResponse<?>> handleGenericException(Exception ex, WebRequest request) {
+        GenericResponse<?> errorResponse = new GenericResponse<>(null, null, "Internal Server Error",new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(FileProcessingException.class)
-    public ResponseEntity<MyResponse<?>> handleFileProcessingException(FileProcessingException ex) {
-        MyResponse<?> errorResponse = new MyResponse<>(null, null,"File processing error", new Metadata());
+    public ResponseEntity<GenericResponse<?>> handleFileProcessingException(FileProcessingException ex) {
+        GenericResponse<?> errorResponse = new GenericResponse<>(null, null,"File processing error", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MinioFileUploadException.class)
-    public ResponseEntity<MyResponse<?>> handleMinioFileUploadException(MinioFileUploadException ex) {
+    public ResponseEntity<GenericResponse<?>> handleMinioFileUploadException(MinioFileUploadException ex) {
         logger.error("Minio file upload exception: {}", ex.getMessage(), ex);
-        MyResponse<?> errorResponse = new MyResponse<>(null, null, "File upload failed", new Metadata());
+        GenericResponse<?> errorResponse = new GenericResponse<>(null, null, "File upload failed", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AlgorithmNotFoundException.class)
-    public ResponseEntity<MyResponse<?>> handleAlgorithmNotFoundException(AlgorithmNotFoundException ex) {
+    public ResponseEntity<GenericResponse<?>> handleAlgorithmNotFoundException(AlgorithmNotFoundException ex) {
         logger.error("Algorithm not found exception: {}", ex.getMessage(), ex);
-        MyResponse errorResponse = new MyResponse(null, null, "Algorithm could not be found", new Metadata());
+        GenericResponse errorResponse = new GenericResponse(null, null, "Algorithm could not be found", new Metadata());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

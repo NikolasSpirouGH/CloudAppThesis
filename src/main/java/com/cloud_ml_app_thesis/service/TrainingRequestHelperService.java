@@ -4,8 +4,10 @@ import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.dto.request.training.TrainingStartRequest;
 import com.cloud_ml_app_thesis.dto.response.*;
+import com.cloud_ml_app_thesis.enumeration.DatasetFunctionalTypeEnum;
 import com.cloud_ml_app_thesis.repository.*;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.model.ModelRepository;
 import com.cloud_ml_app_thesis.repository.status.TrainingStatusRepository;
 import com.cloud_ml_app_thesis.util.DatasetUtil;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
@@ -19,7 +21,7 @@ import weka.core.Instances;
 @RequiredArgsConstructor
 public class TrainingRequestHelperService{
 
-    private final TrainRepository trainRepository;
+    private final TrainingRepository trainingRepository;
     private final ModelRepository modelRepository;
 
     private final UserRepository userRepository;
@@ -78,51 +80,51 @@ public class TrainingRequestHelperService{
         DatasetConfiguration datasetConfiguration = null;
         // 1st check - Can't provide trainingId and modelId at the same time
         if(trainingIdExist && modelIdExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model based on a Training and a Model at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model based on a Training and a Model at the same time.", new Metadata()));
             return trainingDataInput;
         }
 
         // 2nd check - Can't provide datasetId and a new File
         if(datasetIdExist && multipartFileExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model with an already uploaded Dataset and a new Dataset File at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model with an already uploaded Dataset and a new Dataset File at the same time.", new Metadata()));
             return trainingDataInput;
         }
 
         // 3rd check - Can't provide datasetId and datasetConfigurationId at the same time
         if(datasetIdExist && datasetConfigurationIdExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model providing a datasetId and a datasetConfigurationId at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model providing a datasetId and a datasetConfigurationId at the same time.", new Metadata()));
             return trainingDataInput;
         }
 
         // 4th check - Can't provide datasetId and datasetConfigurationId at the same time
         if(datasetConfigurationIdExist && basicCharacteristicsColumnsExist && targetClassColumnExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model providing a datasetConfigurationId and booth basic characteristics columns and target class column at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model providing a datasetConfigurationId and booth basic characteristics columns and target class column at the same time.", new Metadata()));
             return trainingDataInput;
         }
 
         // 5th check - Can't provide algorithmId and algorithmConfigurationId at the same time
         if(algorithmIdExist && algorithmConfigurationIdExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model providing a algorithmId and a algorithmConfigurationId at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model providing a algorithmId and a algorithmConfigurationId at the same time.", new Metadata()));
             return trainingDataInput;
         }
         // 6th check - Can't provide algorithmId and algorithmConfigurationId at the same time
         if(algorithmConfigurationIdExist && algorithmOptionsExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't train a model providing algorithm options and a algorithmConfigurationId at the same time.", new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't train a model providing algorithm options and a algorithmConfigurationId at the same time.", new Metadata()));
             return trainingDataInput;
         }
 
         if(algorithmConfigurationIdExist && datasetConfigurationIdExist && targetClassColumnExist && basicCharacteristicsColumnsExist && algorithmOptionsExist){
-            trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't retrain a model providing all the configuration again. Please start a new train." , new Metadata()));
+            trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't retrain a model providing all the configuration again. Please start a new train." , new Metadata()));
             return trainingDataInput;
         }
 
         // 7th check - If MultiPartFile is provided then upload the dataset and get the datasetId to continue
         if(multipartFileExist){
-            MyResponse uploadFileResponse = datasetService.uploadDataset(file, user);
+            GenericResponse<Dataset> uploadFileResponse = datasetService.uploadDataset(file, user, DatasetFunctionalTypeEnum.TRAIN);
              datasetId = ((Dataset)uploadFileResponse.getDataHeader()).getId().toString();
                 datasetIdExist = true;
-                trainingDataInput.setErrorResponse((MyResponse) uploadFileResponse);
-                trainingDataInput.setErrorResponse(new MyResponse(null, "", "You can't retrain a model providing all the configuration again. Please start a new train." , new Metadata()));
+                trainingDataInput.setErrorResponse((GenericResponse) uploadFileResponse);
+                trainingDataInput.setErrorResponse(new GenericResponse(null, "", "You can't retrain a model providing all the configuration again. Please start a new train." , new Metadata()));
         }
 
         //*********** CONFIGURING TRAINING DATASET**************
@@ -204,12 +206,12 @@ public class TrainingRequestHelperService{
         if(trainingIdExist || modelIdExist){
 
             if(trainingIdExist){
-                training = trainRepository.findById(Integer.parseInt(trainingId)).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
+                training = trainingRepository.findById(Integer.parseInt(trainingId)).orElseThrow(()-> new EntityNotFoundException("The Dataset Configuration you provided could not be found."));
 
             }
 
             if(modelIdExist){
-                training = trainRepository.findByModel(modelRepository.findById(Integer.parseInt(modelId))
+                training = trainingRepository.findByModel(modelRepository.findById(Integer.parseInt(modelId))
                         .orElseThrow(()-> new EntityNotFoundException("The Model you provided could not be found.")))
                         .orElseThrow(()-> new EntityNotFoundException("The Training of the Model you provided could not be found."));
             }
@@ -237,7 +239,7 @@ public class TrainingRequestHelperService{
         trainingDataInput.setDatasetConfiguration(datasetConfiguration);
         trainingDataInput.setFilename(datasetConfiguration.getDataset().getFileName());
         trainingDataInput.setAlgorithmConfiguration(algorithmConfiguration);
-        training = trainRepository.save(training);
+        training = trainingRepository.save(training);
         trainingDataInput.setTraining(training);
 
         if(multipartFileExist){

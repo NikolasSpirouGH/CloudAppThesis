@@ -1,17 +1,23 @@
 package com.cloud_ml_app_thesis.controller;
 
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.service.ModelExecutionService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/model-exec")
@@ -21,15 +27,16 @@ public class ModelExecutionController {
     private final ModelExecutionService modelExecutionService;
 
     @PostMapping("/execute")
-    public ResponseEntity<Resource> executeModel(@RequestParam Integer modelId,
-                                                 @RequestParam MultipartFile predictDataset) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenericResponse<ByteArrayResource>> executeModel(@AuthenticationPrincipal UserDetails userDetails, @NotBlank @PathVariable Integer modelId,
+                                                           @NotNull @RequestParam MultipartFile predictDataset, @RequestParam String targetUsername) {
         try {
-            Resource predictionFile = modelExecutionService.executeModel(modelId, predictDataset);
+            ByteArrayResource predictionFile = modelExecutionService.executeModel(userDetails, modelId, predictDataset, targetUsername);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"predictions.arff\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(predictionFile);
+                    .body(new GenericResponse<ByteArrayResource>(predictionFile, null, null, new Metadata()));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -38,19 +45,13 @@ public class ModelExecutionController {
     }
 
     @GetMapping("/prediction-result")
-    public ResponseEntity<String> getPredictionResults(
+    public ResponseEntity<GenericResponse<ByteArrayResource>> getPredictionResults(
             @RequestParam Integer modelId,
             @RequestParam Integer predictionFileId
     ) {
-        try {
-            String result = modelExecutionService.getPredictionResults(modelId, predictionFileId);
-            return ResponseEntity.ok(result);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Execution not found.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal error");
-        }
+            ByteArrayResource result = modelExecutionService.getPredictionResults(modelId);
+            return ResponseEntity.ok(new GenericResponse<>(result, null, null, new Metadata()));
+
     }
 
 

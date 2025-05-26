@@ -5,64 +5,71 @@ import com.cloud_ml_app_thesis.exception.MinioFileUploadException;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.errors.MinioException;
+import io.minio.errors.*;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import weka.core.SerializationHelper;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class MinioService {
 
     private static final Logger logger = LoggerFactory.getLogger(MinioService.class);
 
     private final MinioClient minioClient;
 
-    @Value("${minio.bucket.name}")
-    private String bucketName;
+    @Value("#{'${minio.bucket.datasets},${minio.bucket.models},${minio.bucket.predictions}'.split(',')}")
+    private List<String> allBuckets;
+    public void uploadObjectToBucket(Object object, String bucketName, String objectName) throws IOException {
 
-
-    public MinioService(@Value("${minio.url}") String minioUrl,
-                        @Value("${minio.access.name}") String accessKey,
-                        @Value("${minio.access.secret}") String secretKey) {
-       /* if (!minioUrl.startsWith("http://") && !minioUrl.startsWith("https://")) {
-            minioUrl = "http://" + minioUrl;
-        }*/
-        this.minioClient = MinioClient.builder()
-                .endpoint(minioUrl)
-                .credentials(accessKey, secretKey)
-                .build();
-    }
-
-    public void uploadFile(MultipartFile file, String objectName) throws MinioFileUploadException {
-        try {
-            logger.info("Uploading file '{}' as '{}'", file.getOriginalFilename(), objectName);
-
-            // Create the PutObjectArgs with the necessary details
-            PutObjectArgs putObjectArgs = PutObjectArgs.builder()
-                    .bucket("ml-datasets")
-                    .object(objectName)
-                    .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
-                    .build();
-
-            // Upload the file to the specified bucket and object name
-            minioClient.putObject(putObjectArgs);
-
-            logger.info("Successfully uploaded file '{}' as '{}'", file.getOriginalFilename(), objectName);
-        } catch (MinioException e) {
-            logger.error("Error occurred while uploading the file to Minio", e);
-            throw new MinioFileUploadException("Error occurred while uploading the file to Minio", e);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | IOException e) {
-            logger.error("Technical error occurred while uploading the file", e);
-            throw new RuntimeException("Technical error occurred while uploading the file", e);
+        //Ensure that the bucket that is going to get the object is still being offered by the application
+        // in order to prevent forgotten hard-coded name in code.
+        if(!isKnownBucket(bucketName)){
+            logger.error("Error: " + "Invalid bucket name: " + bucketName);
+            throw new IllegalArgumentException("Invalid bucket name: " + bucketName);
         }
+
+        InputStream streamToUpload = null;
+        String contentType = null;
+        long size = 0;
+        if(object instanceof MultipartFile file){
+            streamToUpload = file.getInputStream();
+            contentType = file.getContentType();
+            size = file.getSize();
+        } else if (object instanceof byte[] model) {
+            streamToUpload = new ByteArrayInputStream(model);
+            contentType = "application/octet-stream";
+            size = model.length;
+        }
+
+        PutObjectArgs args = PutObjectArgs.builder()
+                .bucket(bucketName)
+                .object(objectName)
+                .stream(streamToUpload, size, -1)
+                .contentType(contentType)
+                .build();
+
+        try {
+            minioClient.putObject(args);
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+    private boolean isKnownBucket(String bucketName){
+        return allBuckets.contains(bucketName);
     }
 
     public void uploadFileToPredictionBucket(MultipartFile file, String objectName) throws MinioFileUploadException {
@@ -79,7 +86,7 @@ public class MinioService {
         }
     }
 
-    public InputStream getFileInputStream(String bucketName, String fileReference) {
+    public InputStream loadObjectAsInputStream(String bucketName, String fileReference) {
         try {
             return minioClient.getObject(
                     GetObjectArgs.builder()
@@ -87,6 +94,18 @@ public class MinioService {
                             .object(fileReference)
                             .build()
             );
+        } catch (Exception e) {
+            throw new FileProcessingException("Error fetching file from MinIO: " + e.getMessage(), e);
+        }
+    }
+    public Object loadObject(String bucketName, String fileReference) {
+        try {
+            return SerializationHelper.read(minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileReference)
+                            .build()
+            ));
         } catch (Exception e) {
             throw new FileProcessingException("Error fetching file from MinIO: " + e.getMessage(), e);
         }

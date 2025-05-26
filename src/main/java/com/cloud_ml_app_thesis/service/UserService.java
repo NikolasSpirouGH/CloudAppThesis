@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.request.user.UserCreateRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
@@ -23,14 +23,14 @@ public class UserService {
     private UserRepository userRepository;
     private RoleRepository roleRepository;
     private UserStatusRepository userStatusRepository;
-    public MyResponse<?> createUser(UserCreateRequest request) {
+    public GenericResponse<?> createUser(UserCreateRequest request) {
         Optional<User> userExists = userRepository.findByEmail(request.getEmail());
         if(userExists.isPresent()) {
-          return new MyResponse<>("User already exists.", null, null, new Metadata());
+          return new GenericResponse<>("User already exists.", null, null, new Metadata());
         }
 
         if(!request.getPassword().equals(request.getConfirmPassword())){
-            return new MyResponse("Password doesn't match with password confirmation.",null, null, new Metadata());
+            return new GenericResponse("Password doesn't match with password confirmation.",null, null, new Metadata());
         }
 
         Role userRole = roleRepository.findByName(UserRoleEnum.USER)
@@ -52,6 +52,6 @@ public class UserService {
                 .build();
         user = userRepository.save(user);
 
-        return new MyResponse<>(user, "OK", null, new Metadata());
+        return new GenericResponse<>(user, "OK", null, new Metadata());
     }
 }

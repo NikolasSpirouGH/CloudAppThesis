@@ -1,5 +1,5 @@
 package com.cloud_ml_app_thesis.entity;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import lombok.*;
 import weka.core.Instances;
 
@@ -14,5 +14,5 @@ public class TrainingDataInput {
     private DatasetConfiguration datasetConfiguration; // OK
 //    private String algorithmClassName; //commented because we can do algorithmConfiguration.getAlgorithm().getClassName();
     private AlgorithmConfiguration algorithmConfiguration; // OK
-    private MyResponse errorResponse = null;
+    private GenericResponse errorResponse = null;
 }

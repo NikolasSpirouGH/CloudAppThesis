@@ -6,15 +6,18 @@ import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryDeleteRequest;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryUpdateRequest;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.entity.*;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.entity.model.Model;
 import com.cloud_ml_app_thesis.entity.status.CategoryRequestStatus;
 import com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum;
 import com.cloud_ml_app_thesis.repository.CategoryHistoryRepository;
 import com.cloud_ml_app_thesis.repository.CategoryRepository;
 import com.cloud_ml_app_thesis.repository.CategoryRequestRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
+import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
+import com.cloud_ml_app_thesis.repository.model.ModelRepository;
 import com.cloud_ml_app_thesis.repository.status.CategoryRequestStatusRepository;
 import com.cloud_ml_app_thesis.util.ValidationUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,10 +48,12 @@ public class CategoryService {
     private final CategoryRequestStatusRepository categoryRequestStatusRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ModelRepository modelRepository;
+    private final DatasetRepository datasetRepository;
     private final ModelMapper modelMapper;
 
     @Transactional
-    public MyResponse<CategoryRequestDTO> createCategory(String username, CategoryCreateRequest request) {
+    public GenericResponse<CategoryRequestDTO> createCategory(String username, CategoryCreateRequest request) {
         log.info("User '{}' is creating a new category: {}", username, request.getName());
 
         User user = userRepository.findByUsername(username)
@@ -111,11 +116,11 @@ public class CategoryService {
         CategoryRequestDTO dto = mapCategoryRequestToDto(categoryRequest);
 
         log.info("Category request for '{}' submitted successfully by user '{}'.", request.getName(), username);
-        return new MyResponse<>(dto, null, "Category created successfully.", new Metadata());
+        return new GenericResponse<>(dto, null, "Category created successfully.", new Metadata());
     }
 
     @Transactional
-    public MyResponse<CategoryRequestDTO> approveCategoryRequest(String username, Integer requestId) {
+    public GenericResponse<CategoryRequestDTO> approveCategoryRequest(String username, Integer requestId) {
         log.info("User '{}' is approving category request with ID {}", username, requestId);
 
         User user = userRepository.findByUsername(username)
@@ -173,11 +178,11 @@ public class CategoryService {
         CategoryRequestDTO dto = mapCategoryRequestToDto(request);
         log.info("Successfully approved category request ID {}. Category '{}' created.", requestId, category.getName());
 
-        return new MyResponse<>(dto, null, "Category approved successfully.", new Metadata());
+        return new GenericResponse<>(dto, null, "Category approved successfully.", new Metadata());
     }
 
     @Transactional
-    public MyResponse<CategoryRequestDTO> rejectCategoryRequest(String username, Integer requestId, String rejectionReason) {
+    public GenericResponse<CategoryRequestDTO> rejectCategoryRequest(String username, Integer requestId, String rejectionReason) {
         log.info("User '{}' is rejecting category request with ID {}. Reason: {}", username, requestId, rejectionReason);
 
         CategoryRequest request = categoryRequestRepository.findById(requestId)
@@ -207,11 +212,11 @@ public class CategoryService {
         CategoryRequestDTO dto = mapCategoryRequestToDto(request);
         log.info("Category request ID {} successfully rejected by '{}'.", requestId, username);
 
-        return new MyResponse<>(dto, null, "Category request rejected successfully.", new Metadata());
+        return new GenericResponse<>(dto, null, "Category request rejected successfully.", new Metadata());
     }
 
     @Transactional
-    public MyResponse<CategoryDTO> updateCategory(String username, Integer categoryId, CategoryUpdateRequest request) {
+    public GenericResponse<CategoryDTO> updateCategory(String username, Integer categoryId, CategoryUpdateRequest request) {
         log.info("User '{}' is attempting to update category with ID {}", username, categoryId);
 
         User editor = userRepository.findByUsername(username)
@@ -274,12 +279,12 @@ public class CategoryService {
 
         log.info("Category with ID {} successfully updated.", updated.getId());
 
-        return new MyResponse<>(dto, null, "Category updated successfully.", new Metadata());
+        return new GenericResponse<>(dto, null, "Category updated successfully.", new Metadata());
     }
 
 
     @Transactional
-    public MyResponse<Void> deleteCategory(String username, Integer categoryId) {
+    public GenericResponse<Void> deleteCategory(String username, Integer categoryId) {
         log.info("User '{}' is attempting to delete category with ID {}", username, categoryId);
 
         User user = userRepository.findByUsername(username)
@@ -289,36 +294,40 @@ public class CategoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + categoryId));
 
         categoryToDelete.setDeleted(true);
-        if (categoryToDelete.getModels().stream()
-                .anyMatch(model -> model.getCategories().size() == 1)) {
 
-            Category closestParent = findClosestParent(categoryToDelete);
+        // Handle models with this main category
+        List<Model> models = modelRepository.findByCategory(categoryToDelete);
+        Category closestParent = findClosestParent(categoryToDelete);
+        if (!models.isEmpty()) {
             if (closestParent == null) {
                 log.warn("Deletion denied: No valid parent found to reassign models.");
                 throw new IllegalStateException("Cannot delete category: No valid parent category found.");
             }
-
-            for (Model model : new HashSet<>(categoryToDelete.getModels())) {
-                if (model.getCategories().size() == 1) {
-                    log.info("Reassigning model '{}' from category ID {} to parent ID {}", model.getId(), categoryId, closestParent.getId());
-                    model.getCategories().add(closestParent);
-                }
-                model.getCategories().remove(categoryToDelete);
+            for (Model model : models) {
+                log.info("Reassigning model '{}' from main category ID {} to parent ID {}", model.getId(), categoryId, closestParent.getId());
+                model.setCategory(closestParent);
             }
-        } else {
-            log.info("No exclusive models found. Proceeding with direct deletion.");
         }
 
-        // Move child categories
+        // Handle datasets with this main category
+        List<Dataset> datasets = datasetRepository.findByCategory(categoryToDelete);
+        if (!datasets.isEmpty()) {
+            if (closestParent == null) {
+                log.warn("Deletion denied: No valid parent found to reassign datasets.");
+                throw new IllegalStateException("Cannot delete category: No valid parent category found.");
+            }
+            for (Dataset dataset : datasets) {
+                log.info("Reassigning dataset '{}' from main category ID {} to parent ID {}", dataset.getId(), categoryId, closestParent.getId());
+                dataset.setCategory(closestParent);
+            }
+        }
+
+        // Move child categories to closest parent
         for (Category child : new HashSet<>(categoryToDelete.getChildCategories())) {
             child.getParentCategories().remove(categoryToDelete);
-            child.getParentCategories().add(findClosestParent(categoryToDelete));
-        }
-
-        // Move datasets
-        for (Dataset dataset : categoryToDelete.getDatasets()) {
-            dataset.getCategories().remove(categoryToDelete);
-            dataset.getCategories().add(findClosestParent(categoryToDelete));
+            if (closestParent != null) {
+                child.getParentCategories().add(closestParent);
+            }
         }
 
         for (Category parent : categoryToDelete.getParentCategories()) {
@@ -328,8 +337,9 @@ public class CategoryService {
         log.info("Deleting category '{}'", categoryToDelete.getName());
         categoryRepository.save(categoryToDelete);
 
-        return new MyResponse<>(null, null, "Category deleted successfully", new Metadata());
+        return new GenericResponse<>(null, null, "Category deleted successfully", new Metadata());
     }
+
 
 
     private CategoryDTO mapCategoryToDto(Category category) {

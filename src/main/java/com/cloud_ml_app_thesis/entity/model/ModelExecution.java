@@ -1,6 +1,8 @@
-package com.cloud_ml_app_thesis.entity;
+package com.cloud_ml_app_thesis.entity.model;
 
+import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.entity.status.ModelExecutionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +25,9 @@ public class ModelExecution {
 
     private LocalDateTime executedAt;
 
-    private boolean success;
+    @ManyToOne
+    @JoinColumn(name = "status_id")
+    private ModelExecutionStatus status;
 
     @Column(length = 5000)
     private String predictionResult;
@@ -31,4 +35,9 @@ public class ModelExecution {
     @ManyToOne
     @JoinColumn(name = "dataset_id")
     private Dataset dataset;
+
+    @ManyToOne
+    @JoinColumn(name="executed_by_user_id", nullable = false)
+    private User executedByUser;
+
 }

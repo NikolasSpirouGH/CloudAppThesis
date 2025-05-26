@@ -1,12 +1,14 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
-import com.cloud_ml_app_thesis.entity.Model;
-import com.cloud_ml_app_thesis.entity.ModelExecution;
+
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
-import com.cloud_ml_app_thesis.repository.ModelExecutionRepository;
-import com.cloud_ml_app_thesis.repository.ModelRepository;
+
+import com.cloud_ml_app_thesis.entity.model.Model;
+import com.cloud_ml_app_thesis.entity.model.ModelExecution;
+import com.cloud_ml_app_thesis.repository.model.ModelExecutionRepository;
+import com.cloud_ml_app_thesis.repository.model.ModelRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,19 +73,19 @@ class ModelExecutionServiceTest {
         int modelId = 42;
         Model dummyModel = new Model();
         Dataset dummyDataset = new Dataset();
-        MyResponse mockResponse = new MyResponse<>(dummyDataset, null, null, new Metadata());
+        GenericResponse mockResponse = new GenericResponse<>(dummyDataset, null, null, new Metadata());
 
         dummyDataset.setFileName("prediction.csv");
         dummyDataset.setOriginalFileName("prediction.csv");
 
         when(datasetService.uploadPredictionDataset(mockFile)).thenReturn(mockResponse);
-        when(modelService.loadModel(modelId)).thenReturn(mockClassifier);
+        when(modelService.loadModel(dummyModel.getMinioUrl())).thenReturn(mockClassifier);
         when(datasetService.wekaFileToInstances(mockFile)).thenReturn(mockInstances);
         when(modelRepository.findById(modelId)).thenReturn(Optional.of(dummyModel));
         when(modelExecutionRepository.save(any(ModelExecution.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Resource result = modelExecutionService.executeModel(modelId, mockFile);
+        Resource result = modelExecutionService.executeModel(null, modelId, mockFile, null);
 
         // Assert
         assertNotNull(result);

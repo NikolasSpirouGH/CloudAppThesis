@@ -4,7 +4,7 @@ import com.cloud_ml_app_thesis.dto.request.dataset.DatasetRemoveSharedUsersReque
 import com.cloud_ml_app_thesis.dto.request.dataset.DatasetShareRequest;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.service.DatasetSharingService;
+import com.cloud_ml_app_thesis.service.DatasetShareService;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DatasetSharingController {
 
-    private final DatasetSharingService datasetSharingService;
+    private final DatasetShareService datasetShareService;
 
     @PostMapping("/{datasetId}")
     public ResponseEntity<Void> shareDataset(
@@ -28,7 +28,7 @@ public class DatasetSharingController {
             Authentication authentication
     ) {
         String sharedByUsername = authentication.getName();
-        datasetSharingService.shareDatasetWithUsers(datasetId, request.getUsernames(), sharedByUsername, request.getComment());
+        datasetShareService.shareDatasetWithUsers(datasetId, request.getUsernames(), sharedByUsername, request.getComment());
         return ResponseEntity.ok().build();
     }
 
@@ -39,7 +39,7 @@ public class DatasetSharingController {
             @PathVariable Integer datasetId,
             @RequestBody DatasetRemoveSharedUsersRequest request
     ) {
-        datasetSharingService.removeUsersFromSharedDataset(userDetails, datasetId, request.getUsernames(), request.getComments());
+        datasetShareService.removeUsersFromSharedDataset(userDetails, datasetId, request.getUsernames(), request.getComments());
         return ResponseEntity.ok().build();
     }
 
@@ -51,7 +51,7 @@ public class DatasetSharingController {
     ) {
         User currentUser = (User) authentication.getPrincipal();
 
-        Dataset copied = datasetSharingService.copySharedDataset(
+        Dataset copied = datasetShareService.copySharedDataset(
                 datasetId,
                 currentUser,
                 targetUsername
@@ -69,7 +69,7 @@ public class DatasetSharingController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
 
-        datasetSharingService.declineDatasetShare(datasetId, targetUsername, comments, userDetails);
+        datasetShareService.declineDatasetShare(datasetId, targetUsername, comments, userDetails);
         return ResponseEntity.ok().build();
     }
 }

@@ -56,13 +56,10 @@ public class Dataset {
     @JoinColumn(name = "accessibility_id", nullable = false)
     private DatasetAccessibility accessibility;
 
-    @ManyToMany
-    @JoinTable(
-            name = "dataset_categories",
-            joinColumns = @JoinColumn(name = "dataset_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private Set<Category> categories;
+    // Main category (required)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @Column(name = "description")
     private String description;

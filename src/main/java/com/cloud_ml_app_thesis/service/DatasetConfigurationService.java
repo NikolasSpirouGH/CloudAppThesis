@@ -2,7 +2,7 @@ package com.cloud_ml_app_thesis.service;
 
 import com.cloud_ml_app_thesis.dto.dataset_configuration.ConfiguredDatasetSelectTableDTO;
 import com.cloud_ml_app_thesis.dto.request.dataset_configuration.DatasetConfigurationCreateRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
@@ -11,7 +11,7 @@ import com.cloud_ml_app_thesis.enumeration.status.DatasetConfigurationStatusEnum
 import com.cloud_ml_app_thesis.enumeration.status.TrainingStatusEnum;
 import com.cloud_ml_app_thesis.repository.DatasetConfigurationRepository;
 import com.cloud_ml_app_thesis.repository.dataset.DatasetRepository;
-import com.cloud_ml_app_thesis.repository.TrainRepository;
+import com.cloud_ml_app_thesis.repository.TrainingRepository;
 import com.cloud_ml_app_thesis.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.MinioClient;
@@ -34,20 +34,22 @@ import java.util.*;
 public class DatasetConfigurationService {
     private final DatasetRepository datasetRepository;
     private final DatasetConfigurationRepository datasetConfigurationRepository;
-    private final TrainRepository trainRepository;
+    private final TrainingRepository trainingRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(DatasetConfigurationService.class);
 
     @Autowired
     public DatasetConfigurationService(DatasetRepository datasetRepository, DatasetConfigurationRepository datasetConfigurationRepository
-            , TrainRepository trainRepository, UserRepository userRepository,
-                          MinioService minioService, MinioClient minioClient, ObjectMapper objectMapper){
+            , TrainingRepository trainingRepository, UserRepository userRepository,
+                                       MinioService minioService, MinioClient minioClient, ObjectMapper objectMapper){
         this.datasetRepository = datasetRepository;
         this.datasetConfigurationRepository= datasetConfigurationRepository;
         this.userRepository= userRepository;
-        this.trainRepository = trainRepository;
+        this.trainingRepository = trainingRepository;
         this.objectMapper = objectMapper;
+
+
     }
 
     //TODO APO BIG SPY EINAI AFTO
@@ -71,8 +73,8 @@ public class DatasetConfigurationService {
         return null;
     }
 
-    public ResponseEntity<MyResponse<Map<String, Object>>> uploadDatasetConfiguration(Integer datasetId, String username,
-                                                                                      String basicAttributesColumns, String targetClassColumn) {
+    public ResponseEntity<GenericResponse<Map<String, Object>>> uploadDatasetConfiguration(Integer datasetId, String username,
+                                                                                           String basicAttributesColumns, String targetClassColumn) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
@@ -95,7 +97,7 @@ public class DatasetConfigurationService {
         } catch (DataAccessException e) {
             logger.error("Failed to save the Dataset Configuration for Dataset '{}' by user '{}'.", datasetId, username);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MyResponse<>(null, "DB_SAVE_ERROR", "Failed to save dataset configuration", null));
+                    .body(new GenericResponse<>(null, "DB_SAVE_ERROR", "Failed to save dataset configuration", null));
         }
 
         // Prepare response data
@@ -103,9 +105,9 @@ public class DatasetConfigurationService {
         responseData.put("id", datasetConfiguration.getId());
         responseData.put("timestamp", ZonedDateTime.now(ZoneId.of("Europe/Athens")));
 
-        return ResponseEntity.ok(new MyResponse<>(responseData, "", "Your dataset configuration has been saved.", null));
+        return ResponseEntity.ok(new GenericResponse<>(responseData, "", "Your dataset configuration has been saved.", null));
     }
-    public ResponseEntity<MyResponse<?>> getDatasetConfigurations(String username){
+    public ResponseEntity<GenericResponse<?>> getDatasetConfigurations(String username){
         Optional<List<DatasetConfiguration>> datasetConfigurationsOptional = datasetConfigurationRepository.findAllByDatasetUserUsernameAndStatus(username, DatasetConfigurationStatusEnum.CUSTOM);
 
         if(datasetConfigurationsOptional.isPresent()){
@@ -113,9 +115,9 @@ public class DatasetConfigurationService {
                     .stream()
                     .map(this::convertToConfiguredDatasetDTO)
                     .toList();
-            return new ResponseEntity<MyResponse<?>>(new MyResponse<List<ConfiguredDatasetSelectTableDTO>>(configuredDatasetSelectTableDTOs, null, null, new Metadata()), HttpStatus.OK);
+            return new ResponseEntity<GenericResponse<?>>(new GenericResponse<List<ConfiguredDatasetSelectTableDTO>>(configuredDatasetSelectTableDTOs, null, null, new Metadata()), HttpStatus.OK);
         }
-        return new ResponseEntity<MyResponse<?>>(new MyResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata()),HttpStatus.OK);
+        return new ResponseEntity<GenericResponse<?>>(new GenericResponse<String>("Could not find datasets for user '" + username + "'.", null, null, new Metadata()),HttpStatus.OK);
 
     }
     private ConfiguredDatasetSelectTableDTO convertToConfiguredDatasetDTO(DatasetConfiguration datasetConfiguration){
@@ -131,10 +133,10 @@ public class DatasetConfigurationService {
         dto.setUploadDate(datasetConfiguration.getUploadDate());
 
         //Setting the training participation statistics
-        long completeCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
+        long completeCount = trainingRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.COMPLETED);
         dto.setCompleteTrainingCount(completeCount);
 
-        long failedCount = trainRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
+        long failedCount = trainingRepository.countByDatasetConfigurationIdAndStatus(dataset.getId(), TrainingStatusEnum.FAILED);
         dto.setFailedTrainingCount(failedCount);
 
         return dto;

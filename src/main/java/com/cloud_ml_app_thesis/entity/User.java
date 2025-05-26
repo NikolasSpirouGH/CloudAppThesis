@@ -1,6 +1,8 @@
 package com.cloud_ml_app_thesis.entity;
 
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
+import com.cloud_ml_app_thesis.entity.model.Model;
+import com.cloud_ml_app_thesis.entity.model.ModelExecution;
 import com.cloud_ml_app_thesis.entity.status.UserStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -62,6 +64,12 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;
+
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Model> models;
+
+    @OneToMany(mappedBy = "executedByUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ModelExecution> modelExecutions;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

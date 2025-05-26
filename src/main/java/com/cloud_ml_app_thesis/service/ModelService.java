@@ -1,45 +1,66 @@
 package com.cloud_ml_app_thesis.service;
 
-import com.cloud_ml_app_thesis.entity.Model;
+import com.cloud_ml_app_thesis.config.BucketResolver;
+import com.cloud_ml_app_thesis.dto.request.model.ModelFinalizeRequest;
+import com.cloud_ml_app_thesis.entity.Category;
+import com.cloud_ml_app_thesis.entity.Training;
+import com.cloud_ml_app_thesis.entity.accessibility.ModelAccessibility;
+import com.cloud_ml_app_thesis.entity.model.Keyword;
+import com.cloud_ml_app_thesis.entity.model.Model;
+import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.entity.model.ModelShareHistory;
 import com.cloud_ml_app_thesis.entity.status.ModelStatus;
+import com.cloud_ml_app_thesis.enumeration.BucketTypeEnum;
+import com.cloud_ml_app_thesis.enumeration.accessibility.ModelAccessibilityEnum;
 import com.cloud_ml_app_thesis.enumeration.status.ModelStatusEnum;
-import com.cloud_ml_app_thesis.repository.ModelRepository;
-import com.cloud_ml_app_thesis.repository.TrainRepository;
+import com.cloud_ml_app_thesis.repository.CategoryRepository;
+import com.cloud_ml_app_thesis.repository.KeywordRepository;
+import com.cloud_ml_app_thesis.repository.UserRepository;
+import com.cloud_ml_app_thesis.repository.accessibility.ModelAccessibilityRepository;
+import com.cloud_ml_app_thesis.repository.model.ModelRepository;
+import com.cloud_ml_app_thesis.repository.TrainingRepository;
 import com.cloud_ml_app_thesis.repository.status.ModelStatusRepository;
-import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.errors.MinioException;
+import jakarta.persistence.AccessType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 
 import java.io.*;
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ModelService {
 
     private final MinioClient minioClient;
+    private final MinioService minioService;
 
     private final ModelRepository modelRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final ModelStatusRepository modelStatusRepository;
+    private final ModelAccessibilityRepository accessibilityRepository;
+    private final KeywordRepository keywordRepository;
 
+    private final BucketResolver bucketResolver;
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class);
 
-    private final TrainRepository trainRepository;
+    private final TrainingRepository trainingRepository;
 
     @Value("${minio.url}")
     private String minioUrl;
@@ -64,16 +85,82 @@ public class ModelService {
         }
     }
 
-    public void saveModel(Integer trainingId, String modelUrl, String results, String modelType) {
-        Model model = new Model();
-        model.setTraining(trainRepository.findById(trainingId).orElseThrow(() -> new EntityNotFoundException("Could not find training with id: "+ trainingId)));
-        model.setUrlModelMinio(modelUrl); // Truncate if needed
-        model.setEvaluation(results); // Truncate if needed
-        model.setStatus(modelStatusRepository.findByName(ModelStatusEnum.FINISHED).orElseThrow(() -> new EntityNotFoundException("Could not find FINISHED model status")));
-        model.setModelType(modelType);
+    public Integer finalizeModel(Integer trainingId, UserDetails userDetails, ModelFinalizeRequest request) {
+
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("User with username "+ userDetails.getUsername() +"not found"));
+
+        // Step 1: Load training and check existence
+        Training training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new EntityNotFoundException("Training with ID " + trainingId + " not found"));
+
+        // Step 2: Ownership check
+        if (!training.getUser().getUsername().equals(userDetails.getUsername())) {
+            throw new AccessDeniedException("You do not own this training.");
+        }
+
+        // Step 3: Check training status
+        if (!training.getStatus().getName().toString().equalsIgnoreCase("COMPLETED")) {
+            throw new IllegalStateException("Training must be completed before finalizing a model.");
+        }
+
+        // Step 4: Get existing model
+        Model model = training.getModel();
+        if (model == null) {
+            throw new IllegalStateException("No model found for this training.");
+        }
+
+        // Step 5: Set model metadata
+        model.setName(request.getName());
+        model.setDescription(request.getDescription());
+        model.setDataDescription(training.getDatasetConfiguration().getDataset().getDescription());
+        model.setFinalizationDate(ZonedDateTime.now());
+        model.setFinishedAt(training.getFinishedDate());
+
+        // Set category
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        model.setCategory(category);
+
+        ModelAccessibilityEnum modelAccessibilityEnum =
+                request.isPublic() ? ModelAccessibilityEnum.PUBLIC : ModelAccessibilityEnum.PRIVATE;
+
+        // Step 6: Handle accessibility
+        ModelAccessibility accessibility = accessibilityRepository.findByName(modelAccessibilityEnum)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid access type: " + modelAccessibilityEnum));
+        model.setAccessibility(accessibility);
+
+        // Step 7: Set model status to FINALIZED
+        ModelStatus finalizedStatus = modelStatusRepository.findByName(ModelStatusEnum.FINALIZED)
+                .orElseThrow(() -> new IllegalStateException("Model status FINALIZED not configured"));
+        model.setStatus(finalizedStatus);
+
+        // Step 8: Handle keywords
+        Set<Keyword> keywords = request.getKeywords().stream()
+                .map(word -> keywordRepository.findByNameIgnoreCase(word)
+                        .orElseGet(() -> keywordRepository.save(new Keyword(word))))
+                .collect(Collectors.toSet());
+        model.setKeywords(keywords);
+
+        // Step 9: Save model
         modelRepository.save(model);
+
+
+        return model.getId();
     }
 
+
+    public void saveModel(Training training, String modelUrl, String results, String modelType, User user, boolean isFinalized) {
+        Model model = new Model();
+        model.setTraining(training);
+        model.setMinioUrl(modelUrl); // Truncate if needed
+        model.setEvaluation(results); // Truncate if needed
+        model.setStatus(modelStatusRepository.findByName(ModelStatusEnum.TRAINING_COMPLETED).orElseThrow(() -> new EntityNotFoundException("Could not find FINISHED model status")));
+        model.setModelType(modelType);
+        model.setFinishedAt(training.getFinishedDate());
+        model.setFinalized(isFinalized);
+        modelRepository.save(model);
+    }
 
     public String evaluateClassifier(Classifier cls, Instances train, Instances test) throws Exception {
         Evaluation eval = new Evaluation(train);
@@ -102,18 +189,10 @@ public class ModelService {
         return results;
     }
 
-    public Object loadModel(Integer modelId) throws Exception {
-        logger.info("Loading model with ID: {}", modelId);
+    public Object loadModel(String modelMinioUri) throws Exception {
+        logger.info("Loading model from minio URI: {}", modelMinioUri);
 
-        Model modelEntity = modelRepository.findById(modelId)
-                .orElseThrow(() -> {
-                    String errorMessage = "Model not found with id: " + modelId;
-                    logger.error(errorMessage);
-                    return new RuntimeException(errorMessage);
-                });
-
-        URI modelUri = new URI(modelEntity.getUrlModelMinio());
-        logger.info("Model URI: {}", modelUri);
+        URI modelUri = new URI(modelMinioUri);
 
         // Splitting the path to get bucket and object names
         String[] pathParts = modelUri.getPath().split("/");
@@ -125,33 +204,16 @@ public class ModelService {
 
         String minioUrl = pathParts[0];
         String bucketName = pathParts[1];
-        String objectName = String.join("/", Arrays.copyOfRange(pathParts, 2, pathParts.length));
-        logger.info("Minio URL: {}", minioUrl);
-        logger.info("Bucket Name: {}", bucketName);
-        logger.info("Object Name: {}", objectName);
 
-        try (InputStream modelStream = minioClient.getObject(
-                GetObjectArgs.builder()
-                        .bucket(bucketName)
-                        .object(objectName)
-                        .build())) {
-            Object model = SerializationHelper.read(modelStream);
+        String objectName = String.join("/", Arrays.copyOfRange(pathParts, 2, pathParts.length));
+
+
+        try {
+
+            Object model = minioService.loadObject(bucketResolver.resolve(BucketTypeEnum.MODEL), objectName);
             logger.info("Model loaded successfully");
 
-
-            if ("classifier".equalsIgnoreCase(modelEntity.getModelType()) && model instanceof Classifier) {
-                return model;
-            } else if ("clusterer".equalsIgnoreCase(modelEntity.getModelType()) && model instanceof Clusterer) {
-                return model;
-            } else {
-                String errorMessage = "Model type mismatch or unsupported model type: " + modelEntity.getModelType();
-                logger.error(errorMessage);
-                throw new RuntimeException(errorMessage);
-            }
-        } catch (MinioException e) {
-            String errorMessage = "Error loading model from Minio: " + e.getMessage();
-            logger.error(errorMessage, e);
-            throw new RuntimeException(errorMessage, e);
+            return model;
         } catch (Exception e) {
             String errorMessage = "Unexpected error while loading model: " + e.getMessage();
             logger.error(errorMessage, e);

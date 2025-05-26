@@ -1,6 +1,5 @@
 package com.cloud_ml_app_thesis.entity.accessibility;
 
-import com.cloud_ml_app_thesis.entity.Model;
 import com.cloud_ml_app_thesis.enumeration.accessibility.ModelAccessibilityEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
