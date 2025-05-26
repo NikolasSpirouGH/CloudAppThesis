@@ -4,7 +4,7 @@ import com.cloud_ml_app_thesis.config.security.AccountDetails;
 import com.cloud_ml_app_thesis.config.security.JwtTokenProvider;
 import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
 import com.cloud_ml_app_thesis.dto.request.user.UserRegisterRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.user.UserDTO;
 import com.cloud_ml_app_thesis.entity.JwtToken;
 import com.cloud_ml_app_thesis.entity.Role;
@@ -65,7 +65,7 @@ public class AuthServiceTest {
     void register_shouldReturnError_whenPasswordsDoNotMatch() {
         validRequest.setConfirmPassword("WrongPassword");
 
-        MyResponse<?> response = authService.register(validRequest);
+        GenericResponse<?> response = authService.register(validRequest);
 
         assertEquals("PASSWORD_MISMATCH", response.getErrorCode());
         assertNull(response.getDataHeader());
@@ -75,7 +75,7 @@ public class AuthServiceTest {
     void register_shouldReturnError_whenUsernameAlreadyExists() {
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        MyResponse<?> response = authService.register(validRequest);
+        GenericResponse<?> response = authService.register(validRequest);
 
         assertEquals("USERNAME_EXISTS", response.getErrorCode());
         verify(userRepository, times(1)).existsByUsername("testuser");
@@ -126,7 +126,7 @@ public class AuthServiceTest {
         when(modelMapper.map(any(User.class), eq(UserDTO.class))).thenReturn(dto);
 
         // Act
-        MyResponse<?> response = authService.register(validRequest);
+        GenericResponse<?> response = authService.register(validRequest);
 
         // Assert
         assertEquals("Account registered successfully", response.getMessage());
@@ -177,7 +177,7 @@ public class AuthServiceTest {
         loginRequest.setUsername("johndoe");
         loginRequest.setPassword("StrongP@ssw0rd");
         // Act
-        MyResponse<?> response = authService.login(loginRequest);
+        GenericResponse<?> response = authService.login(loginRequest);
 
         // Assert
         assertNotNull(response);

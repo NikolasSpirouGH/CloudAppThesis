@@ -3,7 +3,7 @@ package com.cloud_ml_app_thesis.service;
 import com.cloud_ml_app_thesis.dto.request.user.PasswordChangeRequest;
 import com.cloud_ml_app_thesis.entity.PasswordResetToken;
 import com.cloud_ml_app_thesis.dto.request.user.UserUpdateRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
 import com.cloud_ml_app_thesis.dto.user.UserDTO;
 import com.cloud_ml_app_thesis.entity.User;
@@ -43,20 +43,20 @@ public class UserService {
     private final JwtTokenRepository jwtTokenRepository;
 
     @Transactional
-    public MyResponse<?> updateUser(User currentUser, UserUpdateRequest request) {
+    public GenericResponse<?> updateUser(User currentUser, UserUpdateRequest request) {
         log.debug("🔄 Updating profile for user: {}", currentUser.getUsername());
         UserDTO dto = applyUserUpdates(currentUser, request);
-        return new MyResponse<>(dto, null, "User profile updated successfully", new Metadata());
+        return new GenericResponse<>(dto, null, "User profile updated successfully", new Metadata());
     }
 
     @Transactional
-    public MyResponse<?> updateUserByAdmin(String username, @Valid UserUpdateRequest request) {
+    public GenericResponse<?> updateUserByAdmin(String username, @Valid UserUpdateRequest request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
 
         log.debug("👮 Admin updating profile for user: {}", user.getUsername());
         UserDTO dto = applyUserUpdates(user, request);
-        return new MyResponse<>(dto, null, "User profile updated successfully", new Metadata());
+        return new GenericResponse<>(dto, null, "User profile updated successfully", new Metadata());
     }
 
     private UserDTO applyUserUpdates(User user, UserUpdateRequest request) {
@@ -77,7 +77,7 @@ public class UserService {
     }
 
     @Transactional
-    public MyResponse<?> changePassword(User user, PasswordChangeRequest request) {
+    public GenericResponse<?> changePassword(User user, PasswordChangeRequest request) {
         log.debug("🔍 Validating old password for user '{}'", user.getUsername());
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
@@ -92,7 +92,7 @@ public class UserService {
         userRepository.save(user);
 
         log.info("✅ Password successfully updated for user '{}'", user.getUsername());
-        return new MyResponse<>(null, null, "Password changed successfully", new Metadata());
+        return new GenericResponse<>(null, null, "Password changed successfully", new Metadata());
     }
 
 

@@ -1,7 +1,7 @@
 package com.cloud_ml_app_thesis.controller.security;
 
 import com.cloud_ml_app_thesis.dto.response.Metadata;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
 import com.cloud_ml_app_thesis.dto.request.user.UserRegisterRequest;
 import com.cloud_ml_app_thesis.service.security.AuthService;
@@ -33,7 +33,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PostMapping("/register")
-    public ResponseEntity<MyResponse<?>> registerUser(@Valid @RequestBody UserRegisterRequest registerRequest) {
+    public ResponseEntity<GenericResponse<?>> registerUser(@Valid @RequestBody UserRegisterRequest registerRequest) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(authService.register(registerRequest));
@@ -46,7 +46,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
     @PostMapping("/login")
-    public ResponseEntity<MyResponse<?>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<GenericResponse<?>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -57,10 +57,10 @@ public class AuthController {
     })
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MyResponse<?>> logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<GenericResponse<?>> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         authService.logout(token);
-        return ResponseEntity.ok(new MyResponse<>("Successfully logged out", null, "LOGOUT", new Metadata()));
+        return ResponseEntity.ok(new GenericResponse<>("Successfully logged out", null, "LOGOUT", new Metadata()));
     }
 
 

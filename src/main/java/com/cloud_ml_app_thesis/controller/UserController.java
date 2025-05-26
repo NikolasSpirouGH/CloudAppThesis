@@ -3,7 +3,7 @@ package com.cloud_ml_app_thesis.controller;
 import com.cloud_ml_app_thesis.config.security.AccountDetails;
 import com.cloud_ml_app_thesis.dto.request.user.*;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +39,7 @@ public class UserController {
     })
     @PutMapping("/update")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MyResponse<?>> updateUser(@AuthenticationPrincipal AccountDetails userDetails, @Valid @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<GenericResponse<?>> updateUser(@AuthenticationPrincipal AccountDetails userDetails, @Valid @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(userService.updateUser(userDetails.getUser(), request));
     }
 
@@ -51,7 +51,7 @@ public class UserController {
     })
     @PutMapping("/updateByAdmin/{username}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<MyResponse<?>> updateUserByAdmin(@PathVariable String username, @Valid @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<GenericResponse<?>> updateUserByAdmin(@PathVariable String username, @Valid @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(userService.updateUserByAdmin(username, request));
     }
 
@@ -63,7 +63,7 @@ public class UserController {
     })
     @PatchMapping("/change-password")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MyResponse<?>> changePassword(
+    public ResponseEntity<GenericResponse<?>> changePassword(
             @AuthenticationPrincipal AccountDetails userDetails,
             @Valid @RequestBody PasswordChangeRequest request
     ) {
@@ -76,9 +76,9 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid email address provided.")
     })
     @PostMapping("/forgot-password")
-    public ResponseEntity<MyResponse<?>> forgotPassword(@Valid @RequestBody EmailRequest userEmailRequest) {
+    public ResponseEntity<GenericResponse<?>> forgotPassword(@Valid @RequestBody EmailRequest userEmailRequest) {
             userService.resetPasswordRequest(userEmailRequest.getEmail());
-        return ResponseEntity.ok(new MyResponse<>(null, null, "If the email exists, a password reset link has been sent.", new Metadata()));
+        return ResponseEntity.ok(new GenericResponse<>(null, null, "If the email exists, a password reset link has been sent.", new Metadata()));
     }
 
     @Operation(summary = "Reset Password", description = "Allows a user to reset their password using a valid token.")
@@ -87,14 +87,14 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid or expired token.")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<MyResponse<?>> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+    public ResponseEntity<GenericResponse<?>> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         Optional<User> user = userService.validatePasswordResetToken(resetPasswordRequest.getToken());
         if (user.isPresent()) {
             userService.resetPassword(user.get(), resetPasswordRequest.getPassword());
-            return ResponseEntity.ok(new MyResponse<>(null, null, "Password has been reset successfully.", new Metadata()));
+            return ResponseEntity.ok(new GenericResponse<>(null, null, "Password has been reset successfully.", new Metadata()));
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MyResponse<>(null, "Bad Request", "Invalid or expired token.", new Metadata()));
+                    .body(new GenericResponse<>(null, "Bad Request", "Invalid or expired token.", new Metadata()));
         }
     }
 
@@ -105,11 +105,11 @@ public class UserController {
     })
     @DeleteMapping("/delete")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MyResponse<?>> deleteOwnAccount(
+    public ResponseEntity<GenericResponse<?>> deleteOwnAccount(
             @AuthenticationPrincipal AccountDetails userDetails,
             @Valid @RequestBody DeleteUserRequest request) {
         userService.deleteUser(userDetails.getUser(), request.getReason());
-        return ResponseEntity.ok(new MyResponse<>(userDetails.getUser() + " has been deleted ", null, "DELETED" , new Metadata()));
+        return ResponseEntity.ok(new GenericResponse<>(userDetails.getUser() + " has been deleted ", null, "DELETED" , new Metadata()));
     }
 
     @Operation(summary = "Delete user by admin", description = "Allows an admin to delete any user by providing a reason")
@@ -120,10 +120,10 @@ public class UserController {
     })
     @DeleteMapping("/delete/{username}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<MyResponse<?>> deleteUserByAdmin(
+    public ResponseEntity<GenericResponse<?>> deleteUserByAdmin(
             @PathVariable String username,
             @Valid @RequestBody DeleteUserRequest request) {
         userService.deleteUserByAdmin(username, request.getReason());
-        return ResponseEntity.ok(new MyResponse<>("User deleted successfully", null, "DELETED", new Metadata()));
+        return ResponseEntity.ok(new GenericResponse<>("User deleted successfully", null, "DELETED", new Metadata()));
     }
 }

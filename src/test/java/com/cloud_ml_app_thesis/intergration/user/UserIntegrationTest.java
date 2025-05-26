@@ -2,7 +2,7 @@ package com.cloud_ml_app_thesis.intergration.user;
 
 import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
 import com.cloud_ml_app_thesis.entity.PasswordResetToken;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
@@ -78,14 +78,14 @@ class UserIntegrationTest {
         loginRequest.setUsername("testuser");
         loginRequest.setPassword("password123");
 
-        ResponseEntity<MyResponse<Map<String, Object>>> response = restTemplate.exchange(
+        ResponseEntity<GenericResponse<Map<String, Object>>> response = restTemplate.exchange(
                 "/api/auth/login",
                 HttpMethod.POST,
                 new HttpEntity<>(loginRequest),
                 new ParameterizedTypeReference<>() {}
         );
 
-        MyResponse<Map<String, Object>> responseBody = response.getBody();
+        GenericResponse<Map<String, Object>> responseBody = response.getBody();
         System.out.println("Login response: " + responseBody);
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Login failed: wrong status");
@@ -118,7 +118,7 @@ class UserIntegrationTest {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(updateBody, headers);
 
         // 📨 Perform request with generic response
-        ResponseEntity<MyResponse<Map<String, Object>>> response = restTemplate.exchange(
+        ResponseEntity<GenericResponse<Map<String, Object>>> response = restTemplate.exchange(
                 "/api/users/update",
                 HttpMethod.PUT,
                 entity,
@@ -128,7 +128,7 @@ class UserIntegrationTest {
         // ✅ Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
-        MyResponse<?> responseBody = response.getBody();
+        GenericResponse<?> responseBody = response.getBody();
         assertNotNull(responseBody);
         assertEquals("User profile updated successfully", responseBody.getMessage());
 
@@ -146,7 +146,7 @@ class UserIntegrationTest {
         Map<String, String> payload = Map.of("email", "test@example.com");
         HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<MyResponse<Void>> response = restTemplate.exchange(
+        ResponseEntity<GenericResponse<Void>> response = restTemplate.exchange(
                 "/api/users/forgot-password",
                 HttpMethod.POST,
                 request,
@@ -189,7 +189,7 @@ class UserIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, String>> request = new HttpEntity<>(resetPayload, headers);
 
-        ResponseEntity<MyResponse<Void>> response = restTemplate.exchange(
+        ResponseEntity<GenericResponse<Void>> response = restTemplate.exchange(
                 "/api/users/reset-password",
                 HttpMethod.POST,
                 request,
@@ -204,7 +204,7 @@ class UserIntegrationTest {
         login.setUsername("testuser");
         login.setPassword("newSecurePassword123");
 
-        ResponseEntity<MyResponse<Map<String, Object>>> loginResponse = restTemplate.exchange(
+        ResponseEntity<GenericResponse<Map<String, Object>>> loginResponse = restTemplate.exchange(
                 "/api/auth/login",
                 HttpMethod.POST,
                 new HttpEntity<>(login),

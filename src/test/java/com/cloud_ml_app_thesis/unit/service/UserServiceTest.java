@@ -3,7 +3,7 @@ package com.cloud_ml_app_thesis.unit.service;
 import com.cloud_ml_app_thesis.dto.request.user.PasswordChangeRequest;
 import com.cloud_ml_app_thesis.entity.PasswordResetToken;
 import com.cloud_ml_app_thesis.dto.request.user.UserUpdateRequest;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.user.UserDTO;
 import com.cloud_ml_app_thesis.entity.Role;
 import com.cloud_ml_app_thesis.entity.User;
@@ -83,7 +83,7 @@ class UserServiceTest {
         when(modelMapper.map(any(User.class), eq(UserDTO.class))).thenReturn(userDTO);
 
         // When
-        MyResponse<?> response = userService.updateUser(testUser, request);
+        GenericResponse<?> response = userService.updateUser(testUser, request);
 
         // Then
         assertNotNull(response.getDataHeader());
@@ -109,7 +109,7 @@ class UserServiceTest {
         when(passwordEncoder.matches("oldPass", user.getPassword())).thenReturn(true);
         when(passwordEncoder.encode("newPass123")).thenReturn("$argon2id$...newEncoded");
 
-        MyResponse<?> response = userService.changePassword(user, request);
+        GenericResponse<?> response = userService.changePassword(user, request);
 
         assertEquals("Password changed successfully", response.getMessage());
         verify(userRepository).save(user);

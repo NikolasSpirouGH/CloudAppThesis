@@ -7,7 +7,7 @@ import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
 import com.cloud_ml_app_thesis.dto.request.user.UserRegisterRequest;
 import com.cloud_ml_app_thesis.dto.request.user.UserUpdateRequest;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
-import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.dto.response.GenericResponse;
 import com.cloud_ml_app_thesis.dto.user.UserDTO;
 import com.cloud_ml_app_thesis.entity.JwtToken;
 import com.cloud_ml_app_thesis.entity.Role;
@@ -55,21 +55,21 @@ public class AuthService {
 
 
     @Transactional
-    public MyResponse<?> register(UserRegisterRequest request) {
+    public GenericResponse<?> register(UserRegisterRequest request) {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             log.warn("Password mismatch for user: {}", request.getUsername());
-            return new MyResponse<>(null, "PASSWORD_MISMATCH", "Passwords do not match", new Metadata());
+            return new GenericResponse<>(null, "PASSWORD_MISMATCH", "Passwords do not match", new Metadata());
         }
 
         if (userRepository.existsByUsername(request.getUsername())) {
             log.warn("Username already exists: {}", request.getUsername());
-            return new MyResponse<>(null, "USERNAME_EXISTS", "Username already in use", new Metadata());
+            return new GenericResponse<>(null, "USERNAME_EXISTS", "Username already in use", new Metadata());
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Email already exists: {}", request.getEmail());
-            return new MyResponse<>(null, "EMAIL_EXISTS", "Email already in use", new Metadata());
+            return new GenericResponse<>(null, "EMAIL_EXISTS", "Email already in use", new Metadata());
         }
 
         Role userRole = roleRepository.findByName(UserRoleEnum.USER)
@@ -113,12 +113,12 @@ public class AuthService {
 
         log.info("User registered successfully: {}", user.getUsername());
 
-        return new MyResponse<>(userDTO, null, "Account registered successfully", new Metadata());
+        return new GenericResponse<>(userDTO, null, "Account registered successfully", new Metadata());
     }
 
 
     @Transactional
-    public MyResponse<?> login(LoginRequest request) {
+    public GenericResponse<?> login(LoginRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -153,10 +153,10 @@ public class AuthService {
             responseMap.put("token", jwt);
             responseMap.put("user", userDTO);
 
-            return new MyResponse<>(responseMap, null, "Authentication successful", new Metadata());
+            return new GenericResponse<>(responseMap, null, "Authentication successful", new Metadata());
 
         } catch (AuthenticationException ex) {
-            return new MyResponse<>(null, "INVALID_CREDENTIALS", "Invalid username or password", new Metadata());
+            return new GenericResponse<>(null, "INVALID_CREDENTIALS", "Invalid username or password", new Metadata());
         }
     }
 
