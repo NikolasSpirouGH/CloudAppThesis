@@ -2,6 +2,8 @@ package com.cloud_ml_app_thesis.entity;
 
 
 import com.cloud_ml_app_thesis.entity.status.TrainingStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import lombok.Getter;
@@ -34,6 +36,7 @@ public class Training {
     @JoinColumn(name="algorithm_id")
     private AlgorithmConfiguration algorithmConfiguration;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;

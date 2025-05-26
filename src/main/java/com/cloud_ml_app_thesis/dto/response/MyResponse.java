@@ -1,15 +1,13 @@
 package com.cloud_ml_app_thesis.dto.response;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
 @Getter
+@ToString
 public class MyResponse<T> {
     private T dataHeader;
     private String errorCode;

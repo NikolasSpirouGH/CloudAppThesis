@@ -136,35 +136,42 @@ public class DataInitializer implements CommandLineRunner {
         UserStatus defaultStatus = userStatusRepository.findByName(UserStatusEnum.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Default status not found"));
         Role userRole = roleRepository.findByName(UserRoleEnum.USER)
-                .orElseThrow(() -> new RuntimeException("Role USER was not found"));
+                .orElseThrow(() -> new RuntimeException("Role USER not found"));
         Role adminRole = roleRepository.findByName(UserRoleEnum.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Role ADMIN was not found"));
+                .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
 
         List<User> admins = List.of(
-                new User(null, "bigspy", "nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null),
+                new User(null, "bigspy", "Nikolas", "Spirou", "nikolas@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null),
                 new User(null, "nickriz", "Nikos", "Rizogiannis", "rizo@gmail.com", passwordEncoder.encode(adminPassword), 27, "Senior SWE", "Greece", Set.of(userRole), defaultStatus, null, null, null),
-                new User(null, "johnken", "john", "kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
+                new User(null, "johnken", "John", "Kennedy", "john@gmail.com", passwordEncoder.encode(userPassword), 27, "Senior SWE", "Greece", Set.of(adminRole), defaultStatus, null, null, null)
         );
 
         for (User admin : admins) {
-            userRepository.findByEmail(admin.getEmail()).ifPresentOrElse(existingUser -> {
-                existingUser.setUsername(admin.getUsername());
-                existingUser.setFirstName(admin.getFirstName());
-                existingUser.setLastName(admin.getLastName());
-                existingUser.setPassword(admin.getPassword());
-                existingUser.setAge(admin.getAge());
-                existingUser.setProfession(admin.getProfession());
-                existingUser.setCountry(admin.getCountry());
-                existingUser.setRoles(admin.getRoles());
-                existingUser.setStatus(admin.getStatus());
-                userRepository.save(existingUser); // update
-            }, () -> {
-                userRepository.save(admin); // insert
-            });
+            Optional<User> existingByEmail = userRepository.findByEmail(admin.getEmail());
+            Optional<User> existingByUsername = userRepository.findByUsername(admin.getUsername());
+
+            if (existingByEmail.isPresent()) {
+                User existing = existingByEmail.get();
+                existing.setUsername(admin.getUsername());
+                existing.setFirstName(admin.getFirstName());
+                existing.setLastName(admin.getLastName());
+                existing.setPassword(admin.getPassword());
+                existing.setAge(admin.getAge());
+                existing.setProfession(admin.getProfession());
+                existing.setCountry(admin.getCountry());
+                existing.setRoles(admin.getRoles());
+                existing.setStatus(admin.getStatus());
+                userRepository.save(existing); // update
+            } else if (existingByUsername.isPresent()) {
+                System.out.printf("Skipping user '%s' – username already exists with different email%n", admin.getUsername());
+            } else {
+                userRepository.save(admin); // insert safely
+            }
         }
 
-        System.out.println("Admins updated/inserted successfully.");
+        System.out.println("✅ Admins updated/inserted safely.");
     }
+
 
 
     private void initializeAlgorithms() {

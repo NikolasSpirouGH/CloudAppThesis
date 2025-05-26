@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.service;
+package com.cloud_ml_app_thesis.unit.service;
 
 import com.cloud_ml_app_thesis.dto.category.CategoryDTO;
 import com.cloud_ml_app_thesis.dto.request.category.CategoryCreateRequest;
@@ -10,6 +10,7 @@ import com.cloud_ml_app_thesis.enumeration.status.CategoryRequestStatusEnum;
 import com.cloud_ml_app_thesis.repository.*;
 import com.cloud_ml_app_thesis.repository.status.CategoryRequestStatusRepository;
 import com.cloud_ml_app_thesis.dto.response.MyResponse;
+import com.cloud_ml_app_thesis.service.CategoryService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;

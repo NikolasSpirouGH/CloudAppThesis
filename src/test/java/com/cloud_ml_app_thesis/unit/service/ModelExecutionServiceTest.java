@@ -1,4 +1,4 @@
-package com.cloud_ml_app_thesis.service;
+package com.cloud_ml_app_thesis.unit.service;
 
 import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.dto.response.Metadata;
@@ -7,6 +7,9 @@ import com.cloud_ml_app_thesis.entity.ModelExecution;
 import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.repository.ModelExecutionRepository;
 import com.cloud_ml_app_thesis.repository.ModelRepository;
+import com.cloud_ml_app_thesis.service.DatasetService;
+import com.cloud_ml_app_thesis.service.ModelExecutionService;
+import com.cloud_ml_app_thesis.service.ModelService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

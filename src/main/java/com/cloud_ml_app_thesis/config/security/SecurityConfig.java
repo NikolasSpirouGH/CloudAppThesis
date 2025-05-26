@@ -1,6 +1,7 @@
 package com.cloud_ml_app_thesis.config.security;
 
-import com.cloud_ml_app_thesis.service.security.UserDetailsServiceImpl;
+import com.cloud_ml_app_thesis.service.security.AccountDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,9 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
+
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -23,16 +23,12 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
-    private final UserDetailsService userDetailsService;
+    private final AccountDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          UserDetailsServiceImpl userDetailsSertviceImpl){
-        this.jwtAuthFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsSertviceImpl;
-    }
 
     /**
      * Main security filter chain
@@ -44,7 +40,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors->{})
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/algorithms/get-algorithms", "/api/auth/**", "/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/algorithms/get-algorithms", "/api/auth/**", "/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**", "/api/users/forgot-password", "/api/users/reset-password").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/model-exec/execute").authenticated()
                         .requestMatchers("/api/algorithms/**").authenticated()
@@ -67,13 +63,6 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
-    /**
-     * Our password encoder: Argon2
-     */
-//    @Bean
-//    public BCryptPasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
-//    }
     @Bean
     public Argon2PasswordEncoder passwordEncoder() {
         return new Argon2PasswordEncoder(16, 32, 1, 4096, 3);
