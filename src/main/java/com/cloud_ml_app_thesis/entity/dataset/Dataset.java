@@ -6,6 +6,7 @@ import com.cloud_ml_app_thesis.entity.DatasetConfiguration;
 import com.cloud_ml_app_thesis.entity.User;
 import com.cloud_ml_app_thesis.entity.accessibility.DatasetAccessibility;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
@@ -29,6 +30,7 @@ public class Dataset {
     @Column(name = "id", updatable = false, nullable = false)
     private Integer id;
 
+    @JsonIgnore
     @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

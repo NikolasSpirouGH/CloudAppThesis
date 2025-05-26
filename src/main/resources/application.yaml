@@ -13,6 +13,15 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  mail:
+    host: localhost
+    port: 1025
+    username:
+    password:
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
 rsa:
   private:
     key-location: classpath:keys/private_key.pem
@@ -42,9 +51,7 @@ minio:
     secret: minioadmin
   url: http://127.0.0.1:9000
   bucket:
-    datasets: ml-models
-    models: ml-models
-    predictions: ml-predictions
+    name: ml-models
 
 
 server:

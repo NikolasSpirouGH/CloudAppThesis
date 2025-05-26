@@ -1,132 +1,67 @@
 package com.cloud_ml_app_thesis.controller.security;
 
-import com.cloud_ml_app_thesis.entity.Role;
-import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.entity.status.UserStatus;
-import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
-import com.cloud_ml_app_thesis.enumeration.status.UserStatusEnum;
+import com.cloud_ml_app_thesis.dto.response.Metadata;
+import com.cloud_ml_app_thesis.dto.response.MyResponse;
 import com.cloud_ml_app_thesis.dto.request.user.LoginRequest;
 import com.cloud_ml_app_thesis.dto.request.user.UserRegisterRequest;
-import com.cloud_ml_app_thesis.repository.RoleRepository;
-import com.cloud_ml_app_thesis.repository.UserRepository;
-import com.cloud_ml_app_thesis.repository.status.UserStatusRepository;
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityNotFoundException;
+import com.cloud_ml_app_thesis.service.security.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-import com.cloud_ml_app_thesis.config.security.JwtTokenProvider;
 
-import java.util.Map;
-import java.util.Set;
-
+@Tag(name = "Authentication Management", description = "Endpoints for managing authentication")
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-    
-    private final AuthenticationManager authenticationManager;
 
-    
-    private final UserRepository userRepository;
+    private final AuthService authService;
 
-    
-    private final RoleRepository roleRepository;
-
-    
-    private final UserStatusRepository userStatusRepository;
-
-    
-    private final JwtTokenProvider tokenProvider;
-
-    
-    private final Argon2PasswordEncoder passwordEncoder;
-
-//    @PostConstruct
-//    public void initializeRolesAndStatuses() {
-//        if (roleRepository.count() == 0) {
-//            Role adminRole = new Role();
-//            adminRole.setName("ADMIN");
-//            adminRole.setDescription("Administrator role with full access");
-//            roleRepository.save(adminRole);
-//
-//            Role userRole = new Role();
-//            userRole.setName("USER");
-//            userRole.setDescription("User role with limited access");
-//            roleRepository.save(userRole);
-//        }
-//
-//        if (userStatusRepository.count() == 0) {
-//            Status activeStatus = new Status();
-//            activeStatus.setName("ACTIVE");
-//            activeStatus.setDescription("Account is active");
-//            statusRepository.save(activeStatus);
-//
-//            Status inactiveStatus = new Status();
-//            inactiveStatus.setName("INACTIVE");
-//            inactiveStatus.setDescription("Account is inactive");
-//            statusRepository.save(inactiveStatus);
-//        }
-//    }
-
+    @Operation(summary = "Register a new user", description = "Allows anyone to register providing the required fields")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
     @PostMapping("/register")
-    public ResponseEntity<String> registerAccount(@RequestBody UserRegisterRequest registerRequest) {
-        if(!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())){
-            throw new IllegalArgumentException("Your password doesn't match your password confirmation.");
-        }
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new IllegalArgumentException("Username already in use.");
-        }
-
-        if (userRepository.existsByEmail(registerRequest.getUsername())) {
-            throw new IllegalArgumentException("Email already in use.");
-        }
-
-        Role role = roleRepository.findByName(UserRoleEnum.USER)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid role ID."));
-
-        UserStatus status = userStatusRepository.findByName(UserStatusEnum.INACTIVE).orElseThrow(() -> new EntityNotFoundException("Could not find Inactive Status."));
-        User user = new User();
-        user.setEmail(registerRequest.getEmail());
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRoles(Set.of(role));
-        user.setStatus(status);
-        user.setAge(registerRequest.getAge());
-        user.setFirstName(registerRequest.getFirstName());
-        user.setLastName(registerRequest.getLastName());
-        user.setCountry(registerRequest.getCountry());
-        user.setProfession(registerRequest.getProfession());
-
-        userRepository.save(user);
-        return new ResponseEntity<>("Account registered successfully", HttpStatus.OK);
+    public ResponseEntity<MyResponse<?>> registerUser(@Valid @RequestBody UserRegisterRequest registerRequest) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(authService.register(registerRequest));
     }
 
+
+    @Operation(summary = "Login a user", description = "Authenticates a user and returns a JWT token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authentication successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateAccount(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = tokenProvider.generateToken(authentication);
-
-        return ResponseEntity.ok().body(Map.of("token", token)); // ✅ JSON
+    public ResponseEntity<MyResponse<?>> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
+
+    @Operation(summary = "Logout", description = "Revokes the user's token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Logout successful"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MyResponse<?>> logout(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        authService.logout(token);
+        return ResponseEntity.ok(new MyResponse<>("Successfully logged out", null, "LOGOUT", new Metadata()));
+    }
+
+
 }

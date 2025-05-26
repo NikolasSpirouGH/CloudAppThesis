@@ -1,8 +1,7 @@
 package com.cloud_ml_app_thesis.config.security;
 
 
-
-import com.cloud_ml_app_thesis.service.security.UserDetailsServiceImpl;
+import com.cloud_ml_app_thesis.service.security.AccountDetailsService;
 import com.google.common.net.HttpHeaders;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -24,7 +23,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
-    private final UserDetailsServiceImpl userDetailsService;
+    private final AccountDetailsService userDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
 
 

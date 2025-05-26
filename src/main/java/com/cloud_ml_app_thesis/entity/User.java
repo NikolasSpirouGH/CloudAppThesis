@@ -4,6 +4,7 @@ import com.cloud_ml_app_thesis.entity.dataset.Dataset;
 import com.cloud_ml_app_thesis.entity.model.Model;
 import com.cloud_ml_app_thesis.entity.model.ModelExecution;
 import com.cloud_ml_app_thesis.entity.status.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -49,6 +50,7 @@ public class User {
     @Column
     private String country;
 
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
@@ -62,6 +64,7 @@ public class User {
     private UserStatus status;
 
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;
 
@@ -72,11 +75,11 @@ public class User {
     private List<ModelExecution> modelExecutions;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnore
     private List<Dataset> datasets;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnore
     private List<AlgorithmConfiguration> algorithmConfigurations;
 
 
