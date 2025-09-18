@@ -15,6 +15,9 @@
     <description>CloudAppMLProject</description>
     <properties>
         <java.version>21</java.version>
+        <shared.volume>${java.io.tmpdir}</shared.volume>
+        <surefire.tmpdir>${java.io.tmpdir}</surefire.tmpdir>
+        <docker.host>unix:///var/run/docker.sock</docker.host>
     </properties>
     <dependencies>
         <dependency>
@@ -195,15 +198,51 @@
                 <version>3.0.0</version>
                 <configuration>
                     <environmentVariables>
-                        <SHARED_VOLUME>E:/ThesisApp/shared</SHARED_VOLUME>
-                        <DOCKER_HOST>tcp://localhost:2375</DOCKER_HOST>
+                        <SHARED_VOLUME>${shared.volume}</SHARED_VOLUME>
+                        <DOCKER_HOST>${docker.host}</DOCKER_HOST>
                     </environmentVariables>
-                    <argLine>-Djava.io.tmpdir=E:/ThesisApp/tmp</argLine>
+                    <argLine>-Djava.io.tmpdir=${surefire.tmpdir}</argLine>
                 </configuration>
             </plugin>
 
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>use-env-shared-volume</id>
+            <activation>
+                <property>
+                    <name>env.SHARED_VOLUME</name>
+                </property>
+            </activation>
+            <properties>
+                <shared.volume>${env.SHARED_VOLUME}</shared.volume>
+            </properties>
+        </profile>
+        <profile>
+            <id>use-env-maven-tmp</id>
+            <activation>
+                <property>
+                    <name>env.MAVEN_TMP_DIR</name>
+                </property>
+            </activation>
+            <properties>
+                <surefire.tmpdir>${env.MAVEN_TMP_DIR}</surefire.tmpdir>
+            </properties>
+        </profile>
+        <profile>
+            <id>use-env-docker-host</id>
+            <activation>
+                <property>
+                    <name>env.DOCKER_HOST</name>
+                </property>
+            </activation>
+            <properties>
+                <docker.host>${env.DOCKER_HOST}</docker.host>
+            </properties>
+        </profile>
+    </profiles>
 
 
 </project>

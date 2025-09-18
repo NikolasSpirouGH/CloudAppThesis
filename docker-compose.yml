@@ -34,7 +34,7 @@ services:
     - ./.mvn:/app/.mvn
     - ~/.m2:/root/.m2
     - ${SHARED_VOLUME}:/shared
-    - //var/run/docker.sock:/var/run/docker.sock
+    - //var/run/docker.sock:/var/run/docker.sock\
     - ./keys:/app/keys
   db:
     image: postgres:15

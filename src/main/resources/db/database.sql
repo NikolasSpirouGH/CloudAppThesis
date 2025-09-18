@@ -123,6 +123,7 @@ select * from users where username='dtrump';
 select * from models where id=102;
 
 
+
 select * from trainings;
 select * from async_task_status where task_id='441ebe28-efc3-43d7-b391-21cbd76dc6b5';
 select * from models_executions where model_id=97;
