@@ -1,20 +1,17 @@
 package com.cloud_ml_app_thesis.util;
 
-import com.cloud_ml_app_thesis.entity.Training;
-import com.cloud_ml_app_thesis.service.AlgorithmService;
-import lombok.extern.slf4j.Slf4j;
+import java.lang.reflect.Constructor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import weka.classifiers.AbstractClassifier;
+
+import com.cloud_ml_app_thesis.entity.Training;
+
+import lombok.extern.slf4j.Slf4j;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
 import weka.core.Instances;
 import weka.core.OptionHandler;
-
-import java.lang.reflect.Constructor;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class AlgorithmUtil {

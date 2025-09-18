@@ -2,5 +2,8 @@
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.runtimes": [
   { "name": "JavaSE-21", "path": "/usr/lib/jvm/java-21-openjdk-amd64", "default": true }
-]
+],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  }
 }

@@ -1,16 +1,16 @@
 package com.cloud_ml_app_thesis.util;
 
-import com.cloud_ml_app_thesis.entity.Role;
-import com.cloud_ml_app_thesis.entity.User;
-import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.Optional;
-import java.util.Set;
+import com.cloud_ml_app_thesis.entity.Role;
+import com.cloud_ml_app_thesis.entity.User;
+import com.cloud_ml_app_thesis.enumeration.UserRoleEnum;
 
 public class SecurityUtils {
     /**
